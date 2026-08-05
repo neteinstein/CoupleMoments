@@ -1,0 +1,14 @@
+root = true
+
+[*.{kt,kts}]
+indent_size = 4
+insert_final_newline = true
+max_line_length = 140
+# Jetpack Compose functions are conventionally PascalCase (they represent UI, like a type),
+# which otherwise conflicts with ktlint's standard function-naming rule.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Hardcoded question content, not logic - long lines here are the data itself, not a style issue
+# worth wrapping.
+[core/data/src/main/kotlin/org/neteinstein/family/data/source/QuestionDataSource.kt]
+max_line_length = off

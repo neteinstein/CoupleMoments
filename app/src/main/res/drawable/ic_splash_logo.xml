@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple vector icon for splash screen / launcher -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#FFE8C9"
+        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
+
+    <!-- Heart shape -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#BF6900"
+        android:strokeWidth="3"
+        android:pathData="M54,72 C54,72 28,56 28,40 C28,32 34,26 42,28 C46,29 50,32 54,36 C58,32 62,29 66,28 C74,26 80,32 80,40 C80,56 54,72 54,72 Z" />
+
+    <!-- Left figure (parent) -->
+    <path
+        android:fillColor="#6F5B40"
+        android:pathData="M34,76m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#6F5B40"
+        android:pathData="M30,82 L30,96 L38,96 L38,82 Z" />
+
+    <!-- Right figure (parent) -->
+    <path
+        android:fillColor="#6F5B40"
+        android:pathData="M74,76m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#6F5B40"
+        android:pathData="M70,82 L70,96 L78,96 L78,82 Z" />
+
+    <!-- Centre figure (child, smaller) -->
+    <path
+        android:fillColor="#BF6900"
+        android:pathData="M54,78m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#BF6900"
+        android:pathData="M51,83 L51,94 L57,94 L57,83 Z" />
+
+    <!-- Sparkle top -->
+    <path
+        android:fillColor="#FFB95A"
+        android:pathData="M54,14 L55.5,18 L54,22 L52.5,18 Z" />
+    <!-- Sparkle left -->
+    <path
+        android:fillColor="#FFB95A"
+        android:pathData="M22,40 L26,41.5 L30,40 L26,38.5 Z" />
+    <!-- Sparkle right -->
+    <path
+        android:fillColor="#FFB95A"
+        android:pathData="M78,40 L82,41.5 L86,40 L82,38.5 Z" />
+</vector>

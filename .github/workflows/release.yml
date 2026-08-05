@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # Fail fast before spending CI time on lint/test/build if the release secrets aren't set up.
+      - name: Validate required secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          missing=()
+          [ -z "$KEYSTORE_BASE64" ] && missing+=("KEYSTORE_BASE64")
+          [ -z "$KEYSTORE_PASSWORD" ] && missing+=("KEYSTORE_PASSWORD")
+          [ -z "$KEY_ALIAS" ] && missing+=("KEY_ALIAS")
+          [ -z "$KEY_PASSWORD" ] && missing+=("KEY_PASSWORD")
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "::error::Missing required Action secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      # PR Checks (pr.yml) validates the PR branch/merge ref, but a squash- or rebase-merge lands
+      # a commit on main that was never itself built or tested, so this is the only gate that
+      # actually covers the exact commit about to be released.
+      - name: Run ktlint
+        run: ./gradlew ktlintCheck --console=plain --no-daemon --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Decode signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      # Renames the build output to the release-facing artifact name and computes its SHA-1 so
+      # both can be surfaced consistently (asset name + release notes) in the next step.
+      - name: Prepare release artifact
+        id: artifact
+        env:
+          VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: |
+          VERSION_UNDERSCORE="${VERSION_NAME//./_}"
+          APK_PATH="app/build/outputs/apk/release/FamilyMoments_version${VERSION_UNDERSCORE}.apk"
+          mv app/build/outputs/apk/release/app-release.apk "$APK_PATH"
+          SHA1=$(sha1sum "$APK_PATH" | awk '{print $1}')
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "sha1=$SHA1" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_NAME: "1.0.${{ github.run_number }}"
+          APK_PATH: ${{ steps.artifact.outputs.apk_path }}
+          SHA1: ${{ steps.artifact.outputs.sha1 }}
+        run: |
+          gh release create "v${VERSION_NAME}" \
+            "$APK_PATH" \
+            --title "v${VERSION_NAME}" \
+            --notes "**SHA-1:** \`${SHA1}\`" \
+            --generate-notes

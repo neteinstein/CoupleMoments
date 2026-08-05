@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Family Moments</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">App Language</string>
+    <string name="settings_language_subtitle">Change language in Android settings</string>
+    <string name="swipe_hint">Swipe for a new question</string>
+    <string name="splash_tagline">Deeper conversations together</string>
+</resources>
