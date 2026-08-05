@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Monochrome/themed-icon variant of ic_launcher_foreground - the three cards that form the
-     heart's outline, all filled with a single opaque color since Android tints every non-
-     transparent pixel here to one Material You color. Deliberately omits ic_launcher_foreground's
-     two smaller nested cards: they sit entirely inside this outline, so they'd be invisible here
-     anyway (alpha-only) and skipping them keeps this file's silhouette trivially in sync with the
-     three load-bearing shapes.
+     Monochrome/themed-icon variant of ic_launcher_foreground - same shapes, all filled with a
+     single opaque color (glow/embers keep their fillAlpha) since Android tints every pixel here to
+     one Material You color. The campfire-and-people silhouette survives fine on its own.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -13,38 +10,76 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Glow halo -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.30"
+        android:pathData="M54,62m-26,0a26,26 0,1 1,52 0a26,26 0,1 1,-52 0" />
+
+    <!-- Back-row people (peeking behind the front row) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M30.5,68 L30.5,61.5 A6.5,6.5 0 0 1 37,55 A6.5,6.5 0 0 1 43.5,61.5 L43.5,68 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M37,52.14m-5.2,0a5.2,5.2 0,1 1,10.4 0a5.2,5.2 0,1 1,-10.4 0" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M64.5,68 L64.5,61.5 A6.5,6.5 0 0 1 71,55 A6.5,6.5 0 0 1 77.5,61.5 L77.5,68 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M71,52.14m-5.2,0a5.2,5.2 0,1 1,10.4 0a5.2,5.2 0,1 1,-10.4 0" />
+
+    <!-- Crossed logs -->
     <group
         android:pivotX="54"
-        android:pivotY="52.5"
-        android:rotation="45">
+        android:pivotY="82"
+        android:rotation="-22">
         <path
             android:fillColor="#FF000000"
-            android:pathData="M41.5,37 L66.5,37 A3,3 0 0 1 69.5,40 L69.5,65 A3,3 0 0 1 66.5,68 L41.5,68 A3,3 0 0 1 38.5,65 L38.5,40 A3,3 0 0 1 41.5,37 Z" />
+            android:pathData="M37.5,78.5 L70.5,78.5 A3.5,3.5 0 0 1 74,82 A3.5,3.5 0 0 1 70.5,85.5 L37.5,85.5 A3.5,3.5 0 0 1 34,82 A3.5,3.5 0 0 1 37.5,78.5 Z" />
     </group>
-
     <group
-        android:pivotX="38.5"
-        android:pivotY="46"
-        android:rotation="45">
+        android:pivotX="54"
+        android:pivotY="82"
+        android:rotation="22">
         <path
             android:fillColor="#FF000000"
-            android:pathData="M31.5,35 L45.5,35 A4,4 0 0 1 49.5,39 L49.5,53 A4,4 0 0 1 45.5,57 L31.5,57 A4,4 0 0 1 27.5,53 L27.5,39 A4,4 0 0 1 31.5,35 Z" />
+            android:pathData="M37.5,78.5 L70.5,78.5 A3.5,3.5 0 0 1 74,82 A3.5,3.5 0 0 1 70.5,85.5 L37.5,85.5 A3.5,3.5 0 0 1 34,82 A3.5,3.5 0 0 1 37.5,78.5 Z" />
     </group>
 
-    <group
-        android:pivotX="69.5"
-        android:pivotY="46"
-        android:rotation="45">
-        <path
-            android:fillColor="#FF000000"
-            android:pathData="M62.5,35 L76.5,35 A4,4 0 0 1 80.5,39 L80.5,53 A4,4 0 0 1 76.5,57 L62.5,57 A4,4 0 0 1 58.5,53 L58.5,39 A4,4 0 0 1 62.5,35 Z" />
-    </group>
-
-    <!-- Sparkle accent -->
+    <!-- Front-row people -->
     <path
         android:fillColor="#FF000000"
-        android:pathData="M78,26 L79.6,30.4 L78,34.8 L76.4,30.4 Z" />
+        android:pathData="M22,82 L22,74 A8,8 0 0 1 30,66 A8,8 0 0 1 38,74 L38,82 Z" />
     <path
         android:fillColor="#FF000000"
-        android:pathData="M74,30.4 L78,32 L82,30.4 L78,28.8 Z" />
+        android:pathData="M30,62.425m-6.5,0a6.5,6.5 0,1 1,13 0a6.5,6.5 0,1 1,-13 0" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M70,82 L70,74 A8,8 0 0 1 78,66 A8,8 0 0 1 86,74 L86,82 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M78,62.425m-6.5,0a6.5,6.5 0,1 1,13 0a6.5,6.5 0,1 1,-13 0" />
+
+    <!-- Flame (outer / mid / inner) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M54,76 C37.5,67 35.4,50 47.4,39 C51,33 55.2,29 56.4,26 C54.6,33 59.4,42 63,51 C70.5,62 66.6,72 54,76 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M54,75 C42.78,67.98 41.35,54.72 49.51,46.14 C51.96,41.46 54.82,38.34 56.04,36 C54.41,41.46 57.67,48.48 60.12,55.5 C65.22,64.08 62.57,71.88 54,75 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M54,74 C47.73,69.32 46.93,60.48 51.49,54.76 C52.86,51.64 54.46,49.56 55.48,48 C54.23,51.64 56.05,56.32 57.42,61 C60.27,66.72 58.79,71.92 54,74 Z" />
+
+    <!-- Rising embers -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.85"
+        android:pathData="M70,24m-2.6,0a2.6,2.6 0,1 1,5.2 0a2.6,2.6 0,1 1,-5.2 0" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.7"
+        android:pathData="M63,16m-1.7,0a1.7,1.7 0,1 1,3.4 0a1.7,1.7 0,1 1,-3.4 0" />
 </vector>

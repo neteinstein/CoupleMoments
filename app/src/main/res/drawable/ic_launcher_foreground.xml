@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Family Moments mark: five rounded-square "cards" (matching the app's own swipeable question
-     cards) rotated 45deg and overlapped - two "parent" cards and a larger "child" card forming the
-     heart's outline, plus two smaller "child" cards nested in the seams between them - so the
-     combined silhouette reads as a heart while still showing a bigger family. The two nested cards
-     sit entirely inside the outline formed by the other three, so they don't change the outer
-     silhouette (see ic_launcher_monochrome.xml, which is unaffected by them). Content is kept
-     within the 66dp safe-zone circle (33dp radius from the 54,54 center) so it isn't clipped by
-     adaptive-icon masking/parallax on any launcher.
+     Family Moments mark: a cheerful campfire (glow halo, layered cartoon flame, rising embers)
+     over crossed logs, with two "back row" people peeking behind two larger "front row" people
+     seated on either side - a summer-camp night-talk scene. Content is kept close to the 66dp
+     safe-zone circle (33dp radius from the 54,54 center); the outer edges of the front people and
+     log tips bleed slightly past it, which is an accepted tradeoff for a scene this rich - see
+     ic_launcher_monochrome.xml for how it simplifies at a glance.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -15,61 +13,76 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- "Child" card - bottom point of the heart -->
+    <!-- Glow halo -->
+    <path
+        android:fillColor="#FFD866"
+        android:fillAlpha="0.30"
+        android:pathData="M54,62m-26,0a26,26 0,1 1,52 0a26,26 0,1 1,-52 0" />
+
+    <!-- Back-row people (peeking behind the front row) -->
+    <path
+        android:fillColor="#8A7358"
+        android:pathData="M30.5,68 L30.5,61.5 A6.5,6.5 0 0 1 37,55 A6.5,6.5 0 0 1 43.5,61.5 L43.5,68 Z" />
+    <path
+        android:fillColor="#8A7358"
+        android:pathData="M37,52.14m-5.2,0a5.2,5.2 0,1 1,10.4 0a5.2,5.2 0,1 1,-10.4 0" />
+    <path
+        android:fillColor="#8A7358"
+        android:pathData="M64.5,68 L64.5,61.5 A6.5,6.5 0 0 1 71,55 A6.5,6.5 0 0 1 77.5,61.5 L77.5,68 Z" />
+    <path
+        android:fillColor="#8A7358"
+        android:pathData="M71,52.14m-5.2,0a5.2,5.2 0,1 1,10.4 0a5.2,5.2 0,1 1,-10.4 0" />
+
+    <!-- Crossed logs -->
     <group
         android:pivotX="54"
-        android:pivotY="52.5"
-        android:rotation="45">
+        android:pivotY="82"
+        android:rotation="-22">
         <path
-            android:fillColor="#FFB95A"
-            android:pathData="M41.5,37 L66.5,37 A3,3 0 0 1 69.5,40 L69.5,65 A3,3 0 0 1 66.5,68 L41.5,68 A3,3 0 0 1 38.5,65 L38.5,40 A3,3 0 0 1 41.5,37 Z" />
+            android:fillColor="#8A5A34"
+            android:pathData="M37.5,78.5 L70.5,78.5 A3.5,3.5 0 0 1 74,82 A3.5,3.5 0 0 1 70.5,85.5 L37.5,85.5 A3.5,3.5 0 0 1 34,82 A3.5,3.5 0 0 1 37.5,78.5 Z" />
     </group>
-
-    <!-- Left "parent" card -->
     <group
-        android:pivotX="38.5"
-        android:pivotY="46"
-        android:rotation="45">
+        android:pivotX="54"
+        android:pivotY="82"
+        android:rotation="22">
         <path
-            android:fillColor="#BF6900"
-            android:pathData="M31.5,35 L45.5,35 A4,4 0 0 1 49.5,39 L49.5,53 A4,4 0 0 1 45.5,57 L31.5,57 A4,4 0 0 1 27.5,53 L27.5,39 A4,4 0 0 1 31.5,35 Z" />
+            android:fillColor="#6F4526"
+            android:pathData="M37.5,78.5 L70.5,78.5 A3.5,3.5 0 0 1 74,82 A3.5,3.5 0 0 1 70.5,85.5 L37.5,85.5 A3.5,3.5 0 0 1 34,82 A3.5,3.5 0 0 1 37.5,78.5 Z" />
     </group>
 
-    <!-- Right "parent" card -->
-    <group
-        android:pivotX="69.5"
-        android:pivotY="46"
-        android:rotation="45">
-        <path
-            android:fillColor="#E8734A"
-            android:pathData="M62.5,35 L76.5,35 A4,4 0 0 1 80.5,39 L80.5,53 A4,4 0 0 1 76.5,57 L62.5,57 A4,4 0 0 1 58.5,53 L58.5,39 A4,4 0 0 1 62.5,35 Z" />
-    </group>
-
-    <!-- Small "child" card nested in the left seam -->
-    <group
-        android:pivotX="40"
-        android:pivotY="59"
-        android:rotation="45">
-        <path
-            android:fillColor="#7A3E22"
-            android:pathData="M35,51 L45,51 A3,3 0 0 1 48,54 L48,64 A3,3 0 0 1 45,67 L35,67 A3,3 0 0 1 32,64 L32,54 A3,3 0 0 1 35,51 Z" />
-    </group>
-
-    <!-- Small "child" card nested in the right seam -->
-    <group
-        android:pivotX="68"
-        android:pivotY="59"
-        android:rotation="45">
-        <path
-            android:fillColor="#5C3018"
-            android:pathData="M63,51 L73,51 A3,3 0 0 1 76,54 L76,64 A3,3 0 0 1 73,67 L63,67 A3,3 0 0 1 60,64 L60,54 A3,3 0 0 1 63,51 Z" />
-    </group>
-
-    <!-- Sparkle accent -->
+    <!-- Front-row people -->
     <path
-        android:fillColor="#FFD27A"
-        android:pathData="M78,26 L79.6,30.4 L78,34.8 L76.4,30.4 Z" />
+        android:fillColor="#6F5B40"
+        android:pathData="M22,82 L22,74 A8,8 0 0 1 30,66 A8,8 0 0 1 38,74 L38,82 Z" />
     <path
-        android:fillColor="#FFD27A"
-        android:pathData="M74,30.4 L78,32 L82,30.4 L78,28.8 Z" />
+        android:fillColor="#6F5B40"
+        android:pathData="M30,62.425m-6.5,0a6.5,6.5 0,1 1,13 0a6.5,6.5 0,1 1,-13 0" />
+    <path
+        android:fillColor="#5C4A33"
+        android:pathData="M70,82 L70,74 A8,8 0 0 1 78,66 A8,8 0 0 1 86,74 L86,82 Z" />
+    <path
+        android:fillColor="#5C4A33"
+        android:pathData="M78,62.425m-6.5,0a6.5,6.5 0,1 1,13 0a6.5,6.5 0,1 1,-13 0" />
+
+    <!-- Flame (outer / mid / inner) -->
+    <path
+        android:fillColor="#D8471F"
+        android:pathData="M54,76 C37.5,67 35.4,50 47.4,39 C51,33 55.2,29 56.4,26 C54.6,33 59.4,42 63,51 C70.5,62 66.6,72 54,76 Z" />
+    <path
+        android:fillColor="#F08A3C"
+        android:pathData="M54,75 C42.78,67.98 41.35,54.72 49.51,46.14 C51.96,41.46 54.82,38.34 56.04,36 C54.41,41.46 57.67,48.48 60.12,55.5 C65.22,64.08 62.57,71.88 54,75 Z" />
+    <path
+        android:fillColor="#FFD866"
+        android:pathData="M54,74 C47.73,69.32 46.93,60.48 51.49,54.76 C52.86,51.64 54.46,49.56 55.48,48 C54.23,51.64 56.05,56.32 57.42,61 C60.27,66.72 58.79,71.92 54,74 Z" />
+
+    <!-- Rising embers -->
+    <path
+        android:fillColor="#FFD866"
+        android:fillAlpha="0.85"
+        android:pathData="M70,24m-2.6,0a2.6,2.6 0,1 1,5.2 0a2.6,2.6 0,1 1,-5.2 0" />
+    <path
+        android:fillColor="#FFD866"
+        android:fillAlpha="0.7"
+        android:pathData="M63,16m-1.7,0a1.7,1.7 0,1 1,3.4 0a1.7,1.7 0,1 1,-3.4 0" />
 </vector>
