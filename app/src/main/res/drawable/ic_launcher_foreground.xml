@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Splash screen icon - shares its artwork with the launcher's foreground layer
-     (ic_launcher_foreground.xml) so the app icon and splash mark match. No background is baked in
-     here: windowSplashScreenBackground (see themes.xml) already paints the matching page color
-     behind it, same as the adaptive icon's background layer.
+     Family Moments mark: a cheerful campfire (glow halo, layered cartoon flame, rising embers)
+     over crossed logs, with two "back row" people peeking behind two larger "front row" people
+     seated on either side - a summer-camp night-talk scene. Content is kept close to the 66dp
+     safe-zone circle (33dp radius from the 54,54 center); the outer edges of the front people and
+     log tips bleed slightly past it, which is an accepted tradeoff for a scene this rich - see
+     ic_launcher_monochrome.xml for how it simplifies at a glance.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"

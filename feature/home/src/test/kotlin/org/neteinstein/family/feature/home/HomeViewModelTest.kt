@@ -1,6 +1,8 @@
 package org.neteinstein.family.feature.home
 
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,6 +17,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.family.domain.model.Question
+import org.neteinstein.family.domain.repository.LocaleProvider
 import org.neteinstein.family.domain.usecase.GetQuestionsUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -22,6 +25,7 @@ class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val getQuestionsUseCase: GetQuestionsUseCase = mockk()
+    private val localeProvider: LocaleProvider = mockk()
 
     private lateinit var viewModel: HomeViewModel
 
@@ -34,8 +38,9 @@ class HomeViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        every { localeProvider.currentLanguageCode() } returns "en"
         coEvery { getQuestionsUseCase(any()) } returns fakeQuestions
-        viewModel = HomeViewModel(getQuestionsUseCase)
+        viewModel = HomeViewModel(getQuestionsUseCase, localeProvider)
     }
 
     @After
@@ -108,5 +113,46 @@ class HomeViewModelTest {
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertEquals("pt", state.currentQuestion?.languageCode)
+    }
+
+    @Test
+    fun `init loads questions in the app's currently applied language, not a hardcoded default`() = runTest {
+        // Regression test: the ViewModel used to always default to "en" on startup regardless of
+        // the language configured for the app (see LocaleProvider), silently ignoring whatever the
+        // user picked via Settings > App Language.
+        every { localeProvider.currentLanguageCode() } returns "pt"
+        val ptQuestions = listOf(Question(id = 101, text = "Pergunta 1?", languageCode = "pt"))
+        coEvery { getQuestionsUseCase("pt") } returns ptQuestions
+
+        val ptViewModel = HomeViewModel(getQuestionsUseCase, localeProvider)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("pt", ptViewModel.uiState.value.currentQuestion?.languageCode)
+        coVerify(exactly = 1) { getQuestionsUseCase("pt") }
+    }
+
+    @Test
+    fun `onScreenEntered reloads questions when the app language changed since the last load`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+        val esQuestions = listOf(Question(id = 201, text = "Pregunta 1?", languageCode = "es"))
+        coEvery { getQuestionsUseCase("es") } returns esQuestions
+
+        // Simulates the user changing the per-app language in system Settings and returning to Home.
+        every { localeProvider.currentLanguageCode() } returns "es"
+        viewModel.onScreenEntered()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("es", viewModel.uiState.value.currentQuestion?.languageCode)
+    }
+
+    @Test
+    fun `onScreenEntered does nothing when the app language is unchanged`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onScreenEntered()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Only the initial load from init() should have happened - no redundant reload for "en".
+        coVerify(exactly = 1) { getQuestionsUseCase("en") }
     }
 }
