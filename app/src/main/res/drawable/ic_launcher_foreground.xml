@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Splash screen icon - shares its artwork with the launcher's foreground layer
-     (ic_launcher_foreground.xml) so the app icon and splash mark match. No background is baked in
-     here: windowSplashScreenBackground (see themes.xml) already paints the matching page color
-     behind it, same as the adaptive icon's background layer.
+     Family Moments mark: three rounded-square "cards" (matching the app's own swipeable question
+     cards) rotated 45deg and overlapped - two "parent" cards on top of a "child" card - so their
+     combined silhouette reads as a heart. Content is kept within the 66dp safe-zone circle (33dp
+     radius from the 54,54 center) so it isn't clipped by adaptive-icon masking/parallax on any
+     launcher.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"

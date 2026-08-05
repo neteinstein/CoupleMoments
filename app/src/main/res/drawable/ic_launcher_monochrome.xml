@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Splash screen icon - shares its artwork with the launcher's foreground layer
-     (ic_launcher_foreground.xml) so the app icon and splash mark match. No background is baked in
-     here: windowSplashScreenBackground (see themes.xml) already paints the matching page color
-     behind it, same as the adaptive icon's background layer.
+     Monochrome/themed-icon variant of ic_launcher_foreground - same three overlapped "cards", all
+     filled with a single opaque color since Android tints every non-transparent pixel here to one
+     Material You color. The heart shape survives fine on its own since it comes from the shapes'
+     silhouette, not from a second fill color.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -11,41 +11,38 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- "Child" card - bottom point of the heart -->
     <group
         android:pivotX="54"
         android:pivotY="52.5"
         android:rotation="45">
         <path
-            android:fillColor="#FFB95A"
+            android:fillColor="#FF000000"
             android:pathData="M41.5,37 L66.5,37 A3,3 0 0 1 69.5,40 L69.5,65 A3,3 0 0 1 66.5,68 L41.5,68 A3,3 0 0 1 38.5,65 L38.5,40 A3,3 0 0 1 41.5,37 Z" />
     </group>
 
-    <!-- Left "parent" card -->
     <group
         android:pivotX="38.5"
         android:pivotY="46"
         android:rotation="45">
         <path
-            android:fillColor="#BF6900"
+            android:fillColor="#FF000000"
             android:pathData="M31.5,35 L45.5,35 A4,4 0 0 1 49.5,39 L49.5,53 A4,4 0 0 1 45.5,57 L31.5,57 A4,4 0 0 1 27.5,53 L27.5,39 A4,4 0 0 1 31.5,35 Z" />
     </group>
 
-    <!-- Right "parent" card -->
     <group
         android:pivotX="69.5"
         android:pivotY="46"
         android:rotation="45">
         <path
-            android:fillColor="#E8734A"
+            android:fillColor="#FF000000"
             android:pathData="M62.5,35 L76.5,35 A4,4 0 0 1 80.5,39 L80.5,53 A4,4 0 0 1 76.5,57 L62.5,57 A4,4 0 0 1 58.5,53 L58.5,39 A4,4 0 0 1 62.5,35 Z" />
     </group>
 
     <!-- Sparkle accent -->
     <path
-        android:fillColor="#FFD27A"
+        android:fillColor="#FF000000"
         android:pathData="M78,26 L79.6,30.4 L78,34.8 L76.4,30.4 Z" />
     <path
-        android:fillColor="#FFD27A"
+        android:fillColor="#FF000000"
         android:pathData="M74,30.4 L78,32 L82,30.4 L78,28.8 Z" />
 </vector>
