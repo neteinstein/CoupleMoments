@@ -1,18 +1,22 @@
 package org.neteinstein.family.feature.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +26,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -30,7 +35,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,6 +48,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,21 +66,31 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
+import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.model.QuestionCategory
 
 private const val SWIPE_THRESHOLD = 100f
+private const val VERTICAL_SWIPE_THRESHOLD = 120f
+private const val MAX_VERTICAL_NUDGE = 140f
 
 @Composable
 fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var swipeDirection by remember { mutableIntStateOf(0) } // -1 left, +1 right, 0 none
+    var isExpanded by remember { mutableStateOf(false) }
+    var showHideConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.onScreenEntered()
     }
+
+    BackHandler(enabled = isExpanded) { isExpanded = false }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -135,7 +153,9 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                         onSwipeRight = {
                             swipeDirection = 1
                             viewModel.previousQuestion()
-                        }
+                        },
+                        onSwipeUp = { isExpanded = true },
+                        onSwipeDown = { showHideConfirmDialog = true }
                     )
                 }
 
@@ -158,6 +178,94 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn(tween(250)) + scaleIn(initialScale = 0.85f, animationSpec = tween(250)),
+                exit = fadeOut(tween(200)) + scaleOut(targetScale = 0.85f, animationSpec = tween(200)),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                FullScreenQuestion(
+                    question = uiState.currentQuestion,
+                    onClose = { isExpanded = false }
+                )
+            }
+        }
+    }
+
+    if (showHideConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showHideConfirmDialog = false },
+            title = { Text("Mark as used?") },
+            text = { Text("This card will be hidden and won't be shown again.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showHideConfirmDialog = false
+                        viewModel.markCurrentQuestionAsUsed()
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showHideConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun FullScreenQuestion(question: Question?, onClose: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(16.dp)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                question?.category?.let { category ->
+                    CategoryPill(category = category)
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                Text(
+                    text = "💬",
+                    style = MaterialTheme.typography.displayLarge
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    text = question?.text ?: "",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = MaterialTheme.typography.headlineMedium.lineHeight * 1.2f
+                )
             }
         }
     }
@@ -207,13 +315,21 @@ private fun QuestionCard(
     swipeDirection: Int,
     modifier: Modifier = Modifier,
     onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit
+    onSwipeRight: () -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwipeDown: () -> Unit
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
     val cardRotation by animateFloatAsState(
         targetValue = offsetX * 0.04f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "cardRotation"
+    )
+    val cardOffsetY by animateFloatAsState(
+        targetValue = offsetY,
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "cardOffsetY"
     )
 
     Box(
@@ -237,19 +353,29 @@ private fun QuestionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
+                    .offset { IntOffset(0, cardOffsetY.roundToInt()) }
                     .rotate(cardRotation)
                     .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
+                        detectDragGestures(
                             onDragEnd = {
+                                val isVerticalSwipe = abs(offsetY) > abs(offsetX)
                                 when {
-                                    offsetX < -SWIPE_THRESHOLD -> onSwipeLeft()
-                                    offsetX > SWIPE_THRESHOLD -> onSwipeRight()
+                                    isVerticalSwipe && offsetY < -VERTICAL_SWIPE_THRESHOLD -> onSwipeUp()
+                                    isVerticalSwipe && offsetY > VERTICAL_SWIPE_THRESHOLD -> onSwipeDown()
+                                    !isVerticalSwipe && offsetX < -SWIPE_THRESHOLD -> onSwipeLeft()
+                                    !isVerticalSwipe && offsetX > SWIPE_THRESHOLD -> onSwipeRight()
                                 }
                                 offsetX = 0f
+                                offsetY = 0f
                             },
-                            onDragCancel = { offsetX = 0f },
-                            onHorizontalDrag = { _, dragAmount ->
-                                offsetX += dragAmount
+                            onDragCancel = {
+                                offsetX = 0f
+                                offsetY = 0f
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                offsetX += dragAmount.x
+                                offsetY = (offsetY + dragAmount.y).coerceIn(-MAX_VERTICAL_NUDGE, MAX_VERTICAL_NUDGE)
                             }
                         )
                     },
