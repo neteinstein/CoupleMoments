@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Family Moments mark: three rounded-square "cards" (matching the app's own swipeable question
-     cards) rotated 45deg and overlapped - two "parent" cards on top of a "child" card - so their
-     combined silhouette reads as a heart. Content is kept within the 66dp safe-zone circle (33dp
-     radius from the 54,54 center) so it isn't clipped by adaptive-icon masking/parallax on any
-     launcher.
+     Family Moments mark: five rounded-square "cards" (matching the app's own swipeable question
+     cards) rotated 45deg and overlapped - two "parent" cards and a larger "child" card forming the
+     heart's outline, plus two smaller "child" cards nested in the seams between them - so the
+     combined silhouette reads as a heart while still showing a bigger family. The two nested cards
+     sit entirely inside the outline formed by the other three, so they don't change the outer
+     silhouette (see ic_launcher_monochrome.xml, which is unaffected by them). Content is kept
+     within the 66dp safe-zone circle (33dp radius from the 54,54 center) so it isn't clipped by
+     adaptive-icon masking/parallax on any launcher.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -40,6 +43,26 @@
         <path
             android:fillColor="#E8734A"
             android:pathData="M62.5,35 L76.5,35 A4,4 0 0 1 80.5,39 L80.5,53 A4,4 0 0 1 76.5,57 L62.5,57 A4,4 0 0 1 58.5,53 L58.5,39 A4,4 0 0 1 62.5,35 Z" />
+    </group>
+
+    <!-- Small "child" card nested in the left seam -->
+    <group
+        android:pivotX="40"
+        android:pivotY="59"
+        android:rotation="45">
+        <path
+            android:fillColor="#7A3E22"
+            android:pathData="M35,51 L45,51 A3,3 0 0 1 48,54 L48,64 A3,3 0 0 1 45,67 L35,67 A3,3 0 0 1 32,64 L32,54 A3,3 0 0 1 35,51 Z" />
+    </group>
+
+    <!-- Small "child" card nested in the right seam -->
+    <group
+        android:pivotX="68"
+        android:pivotY="59"
+        android:rotation="45">
+        <path
+            android:fillColor="#5C3018"
+            android:pathData="M63,51 L73,51 A3,3 0 0 1 76,54 L76,64 A3,3 0 0 1 73,67 L63,67 A3,3 0 0 1 60,64 L60,54 A3,3 0 0 1 63,51 Z" />
     </group>
 
     <!-- Sparkle accent -->

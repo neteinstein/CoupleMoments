@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Monochrome/themed-icon variant of ic_launcher_foreground - same three overlapped "cards", all
-     filled with a single opaque color since Android tints every non-transparent pixel here to one
-     Material You color. The heart shape survives fine on its own since it comes from the shapes'
-     silhouette, not from a second fill color.
+     Monochrome/themed-icon variant of ic_launcher_foreground - the three cards that form the
+     heart's outline, all filled with a single opaque color since Android tints every non-
+     transparent pixel here to one Material You color. Deliberately omits ic_launcher_foreground's
+     two smaller nested cards: they sit entirely inside this outline, so they'd be invisible here
+     anyway (alpha-only) and skipping them keeps this file's silhouette trivially in sync with the
+     three load-bearing shapes.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"

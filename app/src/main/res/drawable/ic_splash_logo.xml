@@ -41,6 +41,26 @@
             android:pathData="M62.5,35 L76.5,35 A4,4 0 0 1 80.5,39 L80.5,53 A4,4 0 0 1 76.5,57 L62.5,57 A4,4 0 0 1 58.5,53 L58.5,39 A4,4 0 0 1 62.5,35 Z" />
     </group>
 
+    <!-- Small "child" card nested in the left seam -->
+    <group
+        android:pivotX="40"
+        android:pivotY="59"
+        android:rotation="45">
+        <path
+            android:fillColor="#7A3E22"
+            android:pathData="M35,51 L45,51 A3,3 0 0 1 48,54 L48,64 A3,3 0 0 1 45,67 L35,67 A3,3 0 0 1 32,64 L32,54 A3,3 0 0 1 35,51 Z" />
+    </group>
+
+    <!-- Small "child" card nested in the right seam -->
+    <group
+        android:pivotX="68"
+        android:pivotY="59"
+        android:rotation="45">
+        <path
+            android:fillColor="#5C3018"
+            android:pathData="M63,51 L73,51 A3,3 0 0 1 76,54 L76,64 A3,3 0 0 1 73,67 L63,67 A3,3 0 0 1 60,64 L60,54 A3,3 0 0 1 63,51 Z" />
+    </group>
+
     <!-- Sparkle accent -->
     <path
         android:fillColor="#FFD27A"
