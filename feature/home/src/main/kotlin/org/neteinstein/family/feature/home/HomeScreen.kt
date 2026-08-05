@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,6 +64,10 @@ private const val SWIPE_THRESHOLD = 100f
 fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var swipeDirection by remember { mutableIntStateOf(0) } // -1 left, +1 right, 0 none
+
+    LaunchedEffect(Unit) {
+        viewModel.onScreenEntered()
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
