@@ -17,6 +17,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.family.domain.model.Question
+import org.neteinstein.family.domain.model.QuestionCategory
 import org.neteinstein.family.domain.repository.LocaleProvider
 import org.neteinstein.family.domain.usecase.GetQuestionsUseCase
 
@@ -154,5 +155,43 @@ class HomeViewModelTest {
 
         // Only the initial load from init() should have happened - no redundant reload for "en".
         coVerify(exactly = 1) { getQuestionsUseCase("en") }
+    }
+
+    @Test
+    fun `onCategorySelected filters questions to the chosen category`() = runTest {
+        val categorizedQuestions = listOf(
+            Question(id = 1, text = "Q1?", languageCode = "en", category = QuestionCategory.Memories),
+            Question(id = 2, text = "Q2?", languageCode = "en", category = QuestionCategory.Values),
+            Question(id = 3, text = "Q3?", languageCode = "en", category = QuestionCategory.Memories),
+        )
+        coEvery { getQuestionsUseCase("en") } returns categorizedQuestions
+        viewModel.loadQuestions("en")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onCategorySelected(QuestionCategory.Memories)
+
+        val state = viewModel.uiState.value
+        assertEquals(QuestionCategory.Memories, state.selectedCategory)
+        assertEquals(2, state.totalQuestions)
+        assertEquals(QuestionCategory.Memories, state.currentQuestion?.category)
+        assertEquals(0, state.currentIndex)
+    }
+
+    @Test
+    fun `onCategorySelected with null shows all questions again`() = runTest {
+        val categorizedQuestions = listOf(
+            Question(id = 1, text = "Q1?", languageCode = "en", category = QuestionCategory.Memories),
+            Question(id = 2, text = "Q2?", languageCode = "en", category = QuestionCategory.Values),
+        )
+        coEvery { getQuestionsUseCase("en") } returns categorizedQuestions
+        viewModel.loadQuestions("en")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onCategorySelected(QuestionCategory.Values)
+        viewModel.onCategorySelected(null)
+
+        val state = viewModel.uiState.value
+        assertEquals(null, state.selectedCategory)
+        assertEquals(categorizedQuestions.size, state.totalQuestions)
     }
 }

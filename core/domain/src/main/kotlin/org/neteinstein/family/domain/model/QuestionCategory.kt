@@ -6,4 +6,8 @@ sealed class QuestionCategory(val label: String) {
     data object Values : QuestionCategory("❤️ Values")
     data object FutureDreams : QuestionCategory("🔮 Future Dreams")
     data object DailyLife : QuestionCategory("🌻 Daily Life")
+
+    companion object {
+        val all: List<QuestionCategory> = listOf(IceBreakers, Memories, Values, FutureDreams, DailyLife)
+    }
 }

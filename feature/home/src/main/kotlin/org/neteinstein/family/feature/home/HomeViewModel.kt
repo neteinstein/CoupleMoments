@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.family.domain.model.Question
+import org.neteinstein.family.domain.model.QuestionCategory
 import org.neteinstein.family.domain.repository.LocaleProvider
 import org.neteinstein.family.domain.usecase.GetQuestionsUseCase
 
@@ -15,7 +16,8 @@ data class HomeUiState(
     val currentQuestion: Question? = null,
     val isLoading: Boolean = true,
     val currentIndex: Int = 0,
-    val totalQuestions: Int = 0
+    val totalQuestions: Int = 0,
+    val selectedCategory: QuestionCategory? = null
 )
 
 class HomeViewModel(
@@ -26,6 +28,7 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private var allQuestions: List<Question> = emptyList()
     private var questions: List<Question> = emptyList()
     private var loadedLanguageCode: String? = null
 
@@ -49,16 +52,28 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             loadedLanguageCode = languageCode
-            questions = getQuestionsUseCase(languageCode).shuffled()
-            val firstQuestion = questions.firstOrNull()
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    currentQuestion = firstQuestion,
-                    currentIndex = 0,
-                    totalQuestions = questions.size
-                )
-            }
+            allQuestions = getQuestionsUseCase(languageCode)
+            applyFilter(_uiState.value.selectedCategory)
+        }
+    }
+
+    fun onCategorySelected(category: QuestionCategory?) {
+        applyFilter(category)
+    }
+
+    private fun applyFilter(category: QuestionCategory?) {
+        questions = allQuestions
+            .filter { category == null || it.category == category }
+            .shuffled()
+        val firstQuestion = questions.firstOrNull()
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                currentQuestion = firstQuestion,
+                currentIndex = 0,
+                totalQuestions = questions.size,
+                selectedCategory = category
+            )
         }
     }
 

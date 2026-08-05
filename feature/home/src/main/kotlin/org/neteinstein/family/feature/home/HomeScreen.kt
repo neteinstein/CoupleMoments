@@ -11,6 +11,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,10 +29,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -136,12 +141,20 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Progress indicator dots
-                if (!uiState.isLoading && uiState.totalQuestions > 0) {
-                    ProgressDots(
-                        current = uiState.currentIndex,
-                        total = minOf(uiState.totalQuestions, 7)
+                // Category filter (bottom left) + progress indicator dots
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    CategoryDropdown(
+                        selectedCategory = uiState.selectedCategory,
+                        onCategorySelected = viewModel::onCategorySelected,
+                        modifier = Modifier.align(Alignment.CenterStart)
                     )
+                    if (!uiState.isLoading && uiState.totalQuestions > 0) {
+                        ProgressDots(
+                            current = uiState.currentIndex,
+                            total = minOf(uiState.totalQuestions, 7),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -316,9 +329,64 @@ private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun ProgressDots(current: Int, total: Int) {
+private fun CategoryDropdown(
+    selectedCategory: QuestionCategory?,
+    onCategorySelected: (QuestionCategory?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { expanded = true }
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = selectedCategory?.label ?: "All",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = "Filter by category",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("All") },
+                onClick = {
+                    expanded = false
+                    onCategorySelected(null)
+                }
+            )
+            QuestionCategory.all.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(category.label) },
+                    onClick = {
+                        expanded = false
+                        onCategorySelected(category)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier) {
     val visibleIndex = current % total
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
