@@ -465,17 +465,21 @@ private fun QuestionCard(
     }
 }
 
-private val QuestionCategory.labelRes: Int
-    get() = when (this) {
+private fun categoryLabelRes(category: QuestionCategory): Int {
+    return when (category) {
         QuestionCategory.IceBreakers -> R.string.category_ice_breakers
         QuestionCategory.Memories -> R.string.category_memories
         QuestionCategory.Values -> R.string.category_values
         QuestionCategory.FutureDreams -> R.string.category_future_dreams
         QuestionCategory.DailyLife -> R.string.category_daily_life
     }
+}
 
 @Composable
-private fun QuestionCategory.displayLabel(): String = "$emoji ${stringResource(labelRes)}"
+private fun categoryDisplayLabel(category: QuestionCategory): String {
+    val name = stringResource(categoryLabelRes(category))
+    return category.emoji + " " + name
+}
 
 @Composable
 private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifier) {
@@ -486,7 +490,7 @@ private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifi
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
-            text = category.displayLabel(),
+            text = categoryDisplayLabel(category),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
             maxLines = 1
@@ -504,7 +508,7 @@ private fun CategoryDropdown(
     val allLabel = stringResource(R.string.category_all)
     val categoryLabels = ArrayList<Pair<QuestionCategory, String>>(QuestionCategory.all.size)
     for (category in QuestionCategory.all) {
-        categoryLabels.add(category to category.displayLabel())
+        categoryLabels.add(category to categoryDisplayLabel(category))
     }
     var selectedLabel = allLabel
     for ((category, label) in categoryLabels) {
