@@ -465,17 +465,17 @@ private fun QuestionCard(
     }
 }
 
-@Composable
-private fun QuestionCategory.displayLabel(): String {
-    val name = when (this) {
-        QuestionCategory.IceBreakers -> stringResource(R.string.category_ice_breakers)
-        QuestionCategory.Memories -> stringResource(R.string.category_memories)
-        QuestionCategory.Values -> stringResource(R.string.category_values)
-        QuestionCategory.FutureDreams -> stringResource(R.string.category_future_dreams)
-        QuestionCategory.DailyLife -> stringResource(R.string.category_daily_life)
+private val QuestionCategory.labelRes: Int
+    get() = when (this) {
+        QuestionCategory.IceBreakers -> R.string.category_ice_breakers
+        QuestionCategory.Memories -> R.string.category_memories
+        QuestionCategory.Values -> R.string.category_values
+        QuestionCategory.FutureDreams -> R.string.category_future_dreams
+        QuestionCategory.DailyLife -> R.string.category_daily_life
     }
-    return "$emoji $name"
-}
+
+@Composable
+private fun QuestionCategory.displayLabel(): String = "$emoji ${stringResource(labelRes)}"
 
 @Composable
 private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifier) {
@@ -501,6 +501,11 @@ private fun CategoryDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = if (selectedCategory != null) {
+        selectedCategory.displayLabel()
+    } else {
+        stringResource(R.string.category_all)
+    }
 
     Box(modifier = modifier) {
         Row(
@@ -513,7 +518,7 @@ private fun CategoryDropdown(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = selectedCategory?.displayLabel() ?: stringResource(R.string.category_all),
+                text = selectedLabel,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
