@@ -9,6 +9,8 @@
     <string name="cd_settings">Ajustes</string>
     <string name="cd_close">Cerrar</string>
     <string name="cd_filter_by_category">Filtrar por categoría</string>
+    <string name="cd_switch_to_grid_view">Cambiar a vista de cuadrícula</string>
+    <string name="cd_switch_to_swipe_view">Cambiar a vista de tarjetas</string>
     <string name="category_all">Todas</string>
     <string name="hide_card_title">¿Ocultar esta carta?</string>
     <string name="hide_card_message">Oculta esta carta (ya usada o no deseada). No volverá a aparecer hasta que restablezcas las cartas en Ajustes.</string>

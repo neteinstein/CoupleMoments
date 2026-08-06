@@ -20,23 +20,31 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -69,6 +77,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -88,14 +97,21 @@ private const val MAX_VERTICAL_NUDGE = 140f
 fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var swipeDirection by remember { mutableIntStateOf(0) } // -1 left, +1 right, 0 none
-    var isExpanded by remember { mutableStateOf(false) }
+    var fullScreenQuestion by remember { mutableStateOf<Question?>(null) }
+    // Keeps showing the last opened question while the close animation fades/scales it out,
+    // instead of the content blanking out the instant fullScreenQuestion is cleared.
+    var lastFullScreenQuestion by remember { mutableStateOf<Question?>(null) }
+    if (fullScreenQuestion != null) {
+        lastFullScreenQuestion = fullScreenQuestion
+    }
+    var isGridView by remember { mutableStateOf(false) }
     var showHideConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.onScreenEntered()
     }
 
-    BackHandler(enabled = isExpanded) { isExpanded = false }
+    BackHandler(enabled = fullScreenQuestion != null) { fullScreenQuestion = null }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -130,18 +146,20 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Subtitle
-                Text(
-                    text = stringResource(R.string.home_swipe_hint),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = stringResource(R.string.home_vertical_swipe_hint),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
+                if (!isGridView) {
+                    Text(
+                        text = stringResource(R.string.home_swipe_hint),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = stringResource(R.string.home_vertical_swipe_hint),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -152,6 +170,12 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                     ) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
+                } else if (isGridView) {
+                    QuestionGrid(
+                        questions = uiState.questions,
+                        onQuestionClick = { fullScreenQuestion = it },
+                        modifier = Modifier.weight(1f)
+                    )
                 } else {
                     QuestionCard(
                         uiState = uiState,
@@ -165,7 +189,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                             swipeDirection = 1
                             viewModel.previousQuestion()
                         },
-                        onSwipeUp = { isExpanded = true },
+                        onSwipeUp = { fullScreenQuestion = uiState.currentQuestion },
                         onSwipeDown = { showHideConfirmDialog = true }
                     )
                 }
@@ -175,7 +199,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 // Progress indicator dots (above) + category filter (bottom left) below,
                 // stacked vertically so a wide category label never overlaps the dots.
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    if (!uiState.isLoading && uiState.totalQuestions > 0) {
+                    if (!isGridView && !uiState.isLoading && uiState.totalQuestions > 0) {
                         Box(modifier = Modifier.fillMaxWidth()) {
                             ProgressDots(
                                 current = uiState.currentIndex,
@@ -197,15 +221,35 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
+            // View toggle (bottom right corner), hidden while a card is shown full screen.
+            IconButton(
+                onClick = { isGridView = !isGridView },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(16.dp)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Icon(
+                    imageVector = if (isGridView) Icons.Default.ViewCarousel else Icons.Default.GridView,
+                    contentDescription = stringResource(
+                        if (isGridView) R.string.cd_switch_to_swipe_view else R.string.cd_switch_to_grid_view
+                    ),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             AnimatedVisibility(
-                visible = isExpanded,
+                visible = fullScreenQuestion != null,
                 enter = fadeIn(tween(250)) + scaleIn(initialScale = 0.85f, animationSpec = tween(250)),
                 exit = fadeOut(tween(200)) + scaleOut(targetScale = 0.85f, animationSpec = tween(200)),
                 modifier = Modifier.fillMaxSize()
             ) {
                 FullScreenQuestion(
-                    question = uiState.currentQuestion,
-                    onClose = { isExpanded = false }
+                    question = lastFullScreenQuestion,
+                    onClose = { fullScreenQuestion = null }
                 )
             }
         }
@@ -494,6 +538,101 @@ private fun QuestionCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun QuestionGrid(
+    questions: List<Question>,
+    onQuestionClick: (Question) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (questions.isEmpty()) {
+        Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "🗂️",
+                    style = MaterialTheme.typography.displaySmall
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = stringResource(R.string.home_no_cards_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.home_no_cards_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        return
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(questions, key = { it.id }) { question ->
+            GridQuestionCard(
+                question = question,
+                onClick = { onQuestionClick(question) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun GridQuestionCard(question: Question, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.aspectRatio(0.75f),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
+                        )
+                    )
+                )
+                .padding(10.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // The full CategoryPill label (emoji + name) is too wide for a 3-column card and
+            // would get clipped by the card's rounded corners, so just show the emoji here.
+            Text(
+                text = question.category.emoji,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.align(Alignment.TopEnd)
+            )
+            Text(
+                text = question.text,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 5,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

@@ -19,7 +19,8 @@ data class HomeUiState(
     val isLoading: Boolean = true,
     val currentIndex: Int = 0,
     val totalQuestions: Int = 0,
-    val selectedCategory: QuestionCategory? = null
+    val selectedCategory: QuestionCategory? = null,
+    val questions: List<Question> = emptyList()
 )
 
 class HomeViewModel(
@@ -98,7 +99,8 @@ class HomeViewModel(
                 currentQuestion = firstQuestion,
                 currentIndex = 0,
                 totalQuestions = questions.size,
-                selectedCategory = category
+                selectedCategory = category,
+                questions = questions
             )
         }
     }
