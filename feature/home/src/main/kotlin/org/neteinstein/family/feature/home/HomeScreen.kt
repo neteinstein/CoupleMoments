@@ -467,11 +467,12 @@ private fun QuestionCard(
 
 private fun categoryLabelRes(category: QuestionCategory): Int {
     return when (category) {
-        QuestionCategory.IceBreakers -> R.string.category_ice_breakers
-        QuestionCategory.Memories -> R.string.category_memories
-        QuestionCategory.Values -> R.string.category_values
-        QuestionCategory.FutureDreams -> R.string.category_future_dreams
-        QuestionCategory.DailyLife -> R.string.category_daily_life
+        is QuestionCategory.IceBreakers -> R.string.category_ice_breakers
+        is QuestionCategory.Memories -> R.string.category_memories
+        is QuestionCategory.Values -> R.string.category_values
+        is QuestionCategory.FutureDreams -> R.string.category_future_dreams
+        is QuestionCategory.DailyLife -> R.string.category_daily_life
+        else -> R.string.category_ice_breakers
     }
 }
 
