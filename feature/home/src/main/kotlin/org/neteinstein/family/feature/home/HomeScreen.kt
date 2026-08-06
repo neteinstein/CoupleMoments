@@ -478,8 +478,10 @@ private fun categoryLabelRes(category: QuestionCategory): Int {
 
 @Composable
 private fun categoryDisplayLabel(category: QuestionCategory): String {
-    val name = stringResource(categoryLabelRes(category))
-    return category.emoji + " " + name
+    val emoji = category.emoji
+    val labelRes = categoryLabelRes(category)
+    val name = stringResource(labelRes)
+    return emoji + " " + name
 }
 
 @Composable
