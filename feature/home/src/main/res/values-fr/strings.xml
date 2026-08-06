@@ -9,6 +9,8 @@
     <string name="cd_settings">Paramètres</string>
     <string name="cd_close">Fermer</string>
     <string name="cd_filter_by_category">Filtrer par catégorie</string>
+    <string name="cd_switch_to_grid_view">Passer à la vue en grille</string>
+    <string name="cd_switch_to_swipe_view">Passer à la vue en cartes</string>
     <string name="category_all">Toutes</string>
     <string name="hide_card_title">Masquer cette carte ?</string>
     <string name="hide_card_message">Masquer cette carte (déjà utilisée ou non désirée). Elle ne réapparaîtra pas tant que vous n\'aurez pas réinitialisé les cartes dans les Paramètres.</string>

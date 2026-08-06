@@ -9,6 +9,8 @@
     <string name="cd_settings">Settings</string>
     <string name="cd_close">Close</string>
     <string name="cd_filter_by_category">Filter by category</string>
+    <string name="cd_switch_to_grid_view">Switch to grid view</string>
+    <string name="cd_switch_to_swipe_view">Switch to card view</string>
     <string name="category_all">All</string>
     <string name="hide_card_title">Hide this card?</string>
     <string name="hide_card_message">Hide this card (already used or don\'t want it). It won\'t be shown again until you reset cards in Settings.</string>
