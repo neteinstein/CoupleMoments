@@ -17,8 +17,11 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.family.domain.model.Question
+import org.neteinstein.family.domain.model.QuestionCategory
 import org.neteinstein.family.domain.repository.LocaleProvider
 import org.neteinstein.family.domain.usecase.GetQuestionsUseCase
+import org.neteinstein.family.domain.usecase.GetUsedQuestionIdsUseCase
+import org.neteinstein.family.domain.usecase.MarkQuestionUsedUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -26,6 +29,8 @@ class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val getQuestionsUseCase: GetQuestionsUseCase = mockk()
     private val localeProvider: LocaleProvider = mockk()
+    private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase = mockk()
+    private val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
 
     private lateinit var viewModel: HomeViewModel
 
@@ -40,7 +45,14 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { localeProvider.currentLanguageCode() } returns "en"
         coEvery { getQuestionsUseCase(any()) } returns fakeQuestions
-        viewModel = HomeViewModel(getQuestionsUseCase, localeProvider)
+        coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
+        coEvery { markQuestionUsedUseCase(any()) } returns Unit
+        viewModel = HomeViewModel(
+            getQuestionsUseCase,
+            localeProvider,
+            getUsedQuestionIdsUseCase,
+            markQuestionUsedUseCase
+        )
     }
 
     @After
@@ -124,7 +136,12 @@ class HomeViewModelTest {
         val ptQuestions = listOf(Question(id = 101, text = "Pergunta 1?", languageCode = "pt"))
         coEvery { getQuestionsUseCase("pt") } returns ptQuestions
 
-        val ptViewModel = HomeViewModel(getQuestionsUseCase, localeProvider)
+        val ptViewModel = HomeViewModel(
+            getQuestionsUseCase,
+            localeProvider,
+            getUsedQuestionIdsUseCase,
+            markQuestionUsedUseCase
+        )
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals("pt", ptViewModel.uiState.value.currentQuestion?.languageCode)
@@ -154,5 +171,70 @@ class HomeViewModelTest {
 
         // Only the initial load from init() should have happened - no redundant reload for "en".
         coVerify(exactly = 1) { getQuestionsUseCase("en") }
+    }
+
+    @Test
+    fun `onCategorySelected filters questions to the chosen category`() = runTest {
+        val categorizedQuestions = listOf(
+            Question(id = 1, text = "Q1?", languageCode = "en", category = QuestionCategory.Memories),
+            Question(id = 2, text = "Q2?", languageCode = "en", category = QuestionCategory.Values),
+            Question(id = 3, text = "Q3?", languageCode = "en", category = QuestionCategory.Memories),
+        )
+        coEvery { getQuestionsUseCase("en") } returns categorizedQuestions
+        viewModel.loadQuestions("en")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onCategorySelected(QuestionCategory.Memories)
+
+        val state = viewModel.uiState.value
+        assertEquals(QuestionCategory.Memories, state.selectedCategory)
+        assertEquals(2, state.totalQuestions)
+        assertEquals(QuestionCategory.Memories, state.currentQuestion?.category)
+        assertEquals(0, state.currentIndex)
+    }
+
+    @Test
+    fun `onCategorySelected with null shows all questions again`() = runTest {
+        val categorizedQuestions = listOf(
+            Question(id = 1, text = "Q1?", languageCode = "en", category = QuestionCategory.Memories),
+            Question(id = 2, text = "Q2?", languageCode = "en", category = QuestionCategory.Values),
+        )
+        coEvery { getQuestionsUseCase("en") } returns categorizedQuestions
+        viewModel.loadQuestions("en")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onCategorySelected(QuestionCategory.Values)
+        viewModel.onCategorySelected(null)
+
+        val state = viewModel.uiState.value
+        assertEquals(null, state.selectedCategory)
+        assertEquals(categorizedQuestions.size, state.totalQuestions)
+    }
+
+    @Test
+    fun `markCurrentQuestionAsUsed persists the id and removes it from rotation`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+        val current = viewModel.uiState.value.currentQuestion
+        requireNotNull(current)
+
+        viewModel.markCurrentQuestionAsUsed()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { markQuestionUsedUseCase(current.id) }
+        val state = viewModel.uiState.value
+        assertEquals(fakeQuestions.size - 1, state.totalQuestions)
+        assertFalse(state.currentQuestion?.id == current.id)
+    }
+
+    @Test
+    fun `loadQuestions excludes previously used questions`() = runTest {
+        coEvery { getUsedQuestionIdsUseCase() } returns setOf(2)
+
+        viewModel.loadQuestions("en")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(fakeQuestions.size - 1, state.totalQuestions)
+        assertFalse(state.currentQuestion?.id == 2)
     }
 }

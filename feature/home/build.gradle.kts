@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.coroutines.android)
+    implementation(libs.activity.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
