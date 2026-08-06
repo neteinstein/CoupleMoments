@@ -476,20 +476,13 @@ private fun categoryLabelRes(category: QuestionCategory): Int {
     }
 }
 
-/**
- * The emoji+name label is resolved inline here and in [CategoryDropdown] rather than through a
- * shared `categoryDisplayLabel(category)` composable - calling a @Composable function that takes
- * a QuestionCategory parameter from CategoryDropdown's category loop reproducibly threw
- * `NullPointerException` / `NoWhenBranchMatchedException` from a corrupted argument under
- * Robolectric on this Kotlin/Compose compiler version, even with the call isolated to its own
- * statement. Resolving stringResource() directly against a plain Int avoids the pattern entirely.
- */
+@Composable
+private fun categoryDisplayLabel(category: QuestionCategory): String {
+    return category.emoji + " " + stringResource(categoryLabelRes(category))
+}
+
 @Composable
 private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifier) {
-    val emoji = category.emoji
-    val labelRes = categoryLabelRes(category)
-    val name = stringResource(labelRes)
-    val label = emoji + " " + name
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
@@ -497,7 +490,7 @@ private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifi
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
-            text = label,
+            text = categoryDisplayLabel(category),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
             maxLines = 1
@@ -513,20 +506,18 @@ private fun CategoryDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val allLabel = stringResource(R.string.category_all)
-    val categoryLabels = ArrayList<Pair<QuestionCategory, String>>(QuestionCategory.all.size)
-    for (category in QuestionCategory.all) {
-        val emoji = category.emoji
-        val labelRes = categoryLabelRes(category)
-        val name = stringResource(labelRes)
-        val label = emoji + " " + name
-        categoryLabels.add(category to label)
-    }
-    var selectedLabel = allLabel
-    for ((category, label) in categoryLabels) {
-        if (category == selectedCategory) {
-            selectedLabel = label
-        }
-    }
+    // Deliberately unrolled instead of looping over QuestionCategory.all: calling a @Composable
+    // function with an argument sourced from a loop/forEach/map variable reproducibly corrupted
+    // that argument under this project's exact Kotlin/Compose compiler version (see git history
+    // on this file for the failed alternatives). Direct references to the five known singletons
+    // sidestep it entirely, and the category list is small and fixed, so unrolling is cheap.
+    val iceBreakersLabel = QuestionCategory.IceBreakers to categoryDisplayLabel(QuestionCategory.IceBreakers)
+    val memoriesLabel = QuestionCategory.Memories to categoryDisplayLabel(QuestionCategory.Memories)
+    val valuesLabel = QuestionCategory.Values to categoryDisplayLabel(QuestionCategory.Values)
+    val futureDreamsLabel = QuestionCategory.FutureDreams to categoryDisplayLabel(QuestionCategory.FutureDreams)
+    val dailyLifeLabel = QuestionCategory.DailyLife to categoryDisplayLabel(QuestionCategory.DailyLife)
+    val categoryLabels = listOf(iceBreakersLabel, memoriesLabel, valuesLabel, futureDreamsLabel, dailyLifeLabel)
+    val selectedLabel = categoryLabels.firstOrNull { (category, _) -> category == selectedCategory }?.second ?: allLabel
 
     Box(modifier = modifier) {
         Row(
