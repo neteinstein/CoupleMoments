@@ -63,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -126,7 +127,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 
                 // Subtitle
                 Text(
-                    text = "Swipe for a new question ← →",
+                    text = stringResource(R.string.home_swipe_hint),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -197,8 +198,8 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
     if (showHideConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showHideConfirmDialog = false },
-            title = { Text("Hide this card?") },
-            text = { Text("Hide this card (already used or don't want it). It won't be shown again until you reset cards in Settings.") },
+            title = { Text(stringResource(R.string.hide_card_title)) },
+            text = { Text(stringResource(R.string.hide_card_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -206,12 +207,12 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                         viewModel.markCurrentQuestionAsUsed()
                     }
                 ) {
-                    Text("Yes")
+                    Text(stringResource(R.string.yes))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showHideConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -237,7 +238,7 @@ private fun FullScreenQuestion(question: Question?, onClose: () -> Unit) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
+                    contentDescription = stringResource(R.string.cd_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -282,13 +283,13 @@ private fun HomeTopBar(onSettingsClick: () -> Unit) {
     ) {
         Column {
             Text(
-                text = "Family Moments",
+                text = stringResource(R.string.home_app_name),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Start a deep conversation",
+                text = stringResource(R.string.home_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -302,7 +303,7 @@ private fun HomeTopBar(onSettingsClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
+                contentDescription = stringResource(R.string.cd_settings),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -410,7 +411,7 @@ private fun QuestionCard(
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
-                                text = "No cards left in this category",
+                                text = stringResource(R.string.home_no_cards_title),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Medium,
                                 textAlign = TextAlign.Center,
@@ -418,7 +419,7 @@ private fun QuestionCard(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Pick another category, or reset cards in Settings to see them again.",
+                                text = stringResource(R.string.home_no_cards_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -450,7 +451,7 @@ private fun QuestionCard(
                             )
                             Spacer(modifier = Modifier.height(32.dp))
                             Text(
-                                text = "Take turns sharing your answers",
+                                text = stringResource(R.string.home_take_turns),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -464,6 +465,22 @@ private fun QuestionCard(
     }
 }
 
+private fun categoryLabelRes(category: QuestionCategory): Int {
+    return when (category) {
+        is QuestionCategory.IceBreakers -> R.string.category_ice_breakers
+        is QuestionCategory.Memories -> R.string.category_memories
+        is QuestionCategory.Values -> R.string.category_values
+        is QuestionCategory.FutureDreams -> R.string.category_future_dreams
+        is QuestionCategory.DailyLife -> R.string.category_daily_life
+        else -> R.string.category_ice_breakers
+    }
+}
+
+@Composable
+private fun categoryDisplayLabel(category: QuestionCategory): String {
+    return category.emoji + " " + stringResource(categoryLabelRes(category))
+}
+
 @Composable
 private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifier) {
     Box(
@@ -473,7 +490,7 @@ private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifi
             .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
         Text(
-            text = category.label,
+            text = categoryDisplayLabel(category),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
             maxLines = 1
@@ -488,6 +505,19 @@ private fun CategoryDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val allLabel = stringResource(R.string.category_all)
+    // Deliberately unrolled instead of looping over QuestionCategory.all: calling a @Composable
+    // function with an argument sourced from a loop/forEach/map variable reproducibly corrupted
+    // that argument under this project's exact Kotlin/Compose compiler version (see git history
+    // on this file for the failed alternatives). Direct references to the five known singletons
+    // sidestep it entirely, and the category list is small and fixed, so unrolling is cheap.
+    val iceBreakersLabel = QuestionCategory.IceBreakers to categoryDisplayLabel(QuestionCategory.IceBreakers)
+    val memoriesLabel = QuestionCategory.Memories to categoryDisplayLabel(QuestionCategory.Memories)
+    val valuesLabel = QuestionCategory.Values to categoryDisplayLabel(QuestionCategory.Values)
+    val futureDreamsLabel = QuestionCategory.FutureDreams to categoryDisplayLabel(QuestionCategory.FutureDreams)
+    val dailyLifeLabel = QuestionCategory.DailyLife to categoryDisplayLabel(QuestionCategory.DailyLife)
+    val categoryLabels = listOf(iceBreakersLabel, memoriesLabel, valuesLabel, futureDreamsLabel, dailyLifeLabel)
+    val selectedLabel = categoryLabels.firstOrNull { (category, _) -> category == selectedCategory }?.second ?: allLabel
 
     Box(modifier = modifier) {
         Row(
@@ -500,14 +530,14 @@ private fun CategoryDropdown(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = selectedCategory?.label ?: "All",
+                text = selectedLabel,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Filter by category",
+                contentDescription = stringResource(R.string.cd_filter_by_category),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -516,15 +546,15 @@ private fun CategoryDropdown(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("All") },
+                text = { Text(allLabel) },
                 onClick = {
                     expanded = false
                     onCategorySelected(null)
                 }
             )
-            QuestionCategory.all.forEach { category ->
+            for ((category, label) in categoryLabels) {
                 DropdownMenuItem(
-                    text = { Text(category.label) },
+                    text = { Text(label) },
                     onClick = {
                         expanded = false
                         onCategorySelected(category)

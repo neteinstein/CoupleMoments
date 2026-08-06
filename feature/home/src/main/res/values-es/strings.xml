@@ -1,0 +1,21 @@
+<resources>
+    <string name="home_app_name">Family Moments</string>
+    <string name="home_subtitle">Empieza una conversación profunda</string>
+    <string name="home_swipe_hint">Desliza para una nueva pregunta ← →</string>
+    <string name="home_no_cards_title">No quedan cartas en esta categoría</string>
+    <string name="home_no_cards_subtitle">Elige otra categoría o restablece las cartas en Ajustes para verlas de nuevo.</string>
+    <string name="home_take_turns">Túrnense para compartir sus respuestas</string>
+    <string name="cd_settings">Ajustes</string>
+    <string name="cd_close">Cerrar</string>
+    <string name="cd_filter_by_category">Filtrar por categoría</string>
+    <string name="category_all">Todas</string>
+    <string name="hide_card_title">¿Ocultar esta carta?</string>
+    <string name="hide_card_message">Oculta esta carta (ya usada o no deseada). No volverá a aparecer hasta que restablezcas las cartas en Ajustes.</string>
+    <string name="yes">Sí</string>
+    <string name="cancel">Cancelar</string>
+    <string name="category_ice_breakers">Rompehielos</string>
+    <string name="category_memories">Recuerdos</string>
+    <string name="category_values">Valores</string>
+    <string name="category_future_dreams">Sueños Futuros</string>
+    <string name="category_daily_life">Vida Diaria</string>
+</resources>

@@ -19,6 +19,7 @@ json = "20240303"
 ktlintGradle = "12.2.0"
 room = "2.7.1"
 ksp = "2.3.11"
+robolectric = "4.16.1"
 
 [libraries]
 # Compose BOM
@@ -68,6 +69,7 @@ coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koinTest" }
 koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koinTest" }
 json = { group = "org.json", name = "json", version.ref = "json" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 # Room
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
