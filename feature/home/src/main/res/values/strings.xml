@@ -2,6 +2,7 @@
     <string name="home_app_name">Family Moments</string>
     <string name="home_subtitle">Start a deep conversation</string>
     <string name="home_swipe_hint">Swipe for a new question ← →</string>
+    <string name="home_vertical_swipe_hint">Swipe up to focus, down to hide ↑ ↓</string>
     <string name="home_no_cards_title">No cards left in this category</string>
     <string name="home_no_cards_subtitle">Pick another category, or reset cards in Settings to see them again.</string>
     <string name="home_take_turns">Take turns sharing your answers</string>

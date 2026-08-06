@@ -132,6 +132,12 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+                Text(
+                    text = stringResource(R.string.home_vertical_swipe_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -172,7 +178,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                     if (!uiState.isLoading && uiState.totalQuestions > 0) {
                         ProgressDots(
                             current = uiState.currentIndex,
-                            total = minOf(uiState.totalQuestions, 7),
+                            total = uiState.totalQuestions,
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
@@ -565,6 +571,8 @@ private fun CategoryDropdown(
     }
 }
 
+private const val MAX_WINDOWED_DOTS = 5
+
 @Composable
 private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier) {
     if (total <= 0) return
@@ -574,24 +582,50 @@ private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(total) { index ->
-            val isSelected = index == visibleIndex
-            val size by animateFloatAsState(
-                targetValue = if (isSelected) 10f else 6f,
-                label = "dotSize"
-            )
-            Box(
-                modifier = Modifier
-                    .size(size.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                        }
-                    )
-            )
+        if (total <= MAX_WINDOWED_DOTS) {
+            repeat(total) { index -> ProgressDot(isSelected = index == visibleIndex) }
+        } else {
+            // The deck loops through every card in the category, not just the first few
+            // (nextQuestion/previousQuestion wrap via modulo), so instead of capping the dots at
+            // a fixed page count, show a small window centred on the current card with tiny
+            // "peek" dots at both ends hinting that more cards loop around either side. This
+            // stays accurate no matter how many cards the selected category has.
+            PeekDot()
+            val half = MAX_WINDOWED_DOTS / 2
+            for (delta in -half..half) {
+                ProgressDot(isSelected = delta == 0)
+            }
+            PeekDot()
         }
     }
+}
+
+@Composable
+private fun ProgressDot(isSelected: Boolean) {
+    val size by animateFloatAsState(
+        targetValue = if (isSelected) 10f else 6f,
+        label = "dotSize"
+    )
+    Box(
+        modifier = Modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(
+                if (isSelected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                }
+            )
+    )
+}
+
+@Composable
+private fun PeekDot() {
+    Box(
+        modifier = Modifier
+            .size(4.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+    )
 }
