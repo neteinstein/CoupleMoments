@@ -5,5 +5,5 @@ import org.koin.dsl.module
 import org.neteinstein.family.feature.settings.SettingsViewModel
 
 val settingsModule = module {
-    viewModel { SettingsViewModel(get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get()) }
 }

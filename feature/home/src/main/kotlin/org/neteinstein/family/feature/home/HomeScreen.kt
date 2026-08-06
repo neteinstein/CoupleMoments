@@ -197,8 +197,8 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
     if (showHideConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showHideConfirmDialog = false },
-            title = { Text("Mark as used?") },
-            text = { Text("This card will be hidden and won't be shown again.") },
+            title = { Text("Hide this card?") },
+            text = { Text("Hide this card (already used or don't want it). It won't be shown again until you reset cards in Settings.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -399,37 +399,64 @@ private fun QuestionCard(
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    question?.category?.let { category ->
-                        CategoryPill(
-                            category = category,
-                            modifier = Modifier.align(Alignment.TopEnd)
-                        )
-                    }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "💬",
-                            style = MaterialTheme.typography.displaySmall
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = question?.text ?: "",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.2f
-                        )
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Text(
-                            text = "Take turns sharing your answers",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                    if (question == null) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "🗂️",
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "No cards left in this category",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Pick another category, or reset cards in Settings to see them again.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        question.category.let { category ->
+                            CategoryPill(
+                                category = category,
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "💬",
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = question.text,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.2f
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Text(
+                                text = "Take turns sharing your answers",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
@@ -510,6 +537,7 @@ private fun CategoryDropdown(
 
 @Composable
 private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier) {
+    if (total <= 0) return
     val visibleIndex = current % total
     Row(
         modifier = modifier,

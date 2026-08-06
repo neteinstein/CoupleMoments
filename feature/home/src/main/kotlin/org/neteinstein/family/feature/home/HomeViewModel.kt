@@ -45,11 +45,22 @@ class HomeViewModel(
      * Re-checks the OS-applied app language and reloads questions if it changed since the last
      * load - the user can change it via Settings > App Language without this ViewModel (scoped to
      * the Home back stack entry) being recreated, so [init] alone isn't enough to pick that up.
+     * Otherwise, just refreshes which cards are hidden, so returning from Settings after a
+     * "Reset Cards" makes previously hidden cards reappear without needing a full reload.
      */
     fun onScreenEntered() {
         val languageCode = localeProvider.currentLanguageCode()
         if (languageCode != loadedLanguageCode) {
             loadQuestions(languageCode)
+        } else {
+            refreshUsedQuestions()
+        }
+    }
+
+    private fun refreshUsedQuestions() {
+        viewModelScope.launch {
+            usedQuestionIds = getUsedQuestionIdsUseCase()
+            applyFilter(_uiState.value.selectedCategory)
         }
     }
 

@@ -1,52 +1,54 @@
 package org.neteinstein.family.data.repository
 
-import android.content.Context
-import android.content.SharedPreferences
-import io.mockk.every
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.neteinstein.family.data.local.CardDao
 
 class UsedQuestionsRepositoryImplTest {
 
-    private val prefs: SharedPreferences = mockk()
-    private val editor: SharedPreferences.Editor = mockk(relaxed = true)
-    private val context: Context = mockk()
+    private val cardDao: CardDao = mockk()
 
     private lateinit var repository: UsedQuestionsRepositoryImpl
 
     @Before
     fun setUp() {
-        every { context.getSharedPreferences(any(), Context.MODE_PRIVATE) } returns prefs
-        every { prefs.edit() } returns editor
-        every { editor.putStringSet(any(), any()) } returns editor
-        repository = UsedQuestionsRepositoryImpl(context)
+        repository = UsedQuestionsRepositoryImpl(cardDao)
     }
 
     @Test
-    fun `getUsedQuestionIds returns empty set when nothing stored`() = runTest {
-        every { prefs.getStringSet(any(), any()) } returns emptySet()
+    fun `getUsedQuestionIds returns empty set when nothing is hidden`() = runTest {
+        coEvery { cardDao.getHiddenIds() } returns emptyList()
 
         assertEquals(emptySet<Int>(), repository.getUsedQuestionIds())
     }
 
     @Test
-    fun `getUsedQuestionIds parses stored ids back to ints`() = runTest {
-        every { prefs.getStringSet(any(), any()) } returns setOf("1", "2", "3")
+    fun `getUsedQuestionIds returns the hidden ids from the database`() = runTest {
+        coEvery { cardDao.getHiddenIds() } returns listOf(1, 2, 3)
 
         assertEquals(setOf(1, 2, 3), repository.getUsedQuestionIds())
     }
 
     @Test
-    fun `markAsUsed adds the id to the existing stored set`() = runTest {
-        every { prefs.getStringSet(any(), any()) } returns setOf("1")
+    fun `markAsUsed hides the card in the database`() = runTest {
+        coEvery { cardDao.markHidden(2) } returns Unit
 
         repository.markAsUsed(2)
 
-        verify { editor.putStringSet(any(), setOf("1", "2")) }
-        verify { editor.apply() }
+        coVerify { cardDao.markHidden(2) }
+    }
+
+    @Test
+    fun `resetUsedQuestions clears every hidden card`() = runTest {
+        coEvery { cardDao.resetAllHidden() } returns Unit
+
+        repository.resetUsedQuestions()
+
+        coVerify { cardDao.resetAllHidden() }
     }
 }

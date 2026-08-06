@@ -17,6 +17,8 @@ koinTest = "4.0.3"
 splashscreen = "1.0.1"
 json = "20240303"
 ktlintGradle = "12.2.0"
+room = "2.7.1"
+ksp = "2.3.11"
 
 [libraries]
 # Compose BOM
@@ -67,8 +69,14 @@ koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koinT
 koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koinTest" }
 json = { group = "org.json", name = "json", version.ref = "json" }
 
+# Room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }

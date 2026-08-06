@@ -12,6 +12,7 @@ import org.neteinstein.family.domain.model.UpdateCheckResult
 import org.neteinstein.family.domain.repository.AppUpdateInstaller
 import org.neteinstein.family.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.family.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.family.domain.usecase.ResetUsedQuestionsUseCase
 
 /**
  * Runs a background update check when Settings is entered so the "Update to latest" button can
@@ -20,7 +21,8 @@ import org.neteinstein.family.domain.usecase.DownloadAppUpdateUseCase
 class SettingsViewModel(
     private val checkForUpdateUseCase: CheckForUpdateUseCase,
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase,
-    private val appUpdateInstaller: AppUpdateInstaller
+    private val appUpdateInstaller: AppUpdateInstaller,
+    private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -62,6 +64,15 @@ class SettingsViewModel(
     /** Deep-links to the system "install unknown apps" settings page for this app. */
     fun onEnableSideloadingClicked() {
         appUpdateInstaller.openInstallPermissionSettings()
+    }
+
+    /** Makes every card hidden via swipe-down on Home visible again. */
+    fun onResetCardsClicked() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Resetting) }
+            resetUsedQuestionsUseCase()
+            _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Done) }
+        }
     }
 
     private suspend fun handleCheckResultForUpdateClick(result: UpdateCheckResult) {

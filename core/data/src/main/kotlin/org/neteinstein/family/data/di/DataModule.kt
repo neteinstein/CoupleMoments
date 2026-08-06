@@ -1,8 +1,10 @@
 package org.neteinstein.family.data.di
 
+import androidx.room.Room
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import org.neteinstein.family.data.installer.AppUpdateInstallerImpl
+import org.neteinstein.family.data.local.FamilyMomentsDatabase
 import org.neteinstein.family.data.locale.LocaleProviderImpl
 import org.neteinstein.family.data.repository.GitHubUpdateRepositoryImpl
 import org.neteinstein.family.data.repository.QuestionRepositoryImpl
@@ -19,15 +21,21 @@ import org.neteinstein.family.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.family.domain.usecase.GetRandomQuestionUseCase
 import org.neteinstein.family.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.family.domain.usecase.MarkQuestionUsedUseCase
+import org.neteinstein.family.domain.usecase.ResetUsedQuestionsUseCase
 
 val dataModule = module {
-    single<QuestionRepository> { QuestionRepositoryImpl() }
+    single {
+        Room.databaseBuilder(androidContext(), FamilyMomentsDatabase::class.java, "family_moments.db").build()
+    }
+    single { get<FamilyMomentsDatabase>().cardDao() }
+    single<QuestionRepository> { QuestionRepositoryImpl(get()) }
     single<LocaleProvider> { LocaleProviderImpl() }
-    single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(context = androidContext()) }
+    single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
     factory { GetRandomQuestionUseCase(get()) }
     factory { GetQuestionsUseCase(get()) }
     factory { GetUsedQuestionIdsUseCase(get()) }
     factory { MarkQuestionUsedUseCase(get()) }
+    factory { ResetUsedQuestionsUseCase(get()) }
 
     single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext()) }
     single<AppUpdateInstaller> { AppUpdateInstallerImpl(context = androidContext()) }
