@@ -1,6 +1,7 @@
 package org.neteinstein.family.feature.settings
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -21,6 +22,7 @@ import org.neteinstein.family.domain.model.UpdateCheckResult
 import org.neteinstein.family.domain.repository.AppUpdateInstaller
 import org.neteinstein.family.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.family.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.family.domain.usecase.ResetUsedQuestionsUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -29,6 +31,7 @@ class SettingsViewModelTest {
     private val checkForUpdateUseCase: CheckForUpdateUseCase = mockk()
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase = mockk()
     private val appUpdateInstaller: AppUpdateInstaller = mockk(relaxUnitFun = true)
+    private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase = mockk()
 
     private val update = AppUpdate(versionName = "1.0.6", apkDownloadUrl = "https://example.com/app.apk")
 
@@ -37,7 +40,12 @@ class SettingsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = SettingsViewModel(checkForUpdateUseCase, downloadAppUpdateUseCase, appUpdateInstaller)
+        viewModel = SettingsViewModel(
+            checkForUpdateUseCase,
+            downloadAppUpdateUseCase,
+            appUpdateInstaller,
+            resetUsedQuestionsUseCase
+        )
     }
 
     @After
@@ -125,5 +133,16 @@ class SettingsViewModelTest {
         viewModel.onEnableSideloadingClicked()
 
         verify { appUpdateInstaller.openInstallPermissionSettings() }
+    }
+
+    @Test
+    fun `onResetCardsClicked resets used questions and reports done`() = runTest {
+        coEvery { resetUsedQuestionsUseCase() } returns Unit
+
+        viewModel.onResetCardsClicked()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { resetUsedQuestionsUseCase() }
+        assertEquals(ResetCardsStatus.Done, viewModel.uiState.value.resetCardsStatus)
     }
 }

@@ -3,7 +3,12 @@ package org.neteinstein.family.data.source
 import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.model.QuestionCategory
 
-object QuestionDataSource {
+/**
+ * Static seed content for all languages' cards. Read only once, to populate the Room database
+ * ([org.neteinstein.family.data.local.FamilyMomentsDatabase]) the first time it's empty - all
+ * actual reads/writes at runtime go through [org.neteinstein.family.data.local.CardDao] instead.
+ */
+object QuestionSeedData {
 
     private val englishQuestions = listOf(
         // Lighthearted & Fun Icebreakers
@@ -295,11 +300,6 @@ object QuestionDataSource {
         Question(id = 450, text = "Was ist ein kleiner Gefallen oder eine Freundlichkeit, die jemand kürzlich für dich getan hat und die dich zum Lächeln gebracht hat?", languageCode = "de", category = QuestionCategory.DailyLife),
     )
 
-    fun getQuestions(languageCode: String): List<Question> = when (languageCode) {
-        "pt" -> portugueseQuestions
-        "es" -> spanishQuestions
-        "fr" -> frenchQuestions
-        "de" -> germanQuestions
-        else -> englishQuestions
-    }
+    val all: List<Question> =
+        englishQuestions + portugueseQuestions + spanishQuestions + frenchQuestions + germanQuestions
 }

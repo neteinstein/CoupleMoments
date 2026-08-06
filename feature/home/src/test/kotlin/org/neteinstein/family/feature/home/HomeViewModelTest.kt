@@ -174,6 +174,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `onScreenEntered refreshes hidden cards when the app language is unchanged`() = runTest {
+        // Regression test: returning to Home from Settings after "Reset Cards" (or after hiding a
+        // card elsewhere) should bring previously hidden cards back without needing a full reload.
+        testDispatcher.scheduler.advanceUntilIdle()
+        coEvery { getUsedQuestionIdsUseCase() } returns setOf(2)
+
+        viewModel.onScreenEntered()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(fakeQuestions.size - 1, state.totalQuestions)
+        coVerify(exactly = 1) { getQuestionsUseCase("en") }
+    }
+
+    @Test
     fun `onCategorySelected filters questions to the chosen category`() = runTest {
         val categorizedQuestions = listOf(
             Question(id = 1, text = "Q1?", languageCode = "en", category = QuestionCategory.Memories),

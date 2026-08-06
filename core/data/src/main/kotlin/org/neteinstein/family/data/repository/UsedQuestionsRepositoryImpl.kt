@@ -1,24 +1,17 @@
 package org.neteinstein.family.data.repository
 
-import android.content.Context
+import org.neteinstein.family.data.local.CardDao
 import org.neteinstein.family.domain.repository.UsedQuestionsRepository
 
-class UsedQuestionsRepositoryImpl(context: Context) : UsedQuestionsRepository {
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+class UsedQuestionsRepositoryImpl(private val cardDao: CardDao) : UsedQuestionsRepository {
 
-    override suspend fun getUsedQuestionIds(): Set<Int> =
-        prefs.getStringSet(KEY_USED_QUESTION_IDS, emptySet())
-            ?.mapNotNull { it.toIntOrNull() }
-            ?.toSet()
-            ?: emptySet()
+    override suspend fun getUsedQuestionIds(): Set<Int> = cardDao.getHiddenIds().toSet()
 
     override suspend fun markAsUsed(questionId: Int) {
-        val updated = getUsedQuestionIds() + questionId
-        prefs.edit().putStringSet(KEY_USED_QUESTION_IDS, updated.map { it.toString() }.toSet()).apply()
+        cardDao.markHidden(questionId)
     }
 
-    private companion object {
-        const val PREFS_NAME = "used_questions"
-        const val KEY_USED_QUESTION_IDS = "used_question_ids"
+    override suspend fun resetUsedQuestions() {
+        cardDao.resetAllHidden()
     }
 }

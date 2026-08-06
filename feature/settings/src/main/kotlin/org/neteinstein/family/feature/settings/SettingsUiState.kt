@@ -2,7 +2,17 @@ package org.neteinstein.family.feature.settings
 
 import org.neteinstein.family.domain.model.AppUpdate
 
-data class SettingsUiState(val updateStatus: UpdateStatus = UpdateStatus.Idle)
+data class SettingsUiState(
+    val updateStatus: UpdateStatus = UpdateStatus.Idle,
+    val resetCardsStatus: ResetCardsStatus = ResetCardsStatus.Idle
+)
+
+/** Drives the "Reset Cards" button and its status text on the Settings screen. */
+sealed class ResetCardsStatus {
+    data object Idle : ResetCardsStatus()
+    data object Resetting : ResetCardsStatus()
+    data object Done : ResetCardsStatus()
+}
 
 /** Drives the "Update to latest" button and its status text on the Settings screen. */
 sealed class UpdateStatus {
