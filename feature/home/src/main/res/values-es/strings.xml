@@ -7,6 +7,7 @@
     <string name="home_no_cards_subtitle">Elige otra categoría o restablece las cartas en Ajustes para verlas de nuevo.</string>
     <string name="home_take_turns">Túrnense para compartir sus respuestas</string>
     <string name="cd_settings">Ajustes</string>
+    <string name="cd_shuffle_card">Mostrar una carta al azar</string>
     <string name="cd_close">Cerrar</string>
     <string name="cd_filter_by_category">Filtrar por categoría</string>
     <string name="cd_switch_to_grid_view">Cambiar a vista de cuadrícula</string>

@@ -7,6 +7,7 @@
     <string name="home_no_cards_subtitle">Wähle eine andere Kategorie oder setze die Karten in den Einstellungen zurück, um sie erneut zu sehen.</string>
     <string name="home_take_turns">Teilt eure Antworten abwechselnd mit</string>
     <string name="cd_settings">Einstellungen</string>
+    <string name="cd_shuffle_card">Zufällige Karte anzeigen</string>
     <string name="cd_close">Schließen</string>
     <string name="cd_filter_by_category">Nach Kategorie filtern</string>
     <string name="cd_switch_to_grid_view">Zur Rasteransicht wechseln</string>
