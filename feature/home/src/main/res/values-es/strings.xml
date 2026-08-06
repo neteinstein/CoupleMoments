@@ -2,6 +2,7 @@
     <string name="home_app_name">Family Moments</string>
     <string name="home_subtitle">Empieza una conversación profunda</string>
     <string name="home_swipe_hint">Desliza para una nueva pregunta ← →</string>
+    <string name="home_vertical_swipe_hint">Desliza hacia arriba para enfocar, hacia abajo para ocultar ↑ ↓</string>
     <string name="home_no_cards_title">No quedan cartas en esta categoría</string>
     <string name="home_no_cards_subtitle">Elige otra categoría o restablece las cartas en Ajustes para verlas de nuevo.</string>
     <string name="home_take_turns">Túrnense para compartir sus respuestas</string>

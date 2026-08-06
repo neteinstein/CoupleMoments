@@ -2,6 +2,7 @@
     <string name="home_app_name">Family Moments</string>
     <string name="home_subtitle">Beginnt ein tiefgründiges Gespräch</string>
     <string name="home_swipe_hint">Wischen für eine neue Frage ← →</string>
+    <string name="home_vertical_swipe_hint">Nach oben wischen zum Fokussieren, nach unten zum Ausblenden ↑ ↓</string>
     <string name="home_no_cards_title">Keine Karten mehr in dieser Kategorie</string>
     <string name="home_no_cards_subtitle">Wähle eine andere Kategorie oder setze die Karten in den Einstellungen zurück, um sie erneut zu sehen.</string>
     <string name="home_take_turns">Teilt eure Antworten abwechselnd mit</string>
