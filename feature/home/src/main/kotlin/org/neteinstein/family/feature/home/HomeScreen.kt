@@ -502,10 +502,16 @@ private fun CategoryDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val allLabel = stringResource(R.string.category_all)
-    val categoryLabels = QuestionCategory.all.map { category -> category to category.displayLabel() }
-    val selectedLabel = selectedCategory
-        ?.let { selected -> categoryLabels.first { (category, _) -> category == selected }.second }
-        ?: allLabel
+    val categoryLabels = ArrayList<Pair<QuestionCategory, String>>(QuestionCategory.all.size)
+    for (category in QuestionCategory.all) {
+        categoryLabels.add(category to category.displayLabel())
+    }
+    var selectedLabel = allLabel
+    for ((category, label) in categoryLabels) {
+        if (category == selectedCategory) {
+            selectedLabel = label
+        }
+    }
 
     Box(modifier = modifier) {
         Row(
@@ -540,7 +546,7 @@ private fun CategoryDropdown(
                     onCategorySelected(null)
                 }
             )
-            categoryLabels.forEach { (category, label) ->
+            for ((category, label) in categoryLabels) {
                 DropdownMenuItem(
                     text = { Text(label) },
                     onClick = {
