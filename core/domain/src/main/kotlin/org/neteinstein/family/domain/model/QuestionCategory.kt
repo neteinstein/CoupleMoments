@@ -1,11 +1,11 @@
 package org.neteinstein.family.domain.model
 
-sealed class QuestionCategory(val label: String) {
-    data object IceBreakers : QuestionCategory("🎉 Ice Breakers")
-    data object Memories : QuestionCategory("📸 Memories")
-    data object Values : QuestionCategory("❤️ Values")
-    data object FutureDreams : QuestionCategory("🔮 Future Dreams")
-    data object DailyLife : QuestionCategory("🌻 Daily Life")
+sealed class QuestionCategory(val emoji: String) {
+    data object IceBreakers : QuestionCategory("🎉")
+    data object Memories : QuestionCategory("📸")
+    data object Values : QuestionCategory("❤️")
+    data object FutureDreams : QuestionCategory("🔮")
+    data object DailyLife : QuestionCategory("🌻")
 
     companion object {
         val all: List<QuestionCategory> = listOf(IceBreakers, Memories, Values, FutureDreams, DailyLife)

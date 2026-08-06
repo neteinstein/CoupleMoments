@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,7 +63,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
             TopAppBar(
                 title = {
                     Text(
-                        text = "Settings",
+                        text = stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -70,7 +71,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
@@ -92,7 +93,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "App Preferences",
+                    text = stringResource(R.string.section_app_preferences),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -115,8 +116,8 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        title = "App Language",
-                        subtitle = "Change language in Android settings",
+                        title = stringResource(R.string.settings_language_title),
+                        subtitle = stringResource(R.string.settings_language_subtitle),
                         onClick = {
                             val intent = Intent(Settings.ACTION_LOCALE_SETTINGS)
                             context.startActivity(intent)
@@ -127,7 +128,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "About",
+                    text = stringResource(R.string.section_about),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -143,20 +144,20 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Family Moments",
+                            text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Version 1.0.0",
+                            text = stringResource(R.string.settings_version),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Bringing families closer, one question at a time. ❤️",
+                            text = stringResource(R.string.settings_about_description),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -166,7 +167,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Reset Cards",
+                    text = stringResource(R.string.section_reset_cards),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -189,7 +190,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Updates",
+                    text = stringResource(R.string.section_updates),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -216,8 +217,8 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
-            title = { Text("Reset all cards?") },
-            text = { Text("Every card you've hidden will become visible again.") },
+            title = { Text(stringResource(R.string.reset_dialog_title)) },
+            text = { Text(stringResource(R.string.reset_dialog_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -225,12 +226,12 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                         viewModel.onResetCardsClicked()
                     }
                 ) {
-                    Text("Reset")
+                    Text(stringResource(R.string.reset_button))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel_button))
                 }
             }
         )
@@ -246,8 +247,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
 private fun ResetCardsSection(status: ResetCardsStatus, onResetCardsClicked: () -> Unit) {
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
-            text = "Hidden cards (swiped down as already used or not wanted) stay out of rotation. " +
-                "Reset to bring them all back.",
+            text = stringResource(R.string.reset_cards_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -257,15 +257,15 @@ private fun ResetCardsSection(status: ResetCardsStatus, onResetCardsClicked: () 
             enabled = status != ResetCardsStatus.Resetting,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Reset Cards")
+            Text(text = stringResource(R.string.reset_cards_button))
         }
 
         when (status) {
             is ResetCardsStatus.Idle -> Unit
-            is ResetCardsStatus.Resetting -> UpdateStatusRow(text = "Resetting cards…")
+            is ResetCardsStatus.Resetting -> UpdateStatusRow(text = stringResource(R.string.resetting_cards))
             is ResetCardsStatus.Done ->
                 Text(
-                    text = "All cards are visible again.",
+                    text = stringResource(R.string.reset_cards_done),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -287,7 +287,7 @@ private fun UpdateSection(status: UpdateStatus, onUpdateClicked: () -> Unit, onE
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
-            text = "Checks this app's own GitHub releases for a newer version and installs it.",
+            text = stringResource(R.string.update_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -297,16 +297,16 @@ private fun UpdateSection(status: UpdateStatus, onUpdateClicked: () -> Unit, onE
             enabled = !isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Update to latest")
+            Text(text = stringResource(R.string.update_button))
         }
 
         when (status) {
             is UpdateStatus.Idle -> Unit
-            is UpdateStatus.Checking -> UpdateStatusRow(text = "Checking for updates…")
-            is UpdateStatus.Downloading -> UpdateStatusRow(text = "Downloading update…")
+            is UpdateStatus.Checking -> UpdateStatusRow(text = stringResource(R.string.checking_updates))
+            is UpdateStatus.Downloading -> UpdateStatusRow(text = stringResource(R.string.downloading_update))
             is UpdateStatus.UpToDate ->
                 Text(
-                    text = "You're on the latest version (${status.currentVersionName}).",
+                    text = stringResource(R.string.up_to_date_format, status.currentVersionName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)
@@ -321,7 +321,7 @@ private fun UpdateSection(status: UpdateStatus, onUpdateClicked: () -> Unit, onE
                 )
             is UpdateStatus.SideloadingBlocked -> {
                 Text(
-                    text = "Allow this app to install updates to continue.",
+                    text = stringResource(R.string.sideloading_blocked_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 8.dp)
@@ -331,7 +331,7 @@ private fun UpdateSection(status: UpdateStatus, onUpdateClicked: () -> Unit, onE
                     onClick = onEnableSideloadingClicked,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "Enable installing updates")
+                    Text(text = stringResource(R.string.enable_installing_updates))
                 }
             }
         }

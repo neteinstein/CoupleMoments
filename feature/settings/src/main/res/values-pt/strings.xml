@@ -1,0 +1,28 @@
+<resources>
+    <string name="settings_title">Configurações</string>
+    <string name="cd_back">Voltar</string>
+    <string name="section_app_preferences">Preferências do App</string>
+    <string name="settings_language_title">Idioma do App</string>
+    <string name="settings_language_subtitle">Altere o idioma nas configurações do Android</string>
+    <string name="section_about">Sobre</string>
+    <string name="app_name">Family Moments</string>
+    <string name="settings_version">Versão 1.0.0</string>
+    <string name="settings_about_description">Aproximando famílias, uma pergunta de cada vez. ❤️</string>
+    <string name="section_reset_cards">Redefinir Cartas</string>
+    <string name="reset_cards_description">Cartas ocultas (deslizadas para baixo como já usadas ou indesejadas) ficam fora da rotação. Redefina para trazê-las todas de volta.</string>
+    <string name="reset_cards_button">Redefinir Cartas</string>
+    <string name="resetting_cards">Redefinindo cartas…</string>
+    <string name="reset_cards_done">Todas as cartas estão visíveis novamente.</string>
+    <string name="reset_dialog_title">Redefinir todas as cartas?</string>
+    <string name="reset_dialog_message">Todas as cartas que você ocultou ficarão visíveis novamente.</string>
+    <string name="reset_button">Redefinir</string>
+    <string name="cancel_button">Cancelar</string>
+    <string name="section_updates">Atualizações</string>
+    <string name="update_description">Verifica as releases do GitHub deste app em busca de uma versão mais recente e a instala.</string>
+    <string name="update_button">Atualizar para a mais recente</string>
+    <string name="checking_updates">Verificando atualizações…</string>
+    <string name="downloading_update">Baixando atualização…</string>
+    <string name="up_to_date_format">Você está na versão mais recente (%1$s).</string>
+    <string name="sideloading_blocked_message">Permita que este app instale atualizações para continuar.</string>
+    <string name="enable_installing_updates">Permitir instalação de atualizações</string>
+</resources>
