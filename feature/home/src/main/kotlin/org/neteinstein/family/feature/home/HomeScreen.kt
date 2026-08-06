@@ -511,7 +511,8 @@ private fun CategoryDropdown(
     val allLabel = stringResource(R.string.category_all)
     val categoryLabels = ArrayList<Pair<QuestionCategory, String>>(QuestionCategory.all.size)
     for (category in QuestionCategory.all) {
-        categoryLabels.add(category to categoryDisplayLabel(category))
+        val label = categoryDisplayLabel(category)
+        categoryLabels.add(category to label)
     }
     var selectedLabel = allLabel
     for ((category, label) in categoryLabels) {
