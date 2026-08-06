@@ -3,14 +3,15 @@ package org.neteinstein.family.feature.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -44,6 +45,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -80,6 +82,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -141,7 +144,11 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Top bar
-                HomeTopBar(onSettingsClick = onSettingsClick)
+                HomeTopBar(
+                    onShuffleClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
+                    shuffleEnabled = uiState.questions.isNotEmpty(),
+                    onSettingsClick = onSettingsClick
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -243,8 +250,16 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 
             AnimatedVisibility(
                 visible = fullScreenQuestion != null,
-                enter = fadeIn(tween(250)) + scaleIn(initialScale = 0.85f, animationSpec = tween(250)),
-                exit = fadeOut(tween(200)) + scaleOut(targetScale = 0.85f, animationSpec = tween(200)),
+                enter = fadeIn(tween(200)) +
+                    expandIn(
+                        animationSpec = tween(400, easing = FastOutSlowInEasing),
+                        expandFrom = Alignment.Center
+                    ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
+                exit = fadeOut(tween(200)) +
+                    shrinkOut(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        shrinkTowards = Alignment.Center
+                    ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
                 modifier = Modifier.fillMaxSize()
             ) {
                 FullScreenQuestion(
@@ -350,7 +365,11 @@ private fun FullScreenQuestion(question: Question?, onClose: () -> Unit) {
 }
 
 @Composable
-private fun HomeTopBar(onSettingsClick: () -> Unit) {
+private fun HomeTopBar(
+    onShuffleClick: () -> Unit,
+    shuffleEnabled: Boolean,
+    onSettingsClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -371,18 +390,38 @@ private fun HomeTopBar(onSettingsClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        IconButton(
-            onClick = onSettingsClick,
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = stringResource(R.string.cd_settings),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconButton(
+                onClick = onShuffleClick,
+                enabled = shuffleEnabled,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Shuffle,
+                    contentDescription = stringResource(R.string.cd_shuffle_card),
+                    tint = if (shuffleEnabled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    }
+                )
+            }
+            IconButton(
+                onClick = onSettingsClick,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = stringResource(R.string.cd_settings),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
