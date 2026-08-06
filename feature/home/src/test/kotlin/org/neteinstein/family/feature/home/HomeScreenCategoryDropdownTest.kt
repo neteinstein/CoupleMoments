@@ -7,13 +7,6 @@ import androidx.compose.ui.test.performClick
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,30 +28,17 @@ import org.robolectric.annotation.Config
  * the label with an explicit if/else instead - these tests render the real dropdown (not just the
  * ViewModel) so a regression there fails here, not just in manual testing.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class HomeScreenCategoryDropdownTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val testDispatcher = UnconfinedTestDispatcher()
-
     private val fakeQuestions = listOf(
         Question(id = 1, text = "Question 1?", languageCode = "en", category = QuestionCategory.Memories),
         Question(id = 2, text = "Question 2?", languageCode = "en", category = QuestionCategory.Values)
     )
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
 
     private fun buildViewModel(): HomeViewModel {
         val getQuestionsUseCase: GetQuestionsUseCase = mockk()
@@ -81,6 +61,7 @@ class HomeScreenCategoryDropdownTest {
         }
 
         composeTestRule.onNodeWithContentDescription("Filter by category").performClick()
+        composeTestRule.waitForIdle()
 
         QuestionCategory.all.forEach { category ->
             composeTestRule.onNodeWithText("${category.emoji} ${category.expectedName()}").assertExists()
@@ -96,7 +77,9 @@ class HomeScreenCategoryDropdownTest {
         }
 
         composeTestRule.onNodeWithContentDescription("Filter by category").performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("❤️ Values").performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("❤️ Values").assertExists()
         composeTestRule.onNodeWithText("🎉 Ice Breakers").assertDoesNotExist()
