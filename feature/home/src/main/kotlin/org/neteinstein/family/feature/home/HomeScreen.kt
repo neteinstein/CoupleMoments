@@ -63,12 +63,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -168,18 +172,24 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Category filter (bottom left) + progress indicator dots
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    CategoryDropdown(
-                        selectedCategory = uiState.selectedCategory,
-                        onCategorySelected = viewModel::onCategorySelected,
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
+                // Progress indicator dots (above) + category filter (bottom left) below,
+                // stacked vertically so a wide category label never overlaps the dots.
+                Column(modifier = Modifier.fillMaxWidth()) {
                     if (!uiState.isLoading && uiState.totalQuestions > 0) {
-                        ProgressDots(
-                            current = uiState.currentIndex,
-                            total = uiState.totalQuestions,
-                            modifier = Modifier.align(Alignment.Center)
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            ProgressDots(
+                                current = uiState.currentIndex,
+                                total = uiState.totalQuestions,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        CategoryDropdown(
+                            selectedCategory = uiState.selectedCategory,
+                            onCategorySelected = viewModel::onCategorySelected,
+                            modifier = Modifier.align(Alignment.CenterStart)
                         )
                     }
                 }
@@ -227,8 +237,25 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 
 @Composable
 private fun FullScreenQuestion(question: Question?, onClose: () -> Unit) {
+    var offsetY by remember { mutableFloatStateOf(0f) }
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        if (offsetY > VERTICAL_SWIPE_THRESHOLD) {
+                            onClose()
+                        }
+                        offsetY = 0f
+                    },
+                    onDragCancel = { offsetY = 0f },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        offsetY += dragAmount.y
+                    }
+                )
+            },
         color = MaterialTheme.colorScheme.surface
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -511,6 +538,8 @@ private fun CategoryDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var anchorHeightPx by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
     val allLabel = stringResource(R.string.category_all)
     // Deliberately unrolled instead of looping over QuestionCategory.all: calling a @Composable
     // function with an argument sourced from a loop/forEach/map variable reproducibly corrupted
@@ -531,6 +560,7 @@ private fun CategoryDropdown(
                 .clip(RoundedCornerShape(50))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { expanded = true }
+                .onGloballyPositioned { anchorHeightPx = it.size.height }
                 .padding(horizontal = 14.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -549,7 +579,9 @@ private fun CategoryDropdown(
         }
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(0.dp, -with(density) { anchorHeightPx.toDp() }),
+            properties = PopupProperties(focusable = true, clippingEnabled = false)
         ) {
             DropdownMenuItem(
                 text = { Text(allLabel) },
