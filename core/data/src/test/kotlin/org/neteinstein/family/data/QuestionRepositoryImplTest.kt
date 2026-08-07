@@ -10,6 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import org.neteinstein.family.data.local.CardDao
 import org.neteinstein.family.data.local.CardEntity
+import org.neteinstein.family.data.source.QuestionSeedData
 
 class QuestionRepositoryImplTest {
 
@@ -25,6 +26,7 @@ class QuestionRepositoryImplTest {
 
     @Before
     fun setUp() {
+        coEvery { cardDao.count() } returns 0
         coEvery { cardDao.insertAll(any()) } returns Unit
         coEvery { cardDao.getCardsForLanguage("en") } returns englishCards
         coEvery { cardDao.getCardsForLanguage("pt") } returns portugueseCards
@@ -71,9 +73,20 @@ class QuestionRepositoryImplTest {
     }
 
     @Test
-    fun `seeds the database even when it already has cards, so seed data added later is not skipped`() = runTest {
+    fun `seeds the database when it has fewer cards than the current seed data`() = runTest {
+        coEvery { cardDao.count() } returns QuestionSeedData.all.size - 1
+
         repository.getQuestions("en")
 
         coVerify(exactly = 1) { cardDao.insertAll(any()) }
+    }
+
+    @Test
+    fun `does not seed the database when it already has all seed data`() = runTest {
+        coEvery { cardDao.count() } returns QuestionSeedData.all.size
+
+        repository.getQuestions("en")
+
+        coVerify(exactly = 0) { cardDao.insertAll(any()) }
     }
 }

@@ -23,17 +23,20 @@ class QuestionRepositoryImpl(private val cardDao: CardDao) : QuestionRepository 
         getQuestions(languageCode).randomOrNull()
 
     /**
-     * Populates the database from [QuestionSeedData] once per process lifetime. Always attempts
-     * the insert (relying on [CardDao.insertAll]'s conflict-ignore strategy to no-op on rows that
-     * already exist) rather than gating on [CardDao.count] being zero, so cards added to
-     * [QuestionSeedData] after a device was first seeded still get inserted instead of being
-     * silently skipped forever.
+     * Populates the database from [QuestionSeedData] once per process lifetime. Gates on the
+     * table holding fewer rows than the current seed data - not on count being zero - so cards
+     * added to [QuestionSeedData] after a device was first seeded still get inserted (via
+     * [CardDao.insertAll]'s conflict-ignore strategy, which no-ops the rows that already exist)
+     * instead of being silently skipped forever, while a device that's already fully seeded skips
+     * the insert call entirely instead of re-attempting it on every cold start.
      */
     private suspend fun ensureSeeded() {
         if (isSeeded) return
         seedMutex.withLock {
             if (isSeeded) return
-            cardDao.insertAll(QuestionSeedData.all.map { it.toEntity() })
+            if (cardDao.count() < QuestionSeedData.all.size) {
+                cardDao.insertAll(QuestionSeedData.all.map { it.toEntity() })
+            }
             isSeeded = true
         }
     }

@@ -8,6 +8,9 @@ import androidx.room.Query
 @Dao
 interface CardDao {
 
+    @Query("SELECT COUNT(*) FROM cards")
+    suspend fun count(): Int
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(cards: List<CardEntity>)
 
