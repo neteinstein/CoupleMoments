@@ -4,11 +4,21 @@ import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.model.QuestionCategory
 
 /**
- * Static seed content for all languages' cards. Read only once, to populate the Room database
- * ([org.neteinstein.family.data.local.FamilyMomentsDatabase]) the first time it's empty - all
- * actual reads/writes at runtime go through [org.neteinstein.family.data.local.CardDao] instead.
+ * Static seed content for all languages' cards. Applied to the Room database
+ * ([org.neteinstein.family.data.local.FamilyMomentsDatabase]) whenever [VERSION] doesn't match
+ * what's already stored (see [org.neteinstein.family.data.repository.QuestionRepositoryImpl]) -
+ * all actual reads/writes at runtime go through [org.neteinstein.family.data.local.CardDao]
+ * instead.
  */
 object QuestionSeedData {
+
+    /**
+     * Bump this whenever [all] changes - a question added, edited, or removed - so already-seeded
+     * devices get the change too. A version bump triggers a full delete-and-reinsert rather than
+     * an additive insert, which is the only way a removed question actually disappears from a
+     * device that was seeded before it was deleted from this file.
+     */
+    const val VERSION = 1
 
     private val englishQuestions = listOf(
         // Lighthearted & Fun Icebreakers

@@ -25,10 +25,13 @@ import org.neteinstein.family.domain.usecase.ResetUsedQuestionsUseCase
 
 val dataModule = module {
     single {
-        Room.databaseBuilder(androidContext(), FamilyMomentsDatabase::class.java, "family_moments.db").build()
+        Room.databaseBuilder(androidContext(), FamilyMomentsDatabase::class.java, "family_moments.db")
+            .addMigrations(FamilyMomentsDatabase.MIGRATION_1_2)
+            .build()
     }
     single { get<FamilyMomentsDatabase>().cardDao() }
-    single<QuestionRepository> { QuestionRepositoryImpl(get()) }
+    single { get<FamilyMomentsDatabase>().seedMetadataDao() }
+    single<QuestionRepository> { QuestionRepositoryImpl(get(), get()) }
     single<LocaleProvider> { LocaleProviderImpl() }
     single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
     factory { GetRandomQuestionUseCase(get()) }

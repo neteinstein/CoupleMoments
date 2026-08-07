@@ -3,18 +3,23 @@ package org.neteinstein.family.data.repository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.family.data.local.CardDao
 import org.neteinstein.family.data.local.CardEntity
+import org.neteinstein.family.data.local.SeedMetadataDao
+import org.neteinstein.family.data.local.SeedMetadataEntity
 import org.neteinstein.family.data.source.QuestionSeedData
 
 class QuestionRepositoryImplTest {
 
     private val cardDao: CardDao = mockk()
+    private val seedMetadataDao: SeedMetadataDao = mockk()
     private lateinit var repository: QuestionRepositoryImpl
 
     private val englishCards = listOf(
@@ -26,11 +31,14 @@ class QuestionRepositoryImplTest {
 
     @Before
     fun setUp() {
-        coEvery { cardDao.count() } returns 0
+        coEvery { seedMetadataDao.getVersion() } returns null
+        coEvery { seedMetadataDao.setVersion(any()) } returns Unit
+        coEvery { cardDao.getHiddenIds() } returns emptyList()
+        coEvery { cardDao.deleteAll() } returns Unit
         coEvery { cardDao.insertAll(any()) } returns Unit
         coEvery { cardDao.getCardsForLanguage("en") } returns englishCards
         coEvery { cardDao.getCardsForLanguage("pt") } returns portugueseCards
-        repository = QuestionRepositoryImpl(cardDao)
+        repository = QuestionRepositoryImpl(cardDao, seedMetadataDao)
     }
 
     @Test
@@ -69,24 +77,55 @@ class QuestionRepositoryImplTest {
         repository.getQuestions("en")
         repository.getQuestions("en")
 
+        coVerify(exactly = 1) { cardDao.deleteAll() }
         coVerify(exactly = 1) { cardDao.insertAll(any()) }
+        coVerify(exactly = 1) { seedMetadataDao.setVersion(any()) }
     }
 
     @Test
-    fun `seeds the database when it has fewer cards than the current seed data`() = runTest {
-        coEvery { cardDao.count() } returns QuestionSeedData.all.size - 1
+    fun `replaces the database when the stored seed version differs from the current version`() = runTest {
+        coEvery { seedMetadataDao.getVersion() } returns QuestionSeedData.VERSION + 1
 
         repository.getQuestions("en")
 
+        coVerify(exactly = 1) { cardDao.deleteAll() }
         coVerify(exactly = 1) { cardDao.insertAll(any()) }
+        coVerify { seedMetadataDao.setVersion(SeedMetadataEntity(version = QuestionSeedData.VERSION)) }
     }
 
     @Test
-    fun `does not seed the database when it already has all seed data`() = runTest {
-        coEvery { cardDao.count() } returns QuestionSeedData.all.size
+    fun `does not replace the database when the stored version already matches`() = runTest {
+        coEvery { seedMetadataDao.getVersion() } returns QuestionSeedData.VERSION
 
         repository.getQuestions("en")
 
+        coVerify(exactly = 0) { cardDao.deleteAll() }
         coVerify(exactly = 0) { cardDao.insertAll(any()) }
+        coVerify(exactly = 0) { seedMetadataDao.setVersion(any()) }
+    }
+
+    @Test
+    fun `preserves already-hidden card ids across a version-triggered replace`() = runTest {
+        val hiddenId = QuestionSeedData.all.first().id
+        coEvery { cardDao.getHiddenIds() } returns listOf(hiddenId)
+        val insertedCards = slot<List<CardEntity>>()
+        coEvery { cardDao.insertAll(capture(insertedCards)) } returns Unit
+
+        repository.getQuestions("en")
+
+        val reinsertedHiddenCard = insertedCards.captured.first { it.id == hiddenId }
+        val reinsertedOtherCard = insertedCards.captured.first { it.id != hiddenId }
+        assertTrue(reinsertedHiddenCard.isHidden)
+        assertTrue(!reinsertedOtherCard.isHidden)
+    }
+
+    @Test
+    fun `replace reinserts every seed card`() = runTest {
+        val insertedCards = slot<List<CardEntity>>()
+        coEvery { cardDao.insertAll(capture(insertedCards)) } returns Unit
+
+        repository.getQuestions("en")
+
+        assertEquals(QuestionSeedData.all.size, insertedCards.captured.size)
     }
 }
