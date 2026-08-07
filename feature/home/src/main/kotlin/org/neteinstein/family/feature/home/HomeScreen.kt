@@ -66,6 +66,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +89,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import mx.platacard.pagerindicator.PagerIndicator
 import org.koin.androidx.compose.koinViewModel
 import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.model.QuestionCategory
@@ -781,61 +783,24 @@ private fun CategoryDropdown(
     }
 }
 
-private const val MAX_WINDOWED_DOTS = 5
+// Capped so a category with many cards doesn't lay out (and re-measure on every swipe) an
+// unbounded row of dots - mx.platacard's PagerIndicator windows dotCount dots around the
+// current page, so this stays a small fixed-size row no matter how large total gets.
+private const val MAX_VISIBLE_DOTS = 7
 
 @Composable
 private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier) {
     if (total <= 0) return
+    // The deck loops through every card in the category (nextQuestion/previousQuestion wrap via
+    // modulo), so the indicator's page count/fraction are derived from the wrapped index rather
+    // than the raw, ever-increasing current.
     val visibleIndex = current % total
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (total <= MAX_WINDOWED_DOTS) {
-            repeat(total) { index -> ProgressDot(isSelected = index == visibleIndex) }
-        } else {
-            // The deck loops through every card in the category, not just the first few
-            // (nextQuestion/previousQuestion wrap via modulo), so instead of capping the dots at
-            // a fixed page count, show a small window centred on the current card with tiny
-            // "peek" dots at both ends hinting that more cards loop around either side. This
-            // stays accurate no matter how many cards the selected category has.
-            PeekDot()
-            val half = MAX_WINDOWED_DOTS / 2
-            for (delta in -half..half) {
-                ProgressDot(isSelected = delta == 0)
-            }
-            PeekDot()
-        }
-    }
-}
-
-@Composable
-private fun ProgressDot(isSelected: Boolean) {
-    val size by animateFloatAsState(
-        targetValue = if (isSelected) 10f else 6f,
-        label = "dotSize"
-    )
-    Box(
-        modifier = Modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(
-                if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                }
-            )
-    )
-}
-
-@Composable
-private fun PeekDot() {
-    Box(
-        modifier = Modifier
-            .size(4.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+    PagerIndicator(
+        pageCount = total,
+        currentPageFraction = rememberUpdatedState(visibleIndex.toFloat()),
+        activeDotColor = MaterialTheme.colorScheme.primary,
+        dotColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+        dotCount = minOf(total, MAX_VISIBLE_DOTS),
+        modifier = modifier
     )
 }

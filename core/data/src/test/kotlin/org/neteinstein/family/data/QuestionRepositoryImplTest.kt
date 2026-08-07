@@ -25,7 +25,7 @@ class QuestionRepositoryImplTest {
 
     @Before
     fun setUp() {
-        coEvery { cardDao.count() } returns 1
+        coEvery { cardDao.insertAll(any()) } returns Unit
         coEvery { cardDao.getCardsForLanguage("en") } returns englishCards
         coEvery { cardDao.getCardsForLanguage("pt") } returns portugueseCards
         repository = QuestionRepositoryImpl(cardDao)
@@ -63,10 +63,7 @@ class QuestionRepositoryImplTest {
     }
 
     @Test
-    fun `seeds the database from seed data only once when empty`() = runTest {
-        coEvery { cardDao.count() } returns 0
-        coEvery { cardDao.insertAll(any()) } returns Unit
-
+    fun `seeds the database from seed data only once per process lifetime`() = runTest {
         repository.getQuestions("en")
         repository.getQuestions("en")
 
@@ -74,11 +71,9 @@ class QuestionRepositoryImplTest {
     }
 
     @Test
-    fun `does not seed the database when it already has cards`() = runTest {
-        coEvery { cardDao.count() } returns 1
-
+    fun `seeds the database even when it already has cards, so seed data added later is not skipped`() = runTest {
         repository.getQuestions("en")
 
-        coVerify(exactly = 0) { cardDao.insertAll(any()) }
+        coVerify(exactly = 1) { cardDao.insertAll(any()) }
     }
 }

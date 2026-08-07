@@ -22,14 +22,18 @@ class QuestionRepositoryImpl(private val cardDao: CardDao) : QuestionRepository 
     override suspend fun getRandomQuestion(languageCode: String): Question? =
         getQuestions(languageCode).randomOrNull()
 
-    /** Populates the database from [QuestionSeedData] the first time it's empty. */
+    /**
+     * Populates the database from [QuestionSeedData] once per process lifetime. Always attempts
+     * the insert (relying on [CardDao.insertAll]'s conflict-ignore strategy to no-op on rows that
+     * already exist) rather than gating on [CardDao.count] being zero, so cards added to
+     * [QuestionSeedData] after a device was first seeded still get inserted instead of being
+     * silently skipped forever.
+     */
     private suspend fun ensureSeeded() {
         if (isSeeded) return
         seedMutex.withLock {
             if (isSeeded) return
-            if (cardDao.count() == 0) {
-                cardDao.insertAll(QuestionSeedData.all.map { it.toEntity() })
-            }
+            cardDao.insertAll(QuestionSeedData.all.map { it.toEntity() })
             isSeeded = true
         }
     }
