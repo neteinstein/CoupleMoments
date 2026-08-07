@@ -105,4 +105,4 @@ Single `NavHost` in `app/.../navigation/AppNavigation.kt`, routes defined as a `
 
 ## Agent orchestration
 
-This repo defines four agent roles — Developer, QA, Architect, Security Manager — as Claude Code subagents (`.claude/agents/`). Architect and Security Manager delegate to Developer and QA rather than implementing everything themselves. See [`docs/agents/README.md`](docs/agents/README.md) for the full orchestration model, and `docs/agents/<role>.md` for each role's canonical instructions.
+This repo defines five agent roles — Developer, QA, Architect, Security Manager, Product Manager — as Claude Code subagents (`.claude/agents/`). Architect, Security Manager, and Product Manager delegate to Developer and QA rather than implementing everything themselves. See [`docs/agents/README.md`](docs/agents/README.md) for the full orchestration model, and `docs/agents/<role>.md` for each role's canonical instructions.
