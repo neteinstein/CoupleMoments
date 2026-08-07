@@ -20,6 +20,7 @@ ktlintGradle = "12.2.0"
 room = "2.7.1"
 ksp = "2.3.11"
 robolectric = "4.16.1"
+pagerIndicator = "0.0.9"
 
 [libraries]
 # Compose BOM
@@ -70,6 +71,9 @@ koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koinT
 koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koinTest" }
 json = { group = "org.json", name = "json", version.ref = "json" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# Pager Indicator
+pager-indicator = { group = "mx.platacard", name = "compose-pager-indicator", version.ref = "pagerIndicator" }
 
 # Room
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

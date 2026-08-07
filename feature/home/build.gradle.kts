@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.coroutines.android)
     implementation(libs.activity.compose)
+    implementation(libs.pager.indicator)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
