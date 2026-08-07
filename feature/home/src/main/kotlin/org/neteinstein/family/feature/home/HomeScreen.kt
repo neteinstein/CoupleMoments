@@ -544,20 +544,11 @@ private fun QuestionCard(
                             )
                         }
                     } else {
-                        question.category.let { category ->
-                            CategoryPill(
-                                category = category,
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            )
-                        }
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(
-                                text = "💬",
-                                style = MaterialTheme.typography.displaySmall
-                            )
+                            CategoryPill(category = question.category)
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
                                 text = question.text,
