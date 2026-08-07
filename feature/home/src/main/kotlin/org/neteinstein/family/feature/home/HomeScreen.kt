@@ -266,7 +266,9 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
             ) {
                 FullScreenQuestion(
                     question = lastFullScreenQuestion,
-                    onClose = { fullScreenQuestion = null }
+                    onClose = { fullScreenQuestion = null },
+                    onRandomClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
+                    randomEnabled = uiState.questions.isNotEmpty()
                 )
             }
         }
@@ -297,7 +299,12 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 }
 
 @Composable
-private fun FullScreenQuestion(question: Question?, onClose: () -> Unit) {
+private fun FullScreenQuestion(
+    question: Question?,
+    onClose: () -> Unit,
+    onRandomClick: () -> Unit,
+    randomEnabled: Boolean
+) {
     var offsetY by remember { mutableFloatStateOf(0f) }
     Surface(
         modifier = Modifier
@@ -334,6 +341,28 @@ private fun FullScreenQuestion(question: Question?, onClose: () -> Unit) {
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.cd_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(
+                onClick = onRandomClick,
+                enabled = randomEnabled,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(16.dp)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Casino,
+                    contentDescription = stringResource(R.string.cd_shuffle_card),
+                    tint = if (randomEnabled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    }
                 )
             }
 
