@@ -42,10 +42,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -400,7 +400,7 @@ private fun HomeTopBar(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Shuffle,
+                    imageVector = Icons.Default.Casino,
                     contentDescription = stringResource(R.string.cd_shuffle_card),
                     tint = if (shuffleEnabled) {
                         MaterialTheme.colorScheme.onSurfaceVariant
