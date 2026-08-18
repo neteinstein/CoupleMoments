@@ -17,17 +17,22 @@ import org.neteinstein.family.domain.usecase.ResetUsedQuestionsUseCase
 /**
  * Runs a background update check when Settings is entered so the "Update to latest" button can
  * reflect availability immediately (green when a release is found), without auto-downloading.
+ *
+ * [updatesEnabled] is false on the Play Store flavor, which the Play Store itself updates - the
+ * self-update check never runs and SettingsScreen hides the "Updates" section entirely.
  */
 class SettingsViewModel(
     private val checkForUpdateUseCase: CheckForUpdateUseCase,
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase,
     private val appUpdateInstaller: AppUpdateInstaller,
-    private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase
+    private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase,
+    private val updatesEnabled: Boolean = true
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(SettingsUiState())
+    private val _uiState = MutableStateFlow(SettingsUiState(updatesEnabled = updatesEnabled))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     fun onScreenEntered() {
+        if (!updatesEnabled) return
         viewModelScope.launch {
             when (val result = checkForUpdateUseCase().getOrNull()) {
                 is UpdateCheckResult.UpToDate ->

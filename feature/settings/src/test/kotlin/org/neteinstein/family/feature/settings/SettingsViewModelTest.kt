@@ -145,4 +145,27 @@ class SettingsViewModelTest {
         coVerify { resetUsedQuestionsUseCase() }
         assertEquals(ResetCardsStatus.Done, viewModel.uiState.value.resetCardsStatus)
     }
+
+    @Test
+    fun `updatesEnabled defaults to true so the Updates section shows by default`() {
+        assertTrue(viewModel.uiState.value.updatesEnabled)
+    }
+
+    @Test
+    fun `onScreenEntered skips the update check when updates are disabled`() = runTest {
+        val playStoreViewModel = SettingsViewModel(
+            checkForUpdateUseCase,
+            downloadAppUpdateUseCase,
+            appUpdateInstaller,
+            resetUsedQuestionsUseCase,
+            updatesEnabled = false
+        )
+
+        playStoreViewModel.onScreenEntered()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { checkForUpdateUseCase() }
+        assertEquals(false, playStoreViewModel.uiState.value.updatesEnabled)
+        assertEquals(UpdateStatus.Idle, playStoreViewModel.uiState.value.updateStatus)
+    }
 }

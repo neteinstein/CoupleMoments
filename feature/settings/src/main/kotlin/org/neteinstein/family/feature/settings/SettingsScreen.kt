@@ -187,28 +187,30 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                if (uiState.updatesEnabled) {
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = stringResource(R.string.section_updates),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    UpdateSection(
-                        status = uiState.updateStatus,
-                        onUpdateClicked = viewModel::onUpdateClicked,
-                        onEnableSideloadingClicked = viewModel::onEnableSideloadingClicked
+                    Text(
+                        text = stringResource(R.string.section_updates),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
+
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        UpdateSection(
+                            status = uiState.updateStatus,
+                            onUpdateClicked = viewModel::onUpdateClicked,
+                            onEnableSideloadingClicked = viewModel::onEnableSideloadingClicked
+                        )
+                    }
                 }
             }
         }
