@@ -21,6 +21,7 @@ room = "2.8.4"
 ksp = "2.3.11"
 robolectric = "4.16.1"
 pagerIndicator = "0.0.9"
+playPublisher = "4.1.1"
 
 [libraries]
 # Compose BOM
@@ -86,3 +87,4 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
+play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }

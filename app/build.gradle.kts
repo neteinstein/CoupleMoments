@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.play.publisher)
 }
 
 android {
@@ -40,6 +41,15 @@ android {
         create("playstore") {
             dimension = "distribution"
             buildConfigField("boolean", "UPDATES_ENABLED", "false")
+        }
+    }
+
+    // The Play Publisher plugin (see the `play { }` block below) is disabled by default there and
+    // only re-enabled for the "playstore" flavor here, since "github" shares the same
+    // applicationId and must never be uploaded to the Play Console.
+    playConfigs {
+        register("playstore") {
+            enabled.set(true)
         }
     }
 
@@ -95,6 +105,20 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+// Uploads the "playstore" flavor's release App Bundle to the Play Console via the Google Play
+// Developer API (invoked as `publishPlaystoreReleaseBundle` by .github/workflows/release.yml).
+// Disabled by default and only turned on for the "playstore" flavor above (`playConfigs`).
+// Authenticates via the ANDROID_PUBLISHER_CREDENTIALS env var (GPP's default lookup - the raw
+// contents of a Play Console service account JSON key, not a file path), left unset for local
+// builds where no publish task is ever invoked. Publishes to the "internal" track unless
+// PLAY_TRACK overrides it, so a release never reaches production without an explicit promotion
+// in the Play Console.
+play {
+    enabled.set(false)
+    track.set(System.getenv("PLAY_TRACK") ?: "internal")
+    defaultToAppBundles.set(true)
 }
 
 ktlint {
