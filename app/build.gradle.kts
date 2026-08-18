@@ -25,6 +25,24 @@ android {
         }
     }
 
+    // Two distribution channels built from the same codebase: "github" is the direct-APK build
+    // distributed via GitHub Releases and keeps the in-app self-update check/install flow (see
+    // app/src/github/AndroidManifest.xml for its extra permission/provider/receiver); "playstore"
+    // is submitted to the Play Store, which reviews/distributes updates itself, so
+    // UPDATES_ENABLED gates that flow off entirely (feature/settings hides the "Updates" section
+    // and never invokes the update use cases - see di/AppModule.kt).
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+            buildConfigField("boolean", "UPDATES_ENABLED", "true")
+        }
+        create("playstore") {
+            dimension = "distribution"
+            buildConfigField("boolean", "UPDATES_ENABLED", "false")
+        }
+    }
+
     // Populated by .github/workflows/release.yml from Action secrets (KEYSTORE_BASE64 decoded to
     // a file + KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD) so the release workflow can produce a
     // signed APK. Left unset for local builds - see the release buildType below for the fallback.
@@ -69,6 +87,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
