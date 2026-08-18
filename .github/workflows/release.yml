@@ -122,3 +122,26 @@ jobs:
             --notes "**github flavor (self-updating) SHA-1:** \`${GITHUB_SHA1}\`
           **playstore flavor (no self-update) SHA-1:** \`${PLAYSTORE_SHA1}\`" \
             --generate-notes
+
+      # Optional: only runs once a Play Console service account key is configured (see AGENTS.md).
+      # Uploads the playstore flavor's release App Bundle to the Play Console's "internal" track
+      # (or PLAY_TRACK, if set as a repo variable) via the Gradle Play Publisher plugin
+      # (app/build.gradle.kts) - it never touches the "github" flavor, which shares the same
+      # applicationId and must never be uploaded. Left off entirely until the secret exists so
+      # forks/clones without Play Console access keep getting GitHub Releases.
+      - name: Publish to Play Store
+        if: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS != '' }}
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
+          PLAY_TRACK: ${{ vars.PLAY_TRACK }}
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: ./gradlew publishPlaystoreReleaseBundle --no-daemon --stacktrace
+
+      - name: Skip Play Store publish
+        if: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS == '' }}
+        run: echo "::notice::ANDROID_PUBLISHER_CREDENTIALS secret not set - skipping Play Store publish. See AGENTS.md for setup."
