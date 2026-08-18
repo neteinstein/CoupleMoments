@@ -123,6 +123,15 @@ jobs:
           **playstore flavor (no self-update) SHA-1:** \`${PLAYSTORE_SHA1}\`" \
             --generate-notes
 
+      # The `secrets` context isn't available in step-level `if:` conditions, so the
+      # presence check has to happen here (env is allowed) and get passed along via
+      # a step output for the `if:` conditions below to read.
+      - name: Check Play publisher credentials
+        id: play_creds
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
+        run: echo "has_credentials=${{ env.ANDROID_PUBLISHER_CREDENTIALS != '' }}" >> "$GITHUB_OUTPUT"
+
       # Optional: only runs once a Play Console service account key is configured (see AGENTS.md).
       # Uploads the playstore flavor's release App Bundle to the Play Console's "internal" track
       # (or PLAY_TRACK, if set as a repo variable) via the Gradle Play Publisher plugin
@@ -130,7 +139,7 @@ jobs:
       # applicationId and must never be uploaded. Left off entirely until the secret exists so
       # forks/clones without Play Console access keep getting GitHub Releases.
       - name: Publish to Play Store
-        if: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS != '' }}
+        if: steps.play_creds.outputs.has_credentials == 'true'
         env:
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
           PLAY_TRACK: ${{ vars.PLAY_TRACK }}
@@ -143,5 +152,5 @@ jobs:
         run: ./gradlew publishPlaystoreReleaseBundle --no-daemon --stacktrace
 
       - name: Skip Play Store publish
-        if: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS == '' }}
+        if: steps.play_creds.outputs.has_credentials != 'true'
         run: echo "::notice::ANDROID_PUBLISHER_CREDENTIALS secret not set - skipping Play Store publish. See AGENTS.md for setup."
