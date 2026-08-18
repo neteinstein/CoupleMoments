@@ -139,6 +139,7 @@ jobs:
       # applicationId and must never be uploaded. Left off entirely until the secret exists so
       # forks/clones without Play Console access keep getting GitHub Releases.
       - name: Publish to Play Store
+        id: publish_play
         if: steps.play_creds.outputs.has_credentials == 'true'
         env:
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
@@ -150,6 +151,15 @@ jobs:
           APP_VERSION_CODE: ${{ github.run_number }}
           APP_VERSION_NAME: "1.0.${{ github.run_number }}"
         run: ./gradlew publishPlaystoreReleaseBundle --no-daemon --stacktrace
+
+      # A 403 here is almost always the Play Console service account's standing (not invited to
+      # this app, no first manual release yet, API not enabled, or a still-propagating permission
+      # grant) rather than anything in this repo - see the "Troubleshooting a 403" note in
+      # AGENTS.md for the full checklist before assuming the workflow itself is broken.
+      - name: Play Store publish failure hint
+        if: failure() && steps.publish_play.outcome == 'failure'
+        run: |
+          echo "::error::publishPlaystoreReleaseBundle failed. If this was a 403/PERMISSION_DENIED from androidpublisher.googleapis.com, see the 'Troubleshooting a 403 PERMISSION_DENIED' note under ## Releases in AGENTS.md - it is almost always the service account's Play Console permissions/app access, a missing first manual release, or the Android Publisher API not being enabled, not this workflow."
 
       - name: Skip Play Store publish
         if: steps.play_creds.outputs.has_credentials != 'true'
