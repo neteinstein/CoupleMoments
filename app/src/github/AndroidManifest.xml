@@ -3,8 +3,14 @@
      - the direct-APK build distributed via GitHub Releases that keeps the in-app self-update
      check/install flow. The "playstore" flavor has no such override, so none of this is present
      in that build: the Play Store reviews/distributes updates itself and disallows apps
-     installing packages outside it. -->
+     installing packages outside it. Also the only source of the INTERNET permission - the
+     "playstore" flavor makes no network calls at all (update checks are the app's only network
+     usage), so it must not declare INTERNET. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Needed to check GitHub Releases for updates and download the update APK
+         (GitHubUpdateRepositoryImpl). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Gates AppUpdateInstaller.canInstallPackages()/installPackage() (the Settings screen's
          "Update to latest" button) - granting this is a special, per-app "install unknown apps"
