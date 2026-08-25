@@ -25,4 +25,9 @@
     <string name="up_to_date_format">You\'re on the latest version (%1$s).</string>
     <string name="sideloading_blocked_message">Allow this app to install updates to continue.</string>
     <string name="enable_installing_updates">Enable installing updates</string>
+    <!-- Brand and author names; not translated. They are injected into
+         settings_loopgain_footer, where each becomes a tappable link. -->
+    <string name="loopgain_name" translatable="false">LoopGain</string>
+    <string name="pedro_vicente_name" translatable="false">Pedro Vicente</string>
+    <string name="settings_loopgain_footer">Family Moments is part of the %1$s family tools by %2$s</string>
 </resources>

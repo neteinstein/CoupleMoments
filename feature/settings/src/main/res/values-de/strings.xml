@@ -25,4 +25,5 @@
     <string name="up_to_date_format">Du hast die neueste Version (%1$s).</string>
     <string name="sideloading_blocked_message">Erlaube dieser App, Updates zu installieren, um fortzufahren.</string>
     <string name="enable_installing_updates">Installation von Updates erlauben</string>
+    <string name="settings_loopgain_footer">Family Moments ist Teil der %1$s-Toolfamilie von %2$s</string>
 </resources>
