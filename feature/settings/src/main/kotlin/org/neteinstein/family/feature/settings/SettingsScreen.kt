@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -42,10 +44,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
+
+private const val LOOPGAIN_URL = "https://loopgain.org"
+private const val PEDRO_VICENTE_URL = "https://pedrovicente.pt"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +102,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 Text(
@@ -212,6 +225,10 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                LoopGainFooter(modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -354,6 +371,49 @@ private fun UpdateStatusRow(text: String) {
             modifier = Modifier.padding(start = 12.dp)
         )
     }
+}
+
+/**
+ * Attribution line closing the screen: the app's place in the wider LoopGain tool family, with the
+ * brand and the author each linking out to their own site.
+ */
+@Composable
+private fun LoopGainFooter(modifier: Modifier = Modifier) {
+    val loopGain = stringResource(R.string.loopgain_name)
+    val author = stringResource(R.string.pedro_vicente_name)
+    val footer = stringResource(R.string.settings_loopgain_footer, loopGain, author)
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline
+        )
+    )
+
+    val annotatedFooter = remember(footer, loopGain, author, linkStyles) {
+        buildAnnotatedString {
+            append(footer)
+            addUrlLink(footer, loopGain, LOOPGAIN_URL, linkStyles)
+            addUrlLink(footer, author, PEDRO_VICENTE_URL, linkStyles)
+        }
+    }
+
+    Text(
+        text = annotatedFooter,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+    )
+}
+
+/**
+ * Links the first occurrence of [label] in [text] to [url]. A translation that drops or rewrites
+ * the placeholder simply keeps that part as plain text instead of blowing up on a bad range.
+ */
+private fun AnnotatedString.Builder.addUrlLink(text: String, label: String, url: String, styles: TextLinkStyles) {
+    val start = text.indexOf(label)
+    if (start < 0) return
+    addLink(LinkAnnotation.Url(url, styles), start, start + label.length)
 }
 
 @Composable
