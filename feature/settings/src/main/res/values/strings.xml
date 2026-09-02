@@ -6,7 +6,8 @@
     <string name="settings_language_subtitle">Change language in Android settings</string>
     <string name="section_about">About</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_version">Version 1.0.0</string>
+    <string name="settings_app_title_format">%1$s (part of %2$s)</string>
+    <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Bringing families closer, one question at a time. ❤️</string>
     <string name="section_reset_cards">Reset Cards</string>
     <string name="reset_cards_description">Hidden cards (swiped down as already used or not wanted) stay out of rotation. Reset to bring them all back.</string>

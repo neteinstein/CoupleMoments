@@ -6,7 +6,8 @@
     <string name="settings_language_subtitle">Altere o idioma nas configurações do Android</string>
     <string name="section_about">Sobre</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_version">Versão 1.0.0</string>
+    <string name="settings_app_title_format">%1$s (parte da %2$s)</string>
+    <string name="settings_version_format">Versão %1$s</string>
     <string name="settings_about_description">Aproximando famílias, uma pergunta de cada vez. ❤️</string>
     <string name="section_reset_cards">Redefinir Cartas</string>
     <string name="reset_cards_description">Cartas ocultas (deslizadas para baixo como já usadas ou indesejadas) ficam fora da rotação. Redefina para trazê-las todas de volta.</string>
