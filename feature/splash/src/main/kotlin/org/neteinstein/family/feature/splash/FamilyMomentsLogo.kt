@@ -12,6 +12,6 @@ fun FamilyMomentsLogo(modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(id = R.drawable.ic_campfire_scene),
         contentDescription = null,
-        modifier = modifier
+        modifier = modifier,
     )
 }

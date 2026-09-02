@@ -10,7 +10,6 @@ import org.neteinstein.family.navigation.AppNavigation
 import org.neteinstein.family.ui.theme.FamilyMomentsTheme
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)

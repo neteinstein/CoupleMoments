@@ -7,7 +7,6 @@ import androidx.room.Query
 
 @Dao
 interface SeedMetadataDao {
-
     @Query("SELECT version FROM seed_metadata LIMIT 1")
     suspend fun getVersion(): Int?
 

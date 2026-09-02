@@ -1,12 +1,11 @@
 package org.neteinstein.family.data.locale
 
-import java.util.Locale
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.Locale
 
 class LocaleProviderImplTest {
-
     private val originalDefaultLocale: Locale = Locale.getDefault()
     private val provider = LocaleProviderImpl()
 

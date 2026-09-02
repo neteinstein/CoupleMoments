@@ -36,7 +36,10 @@ class UpdateApkCleanupReceiver :
     KoinComponent {
     private val clearDownloadedUpdateUseCase: ClearDownloadedUpdateUseCase by inject()
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
 
         val pendingResult = goAsync()

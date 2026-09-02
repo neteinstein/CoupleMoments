@@ -15,5 +15,5 @@ data class CardEntity(
     val text: String,
     val languageCode: String,
     val category: String,
-    val isHidden: Boolean = false
+    val isHidden: Boolean = false,
 )

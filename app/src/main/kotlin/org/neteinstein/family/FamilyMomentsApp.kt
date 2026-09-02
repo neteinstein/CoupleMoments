@@ -8,7 +8,6 @@ import org.koin.core.logger.Level
 import org.neteinstein.family.di.appModule
 
 class FamilyMomentsApp : Application() {
-
     override fun onCreate() {
         super.onCreate()
         startKoin {

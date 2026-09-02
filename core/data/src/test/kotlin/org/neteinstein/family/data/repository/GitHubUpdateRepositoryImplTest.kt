@@ -33,7 +33,7 @@ class GitHubUpdateRepositoryImplTest {
         assertEquals("1.0.16", update.versionName)
         assertEquals(
             "https://github.com/neteinstein/FamilyMoments/releases/download/v1.0.16/FamilyMoments-1.0.16.apk",
-            update.apkDownloadUrl
+            update.apkDownloadUrl,
         )
     }
 
@@ -82,12 +82,15 @@ class GitHubUpdateRepositoryImplTest {
         assertTrue(exception is IllegalStateException)
     }
 
-    private fun releaseJson(tagName: String, assetName: String) = """
+    private fun releaseJson(
+        tagName: String,
+        assetName: String,
+    ) = """
         {
           "tag_name": "$tagName",
           "assets": [
             { "name": "$assetName", "browser_download_url": "https://example.com/$assetName" }
           ]
         }
-    """.trimIndent()
+        """.trimIndent()
 }

@@ -1,9 +1,6 @@
 package org.neteinstein.family.data.repository
 
 import android.content.Context
-import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -12,6 +9,9 @@ import org.neteinstein.family.domain.model.AppUpdate
 import org.neteinstein.family.domain.model.UpdateCheckResult
 import org.neteinstein.family.domain.repository.UpdateRepository
 import org.neteinstein.family.domain.util.isNewerVersion
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * [UpdateRepository] backed by the public GitHub Releases REST API for this project's own repo
@@ -22,47 +22,53 @@ import org.neteinstein.family.domain.util.isNewerVersion
  * The endpoint is unauthenticated (no API key needed to read public release metadata), but GitHub
  * 403s any request with no `User-Agent` header, so [fetchLatestReleaseJson] always sets one.
  */
-class GitHubUpdateRepositoryImpl(private val context: Context) : UpdateRepository {
-    override suspend fun checkForUpdate(): Result<UpdateCheckResult> = withContext(Dispatchers.IO) {
-        runCatching {
-            val update = parseGitHubReleaseResponse(fetchLatestReleaseJson())
-            val currentVersionName = currentVersionName()
-            if (isNewerVersion(current = currentVersionName, candidate = update.versionName)) {
-                UpdateCheckResult.UpdateAvailable(update)
-            } else {
-                UpdateCheckResult.UpToDate(currentVersionName)
+class GitHubUpdateRepositoryImpl(
+    private val context: Context,
+) : UpdateRepository {
+    override suspend fun checkForUpdate(): Result<UpdateCheckResult> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val update = parseGitHubReleaseResponse(fetchLatestReleaseJson())
+                val currentVersionName = currentVersionName()
+                if (isNewerVersion(current = currentVersionName, candidate = update.versionName)) {
+                    UpdateCheckResult.UpdateAvailable(update)
+                } else {
+                    UpdateCheckResult.UpToDate(currentVersionName)
+                }
             }
         }
-    }
 
-    override suspend fun downloadUpdate(update: AppUpdate): Result<File> = withContext(Dispatchers.IO) {
-        runCatching {
-            val updatesDir = updatesDir()
-            // Only one downloaded update is ever "current" - clear out anything left over
-            // from a previous check before writing the new one.
-            updatesDir.deleteRecursively()
-            updatesDir.mkdirs()
+    override suspend fun downloadUpdate(update: AppUpdate): Result<File> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val updatesDir = updatesDir()
+                // Only one downloaded update is ever "current" - clear out anything left over
+                // from a previous check before writing the new one.
+                updatesDir.deleteRecursively()
+                updatesDir.mkdirs()
 
-            val apkFile = File(updatesDir, "FamilyMoments-${update.versionName}.apk")
-            downloadToFile(url = update.apkDownloadUrl, destination = apkFile)
-            apkFile
+                val apkFile = File(updatesDir, "FamilyMoments-${update.versionName}.apk")
+                downloadToFile(url = update.apkDownloadUrl, destination = apkFile)
+                apkFile
+            }
         }
-    }
 
-    override suspend fun clearDownloadedUpdate(): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            updatesDir().deleteRecursively()
-            Unit
+    override suspend fun clearDownloadedUpdate(): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                updatesDir().deleteRecursively()
+                Unit
+            }
         }
-    }
 
     private fun updatesDir(): File = File(context.cacheDir, UPDATE_CACHE_DIR_NAME)
 
     // getPackageInfo(String, Int) is deprecated in favor of the PackageInfoFlags overload added in
     // API 33, but minSdk is 32 - there's no non-deprecated way to read this below API 33.
     @Suppress("DEPRECATION")
-    private fun currentVersionName(): String = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-        ?: error("Installed package has no versionName")
+    private fun currentVersionName(): String =
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            ?: error("Installed package has no versionName")
 
     private fun fetchLatestReleaseJson(): String {
         val connection = URL(LATEST_RELEASE_URL).openConnection() as HttpURLConnection
@@ -72,7 +78,11 @@ class GitHubUpdateRepositoryImpl(private val context: Context) : UpdateRepositor
 
             val responseCode = connection.responseCode
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                val errorBody = connection.errorStream?.bufferedReader(Charsets.UTF_8)?.readText().orEmpty()
+                val errorBody =
+                    connection.errorStream
+                        ?.bufferedReader(Charsets.UTF_8)
+                        ?.readText()
+                        .orEmpty()
                 error("GitHub API error $responseCode: $errorBody")
             }
 
@@ -82,7 +92,10 @@ class GitHubUpdateRepositoryImpl(private val context: Context) : UpdateRepositor
         }
     }
 
-    private fun downloadToFile(url: String, destination: File) {
+    private fun downloadToFile(
+        url: String,
+        destination: File,
+    ) {
         val connection = URL(url).openConnection() as HttpURLConnection
         try {
             val responseCode = connection.responseCode

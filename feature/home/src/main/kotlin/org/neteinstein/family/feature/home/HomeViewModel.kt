@@ -20,16 +20,15 @@ data class HomeUiState(
     val currentIndex: Int = 0,
     val totalQuestions: Int = 0,
     val selectedCategory: QuestionCategory? = null,
-    val questions: List<Question> = emptyList()
+    val questions: List<Question> = emptyList(),
 )
 
 class HomeViewModel(
     private val getQuestionsUseCase: GetQuestionsUseCase,
     private val localeProvider: LocaleProvider,
     private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase,
-    private val markQuestionUsedUseCase: MarkQuestionUsedUseCase
+    private val markQuestionUsedUseCase: MarkQuestionUsedUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -89,9 +88,10 @@ class HomeViewModel(
     }
 
     private fun applyFilter(category: QuestionCategory?) {
-        questions = allQuestions
-            .filter { (category == null || it.category == category) && it.id !in usedQuestionIds }
-            .shuffled()
+        questions =
+            allQuestions
+                .filter { (category == null || it.category == category) && it.id !in usedQuestionIds }
+                .shuffled()
         val firstQuestion = questions.firstOrNull()
         _uiState.update {
             it.copy(
@@ -100,7 +100,7 @@ class HomeViewModel(
                 currentIndex = 0,
                 totalQuestions = questions.size,
                 selectedCategory = category,
-                questions = questions
+                questions = questions,
             )
         }
     }
@@ -111,7 +111,7 @@ class HomeViewModel(
         _uiState.update {
             it.copy(
                 currentQuestion = questions[nextIndex],
-                currentIndex = nextIndex
+                currentIndex = nextIndex,
             )
         }
     }
@@ -122,7 +122,7 @@ class HomeViewModel(
         _uiState.update {
             it.copy(
                 currentQuestion = questions[prevIndex],
-                currentIndex = prevIndex
+                currentIndex = prevIndex,
             )
         }
     }

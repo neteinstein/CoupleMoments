@@ -1,7 +1,7 @@
 package org.neteinstein.family.data.locale
 
-import java.util.Locale
 import org.neteinstein.family.domain.repository.LocaleProvider
+import java.util.Locale
 
 /**
  * `Locale.getDefault()` is the process-wide default locale, which the OS itself overrides to match
