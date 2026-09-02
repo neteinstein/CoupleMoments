@@ -6,7 +6,8 @@
     <string name="settings_language_subtitle">Sprache in den Android-Einstellungen ändern</string>
     <string name="section_about">Über</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_version">Version 1.0.0</string>
+    <string name="settings_app_title_format">%1$s (Teil von %2$s)</string>
+    <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Familien näher zusammenbringen, eine Frage nach der anderen. ❤️</string>
     <string name="section_reset_cards">Karten Zurücksetzen</string>
     <string name="reset_cards_description">Ausgeblendete Karten (nach unten gewischt als bereits verwendet oder unerwünscht) bleiben außerhalb der Rotation. Setze sie zurück, um sie alle wiederzubekommen.</string>
@@ -25,4 +26,5 @@
     <string name="up_to_date_format">Du hast die neueste Version (%1$s).</string>
     <string name="sideloading_blocked_message">Erlaube dieser App, Updates zu installieren, um fortzufahren.</string>
     <string name="enable_installing_updates">Installation von Updates erlauben</string>
+    <string name="settings_loopgain_footer">Family Moments ist Teil der %1$s-Toolfamilie von %2$s</string>
 </resources>

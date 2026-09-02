@@ -4,16 +4,16 @@ kotlin = "2.3.21"
 coroutines = "1.10.2"
 lifecycle = "2.10.0"
 navigationCompose = "2.9.7"
-composeBom = "2026.06.00"
+composeBom = "2026.08.00"
 activityCompose = "1.10.1"
 koin = "4.0.3"
-koinCompose = "4.0.3"
+koinCompose = "4.2.2"
 junit = "4.13.2"
 junitExt = "1.3.0"
 espresso = "3.7.0"
 mockk = "1.14.2"
 coroutinesTest = "1.11.0"
-koinTest = "4.0.3"
+koinTest = "4.2.2"
 splashscreen = "1.0.1"
 json = "20260814"
 ktlintGradle = "14.2.0"
@@ -57,7 +57,7 @@ koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compos
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
 
 # Core
-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.0" }
 
 # Splash Screen
 splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }

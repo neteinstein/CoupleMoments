@@ -6,7 +6,8 @@
     <string name="settings_language_subtitle">Changez la langue dans les paramètres Android</string>
     <string name="section_about">À propos</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_version">Version 1.0.0</string>
+    <string name="settings_app_title_format">%1$s (fait partie de %2$s)</string>
+    <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Rapprocher les familles, une question à la fois. ❤️</string>
     <string name="section_reset_cards">Réinitialiser les Cartes</string>
     <string name="reset_cards_description">Les cartes masquées (glissées vers le bas comme déjà utilisées ou non désirées) restent hors rotation. Réinitialisez pour toutes les récupérer.</string>
@@ -25,4 +26,5 @@
     <string name="up_to_date_format">Vous avez la dernière version (%1$s).</string>
     <string name="sideloading_blocked_message">Autorisez cette app à installer des mises à jour pour continuer.</string>
     <string name="enable_installing_updates">Autoriser l\'installation des mises à jour</string>
+    <string name="settings_loopgain_footer">Family Moments fait partie de la famille d’outils %1$s, par %2$s</string>
 </resources>

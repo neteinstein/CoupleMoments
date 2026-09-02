@@ -1,5 +1,6 @@
 package org.neteinstein.family.feature.settings
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -42,10 +45,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
+
+private const val LOOPGAIN_URL = "https://loopgain.org"
+private const val PEDRO_VICENTE_URL = "https://pedrovicente.pt"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +66,23 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showResetConfirmDialog by remember { mutableStateOf(false) }
+
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline
+        )
+    )
+    val appName = stringResource(R.string.app_name)
+    val loopGain = stringResource(R.string.loopgain_name)
+    val appTitle = stringResource(R.string.settings_app_title_format, appName, loopGain)
+    val annotatedAppTitle = remember(appTitle, loopGain, linkStyles) {
+        buildAnnotatedString {
+            append(appTitle)
+            addUrlLink(appTitle, loopGain, LOOPGAIN_URL, linkStyles)
+        }
+    }
+    val versionName = remember(context) { context.currentVersionName() }
 
     LaunchedEffect(Unit) {
         viewModel.onScreenEntered()
@@ -90,6 +120,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 Text(
@@ -123,45 +154,6 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                             context.startActivity(intent)
                         }
                     )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = stringResource(R.string.section_about),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.settings_version),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.settings_about_description),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -212,6 +204,49 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = koinViewMo
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = stringResource(R.string.section_about),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = annotatedAppTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.settings_version_format, versionName),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.settings_about_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                LoopGainFooter(modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -355,6 +390,53 @@ private fun UpdateStatusRow(text: String) {
         )
     }
 }
+
+/**
+ * Attribution line closing the screen: the app's place in the wider LoopGain tool family, with the
+ * brand and the author each linking out to their own site.
+ */
+@Composable
+private fun LoopGainFooter(modifier: Modifier = Modifier) {
+    val loopGain = stringResource(R.string.loopgain_name)
+    val author = stringResource(R.string.pedro_vicente_name)
+    val footer = stringResource(R.string.settings_loopgain_footer, loopGain, author)
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline
+        )
+    )
+
+    val annotatedFooter = remember(footer, loopGain, author, linkStyles) {
+        buildAnnotatedString {
+            append(footer)
+            addUrlLink(footer, loopGain, LOOPGAIN_URL, linkStyles)
+            addUrlLink(footer, author, PEDRO_VICENTE_URL, linkStyles)
+        }
+    }
+
+    Text(
+        text = annotatedFooter,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+    )
+}
+
+/**
+ * Links the first occurrence of [label] in [text] to [url]. A translation that drops or rewrites
+ * the placeholder simply keeps that part as plain text instead of blowing up on a bad range.
+ */
+private fun AnnotatedString.Builder.addUrlLink(text: String, label: String, url: String, styles: TextLinkStyles) {
+    val start = text.indexOf(label)
+    if (start < 0) return
+    addLink(LinkAnnotation.Url(url, styles), start, start + label.length)
+}
+
+/** The installed build's version name (e.g. "1.2.3"), as shown in the "About" section. */
+private fun Context.currentVersionName(): String =
+    packageManager.getPackageInfo(packageName, 0).versionName ?: "—"
 
 @Composable
 private fun SettingsItem(icon: @Composable () -> Unit, title: String, subtitle: String, onClick: () -> Unit) {

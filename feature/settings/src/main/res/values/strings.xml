@@ -6,7 +6,8 @@
     <string name="settings_language_subtitle">Change language in Android settings</string>
     <string name="section_about">About</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_version">Version 1.0.0</string>
+    <string name="settings_app_title_format">%1$s (part of %2$s)</string>
+    <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Bringing families closer, one question at a time. ❤️</string>
     <string name="section_reset_cards">Reset Cards</string>
     <string name="reset_cards_description">Hidden cards (swiped down as already used or not wanted) stay out of rotation. Reset to bring them all back.</string>
@@ -25,4 +26,9 @@
     <string name="up_to_date_format">You\'re on the latest version (%1$s).</string>
     <string name="sideloading_blocked_message">Allow this app to install updates to continue.</string>
     <string name="enable_installing_updates">Enable installing updates</string>
+    <!-- Brand and author names; not translated. They are injected into
+         settings_loopgain_footer, where each becomes a tappable link. -->
+    <string name="loopgain_name" translatable="false">LoopGain</string>
+    <string name="pedro_vicente_name" translatable="false">Pedro Vicente</string>
+    <string name="settings_loopgain_footer">Family Moments is part of the %1$s family tools by %2$s</string>
 </resources>
