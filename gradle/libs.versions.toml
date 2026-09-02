@@ -57,7 +57,7 @@ koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compos
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
 
 # Core
-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.0" }
 
 # Splash Screen
 splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
