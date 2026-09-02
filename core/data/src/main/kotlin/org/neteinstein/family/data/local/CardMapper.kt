@@ -3,33 +3,37 @@ package org.neteinstein.family.data.local
 import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.model.QuestionCategory
 
-private fun QuestionCategory.toStorageKey(): String = when (this) {
-    QuestionCategory.IceBreakers -> "ice_breakers"
-    QuestionCategory.Memories -> "memories"
-    QuestionCategory.Values -> "values"
-    QuestionCategory.FutureDreams -> "future_dreams"
-    QuestionCategory.DailyLife -> "daily_life"
-}
+private fun QuestionCategory.toStorageKey(): String =
+    when (this) {
+        QuestionCategory.IceBreakers -> "ice_breakers"
+        QuestionCategory.Memories -> "memories"
+        QuestionCategory.Values -> "values"
+        QuestionCategory.FutureDreams -> "future_dreams"
+        QuestionCategory.DailyLife -> "daily_life"
+    }
 
-private fun categoryFromStorageKey(key: String): QuestionCategory = when (key) {
-    "ice_breakers" -> QuestionCategory.IceBreakers
-    "memories" -> QuestionCategory.Memories
-    "values" -> QuestionCategory.Values
-    "future_dreams" -> QuestionCategory.FutureDreams
-    "daily_life" -> QuestionCategory.DailyLife
-    else -> QuestionCategory.IceBreakers
-}
+private fun categoryFromStorageKey(key: String): QuestionCategory =
+    when (key) {
+        "ice_breakers" -> QuestionCategory.IceBreakers
+        "memories" -> QuestionCategory.Memories
+        "values" -> QuestionCategory.Values
+        "future_dreams" -> QuestionCategory.FutureDreams
+        "daily_life" -> QuestionCategory.DailyLife
+        else -> QuestionCategory.IceBreakers
+    }
 
-fun CardEntity.toDomain(): Question = Question(
-    id = id,
-    text = text,
-    languageCode = languageCode,
-    category = categoryFromStorageKey(category)
-)
+fun CardEntity.toDomain(): Question =
+    Question(
+        id = id,
+        text = text,
+        languageCode = languageCode,
+        category = categoryFromStorageKey(category),
+    )
 
-fun Question.toEntity(): CardEntity = CardEntity(
-    id = id,
-    text = text,
-    languageCode = languageCode,
-    category = category.toStorageKey()
-)
+fun Question.toEntity(): CardEntity =
+    CardEntity(
+        id = id,
+        text = text,
+        languageCode = languageCode,
+        category = category.toStorageKey(),
+    )

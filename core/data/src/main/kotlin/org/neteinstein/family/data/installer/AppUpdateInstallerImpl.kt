@@ -5,8 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.core.content.FileProvider
-import java.io.File
 import org.neteinstein.family.domain.repository.AppUpdateInstaller
+import java.io.File
 
 /**
  * Hands a downloaded APK (see `GitHubUpdateRepositoryImpl.downloadUpdate`) to the system Package
@@ -16,7 +16,9 @@ import org.neteinstein.family.domain.repository.AppUpdateInstaller
  * needed here - both platform APIs this class calls have existed since the oldest OS version this
  * app supports.
  */
-class AppUpdateInstallerImpl(private val context: Context) : AppUpdateInstaller {
+class AppUpdateInstallerImpl(
+    private val context: Context,
+) : AppUpdateInstaller {
     override fun canInstallPackages(): Boolean = context.packageManager.canRequestPackageInstalls()
 
     override fun openInstallPermissionSettings() {

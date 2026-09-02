@@ -10,35 +10,37 @@ import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.repository.QuestionRepository
 
 class GetRandomQuestionUseCaseTest {
-
     private val repository: QuestionRepository = mockk()
     private val useCase = GetRandomQuestionUseCase(repository)
 
     @Test
-    fun `invoke returns question from repository`() = runTest {
-        val question = Question(id = 1, text = "Test question?", languageCode = "en")
-        coEvery { repository.getRandomQuestion("en") } returns question
+    fun `invoke returns question from repository`() =
+        runTest {
+            val question = Question(id = 1, text = "Test question?", languageCode = "en")
+            coEvery { repository.getRandomQuestion("en") } returns question
 
-        val result = useCase("en")
+            val result = useCase("en")
 
-        assertEquals(question, result)
-    }
-
-    @Test
-    fun `invoke returns null when no questions available`() = runTest {
-        coEvery { repository.getRandomQuestion("en") } returns null
-
-        val result = useCase("en")
-
-        assertNull(result)
-    }
+            assertEquals(question, result)
+        }
 
     @Test
-    fun `invoke passes language code to repository`() = runTest {
-        coEvery { repository.getRandomQuestion("pt") } returns null
+    fun `invoke returns null when no questions available`() =
+        runTest {
+            coEvery { repository.getRandomQuestion("en") } returns null
 
-        useCase("pt")
+            val result = useCase("en")
 
-        io.mockk.coVerify { repository.getRandomQuestion("pt") }
-    }
+            assertNull(result)
+        }
+
+    @Test
+    fun `invoke passes language code to repository`() =
+        runTest {
+            coEvery { repository.getRandomQuestion("pt") } returns null
+
+            useCase("pt")
+
+            io.mockk.coVerify { repository.getRandomQuestion("pt") }
+        }
 }

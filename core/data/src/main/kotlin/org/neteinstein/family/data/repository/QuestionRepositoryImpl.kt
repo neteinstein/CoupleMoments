@@ -13,9 +13,8 @@ import org.neteinstein.family.domain.repository.QuestionRepository
 
 class QuestionRepositoryImpl(
     private val cardDao: CardDao,
-    private val seedMetadataDao: SeedMetadataDao
+    private val seedMetadataDao: SeedMetadataDao,
 ) : QuestionRepository {
-
     private val seedMutex = Mutex()
     private var isSeeded = false
 
@@ -24,8 +23,7 @@ class QuestionRepositoryImpl(
         return cardDao.getCardsForLanguage(languageCode).map { it.toDomain() }
     }
 
-    override suspend fun getRandomQuestion(languageCode: String): Question? =
-        getQuestions(languageCode).randomOrNull()
+    override suspend fun getRandomQuestion(languageCode: String): Question? = getQuestions(languageCode).randomOrNull()
 
     /**
      * Fully replaces the `cards` table with [QuestionSeedData] whenever the stored seed version
@@ -44,7 +42,7 @@ class QuestionRepositoryImpl(
                 val hiddenIds = cardDao.getHiddenIds().toSet()
                 cardDao.deleteAll()
                 cardDao.insertAll(
-                    QuestionSeedData.all.map { it.toEntity().copy(isHidden = it.id in hiddenIds) }
+                    QuestionSeedData.all.map { it.toEntity().copy(isHidden = it.id in hiddenIds) },
                 )
                 seedMetadataDao.setVersion(SeedMetadataEntity(version = QuestionSeedData.VERSION))
             }

@@ -7,7 +7,6 @@ import androidx.room.Query
 
 @Dao
 interface CardDao {
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(cards: List<CardEntity>)
 

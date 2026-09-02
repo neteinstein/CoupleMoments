@@ -8,7 +8,10 @@ package org.neteinstein.family.domain.util
  * 0 rather than throwing, so an unexpected tag format degrades to "not newer" instead of crashing
  * the update check. Callers are expected to strip any leading "v" from a GitHub release tag first.
  */
-fun isNewerVersion(current: String, candidate: String): Boolean {
+fun isNewerVersion(
+    current: String,
+    candidate: String,
+): Boolean {
     val currentSegments = current.trim().toVersionSegments()
     val candidateSegments = candidate.trim().toVersionSegments()
 

@@ -35,17 +35,17 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
         // Logo scale + fade in
         scale.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
         )
         alpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 500)
+            animationSpec = tween(durationMillis = 500),
         )
         // Text fades in after logo
         delay(200)
         textAlpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 600)
+            animationSpec = tween(durationMillis = 600),
         )
         // Hold and navigate
         delay(1200)
@@ -53,26 +53,30 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.background
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    MaterialTheme.colorScheme.background,
+                                ),
+                        ),
+                ),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             FamilyMomentsLogo(
-                modifier = Modifier
-                    .size(160.dp)
-                    .scale(scale.value)
-                    .alpha(alpha.value)
+                modifier =
+                    Modifier
+                        .size(160.dp)
+                        .scale(scale.value)
+                        .alpha(alpha.value),
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
@@ -80,14 +84,14 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.alpha(textAlpha.value)
+                modifier = Modifier.alpha(textAlpha.value),
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.splash_tagline),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.alpha(textAlpha.value)
+                modifier = Modifier.alpha(textAlpha.value),
             )
         }
     }

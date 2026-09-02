@@ -23,26 +23,28 @@ import org.neteinstein.family.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.family.domain.usecase.MarkQuestionUsedUseCase
 import org.neteinstein.family.domain.usecase.ResetUsedQuestionsUseCase
 
-val dataModule = module {
-    single {
-        Room.databaseBuilder(androidContext(), FamilyMomentsDatabase::class.java, "family_moments.db")
-            .addMigrations(FamilyMomentsDatabase.MIGRATION_1_2)
-            .build()
-    }
-    single { get<FamilyMomentsDatabase>().cardDao() }
-    single { get<FamilyMomentsDatabase>().seedMetadataDao() }
-    single<QuestionRepository> { QuestionRepositoryImpl(get(), get()) }
-    single<LocaleProvider> { LocaleProviderImpl() }
-    single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
-    factory { GetRandomQuestionUseCase(get()) }
-    factory { GetQuestionsUseCase(get()) }
-    factory { GetUsedQuestionIdsUseCase(get()) }
-    factory { MarkQuestionUsedUseCase(get()) }
-    factory { ResetUsedQuestionsUseCase(get()) }
+val dataModule =
+    module {
+        single {
+            Room
+                .databaseBuilder(androidContext(), FamilyMomentsDatabase::class.java, "family_moments.db")
+                .addMigrations(FamilyMomentsDatabase.MIGRATION_1_2)
+                .build()
+        }
+        single { get<FamilyMomentsDatabase>().cardDao() }
+        single { get<FamilyMomentsDatabase>().seedMetadataDao() }
+        single<QuestionRepository> { QuestionRepositoryImpl(get(), get()) }
+        single<LocaleProvider> { LocaleProviderImpl() }
+        single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
+        factory { GetRandomQuestionUseCase(get()) }
+        factory { GetQuestionsUseCase(get()) }
+        factory { GetUsedQuestionIdsUseCase(get()) }
+        factory { MarkQuestionUsedUseCase(get()) }
+        factory { ResetUsedQuestionsUseCase(get()) }
 
-    single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext()) }
-    single<AppUpdateInstaller> { AppUpdateInstallerImpl(context = androidContext()) }
-    factory { CheckForUpdateUseCase(get()) }
-    factory { DownloadAppUpdateUseCase(get()) }
-    factory { ClearDownloadedUpdateUseCase(get()) }
-}
+        single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext()) }
+        single<AppUpdateInstaller> { AppUpdateInstallerImpl(context = androidContext()) }
+        factory { CheckForUpdateUseCase(get()) }
+        factory { DownloadAppUpdateUseCase(get()) }
+        factory { ClearDownloadedUpdateUseCase(get()) }
+    }

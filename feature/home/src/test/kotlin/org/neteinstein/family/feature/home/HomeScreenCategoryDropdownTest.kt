@@ -27,7 +27,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class HomeScreenCategoryDropdownTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 

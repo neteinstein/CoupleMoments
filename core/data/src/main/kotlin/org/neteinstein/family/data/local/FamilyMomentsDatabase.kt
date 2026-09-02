@@ -8,6 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(entities = [CardEntity::class, SeedMetadataEntity::class], version = 2, exportSchema = false)
 abstract class FamilyMomentsDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
+
     abstract fun seedMetadataDao(): SeedMetadataDao
 
     companion object {
@@ -19,12 +20,13 @@ abstract class FamilyMomentsDatabase : RoomDatabase() {
          * seed-version-mismatched on the next launch and reseeds once, the same as a fresh
          * install would.
          */
-        val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `seed_metadata` (`id` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))"
-                )
+        val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `seed_metadata` (`id` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                    )
+                }
             }
-        }
     }
 }

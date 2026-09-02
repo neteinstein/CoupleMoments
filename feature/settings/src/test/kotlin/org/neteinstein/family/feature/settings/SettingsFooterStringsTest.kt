@@ -1,8 +1,8 @@
 package org.neteinstein.family.feature.settings
 
-import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * The LoopGain footer and the "About" app title both turn a name injected into their format
@@ -12,10 +12,10 @@ import org.junit.Test
  * every locale we ship.
  */
 class SettingsFooterStringsTest {
-
-    private val resDir = listOf("src/main/res", "feature/settings/src/main/res")
-        .map(::File)
-        .first { it.isDirectory }
+    private val resDir =
+        listOf("src/main/res", "feature/settings/src/main/res")
+            .map(::File)
+            .first { it.isDirectory }
 
     @Test
     fun `every locale declares the loopgain footer`() {
@@ -45,19 +45,29 @@ class SettingsFooterStringsTest {
         assertTrue("About title is missing %1\$s and/or %2\$s in: $broken", broken.isEmpty())
     }
 
-    private fun brokenLocales(stringName: String, vararg requiredPlaceholders: String): List<String> =
-        localeDirs().filter { dir ->
-            val value = stringIn(dir, stringName) ?: return@filter true
-            requiredPlaceholders.any { it !in value }
-        }.map { it.name }
+    private fun brokenLocales(
+        stringName: String,
+        vararg requiredPlaceholders: String,
+    ): List<String> =
+        localeDirs()
+            .filter { dir ->
+                val value = stringIn(dir, stringName) ?: return@filter true
+                requiredPlaceholders.any { it !in value }
+            }.map { it.name }
 
     private fun localeDirs(): List<File> =
-        resDir.listFiles { file -> file.isDirectory && file.name.startsWith("values") }
+        resDir
+            .listFiles { file -> file.isDirectory && file.name.startsWith("values") }
             .orEmpty()
             .filter { File(it, "strings.xml").isFile }
             .sortedBy { it.name }
 
-    private fun stringIn(localeDir: File, stringName: String): String? =
+    private fun stringIn(
+        localeDir: File,
+        stringName: String,
+    ): String? =
         Regex("""<string name="$stringName">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
-            .find(File(localeDir, "strings.xml").readText())?.groupValues?.get(1)
+            .find(File(localeDir, "strings.xml").readText())
+            ?.groupValues
+            ?.get(1)
 }

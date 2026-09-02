@@ -87,19 +87,22 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import mx.platacard.pagerindicator.PagerIndicator
 import org.koin.androidx.compose.koinViewModel
 import org.neteinstein.family.domain.model.Question
 import org.neteinstein.family.domain.model.QuestionCategory
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private const val SWIPE_THRESHOLD = 100f
 private const val VERTICAL_SWIPE_THRESHOLD = 120f
 private const val MAX_VERTICAL_NUDGE = 140f
 
 @Composable
-fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
+fun HomeScreen(
+    onSettingsClick: () -> Unit,
+    viewModel: HomeViewModel = koinViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var swipeDirection by remember { mutableIntStateOf(0) } // -1 left, +1 right, 0 none
     var fullScreenQuestion by remember { mutableStateOf<Question?>(null) }
@@ -120,36 +123,40 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Decorative background gradient
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                MaterialTheme.colorScheme.background
-                            ),
-                            radius = 900f
-                        )
-                    )
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush =
+                                Brush.radialGradient(
+                                    colors =
+                                        listOf(
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                            MaterialTheme.colorScheme.background,
+                                        ),
+                                    radius = 900f,
+                                ),
+                        ),
             )
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Top bar
                 HomeTopBar(
                     onShuffleClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
                     shuffleEnabled = uiState.questions.isNotEmpty(),
-                    onSettingsClick = onSettingsClick
+                    onSettingsClick = onSettingsClick,
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -160,13 +167,13 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                         text = stringResource(R.string.home_swipe_hint),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                     Text(
                         text = stringResource(R.string.home_vertical_swipe_hint),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
 
@@ -175,7 +182,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 if (uiState.isLoading) {
                     Box(
                         modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
@@ -183,7 +190,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                     QuestionGrid(
                         questions = uiState.questions,
                         onQuestionClick = { fullScreenQuestion = it },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 } else {
                     QuestionCard(
@@ -199,7 +206,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                             viewModel.previousQuestion()
                         },
                         onSwipeUp = { fullScreenQuestion = uiState.currentQuestion },
-                        onSwipeDown = { showHideConfirmDialog = true }
+                        onSwipeDown = { showHideConfirmDialog = true },
                     )
                 }
 
@@ -213,7 +220,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                             ProgressDots(
                                 current = uiState.currentIndex,
                                 total = uiState.totalQuestions,
-                                modifier = Modifier.align(Alignment.Center)
+                                modifier = Modifier.align(Alignment.Center),
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
@@ -222,7 +229,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                         CategoryDropdown(
                             selectedCategory = uiState.selectedCategory,
                             onCategorySelected = viewModel::onCategorySelected,
-                            modifier = Modifier.align(Alignment.CenterStart)
+                            modifier = Modifier.align(Alignment.CenterStart),
                         )
                     }
                 }
@@ -233,42 +240,46 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
             // View toggle (bottom right corner), hidden while a card is shown full screen.
             IconButton(
                 onClick = { isGridView = !isGridView },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(16.dp)
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(16.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = if (isGridView) Icons.Default.ViewCarousel else Icons.Default.GridView,
-                    contentDescription = stringResource(
-                        if (isGridView) R.string.cd_switch_to_swipe_view else R.string.cd_switch_to_grid_view
-                    ),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentDescription =
+                        stringResource(
+                            if (isGridView) R.string.cd_switch_to_swipe_view else R.string.cd_switch_to_grid_view,
+                        ),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
             AnimatedVisibility(
                 visible = fullScreenQuestion != null,
-                enter = fadeIn(tween(200)) +
-                    expandIn(
-                        animationSpec = tween(400, easing = FastOutSlowInEasing),
-                        expandFrom = Alignment.Center
-                    ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
-                exit = fadeOut(tween(200)) +
-                    shrinkOut(
-                        animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        shrinkTowards = Alignment.Center
-                    ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
-                modifier = Modifier.fillMaxSize()
+                enter =
+                    fadeIn(tween(200)) +
+                        expandIn(
+                            animationSpec = tween(400, easing = FastOutSlowInEasing),
+                            expandFrom = Alignment.Center,
+                        ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
+                exit =
+                    fadeOut(tween(200)) +
+                        shrinkOut(
+                            animationSpec = tween(300, easing = FastOutSlowInEasing),
+                            shrinkTowards = Alignment.Center,
+                        ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
+                modifier = Modifier.fillMaxSize(),
             ) {
                 FullScreenQuestion(
                     question = lastFullScreenQuestion,
                     onClose = { fullScreenQuestion = null },
                     onRandomClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
-                    randomEnabled = uiState.questions.isNotEmpty()
+                    randomEnabled = uiState.questions.isNotEmpty(),
                 )
             }
         }
@@ -284,7 +295,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                     onClick = {
                         showHideConfirmDialog = false
                         viewModel.markCurrentQuestionAsUsed()
-                    }
+                    },
                 ) {
                     Text(stringResource(R.string.yes))
                 }
@@ -293,7 +304,7 @@ fun HomeScreen(onSettingsClick: () -> Unit, viewModel: HomeViewModel = koinViewM
                 TextButton(onClick = { showHideConfirmDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 }
@@ -303,75 +314,80 @@ private fun FullScreenQuestion(
     question: Question?,
     onClose: () -> Unit,
     onRandomClick: () -> Unit,
-    randomEnabled: Boolean
+    randomEnabled: Boolean,
 ) {
     var offsetY by remember { mutableFloatStateOf(0f) }
     Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = {
-                        if (offsetY > VERTICAL_SWIPE_THRESHOLD) {
-                            onClose()
-                        }
-                        offsetY = 0f
-                    },
-                    onDragCancel = { offsetY = 0f },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        offsetY += dragAmount.y
-                    }
-                )
-            },
-        color = MaterialTheme.colorScheme.surface
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            if (offsetY > VERTICAL_SWIPE_THRESHOLD) {
+                                onClose()
+                            }
+                            offsetY = 0f
+                        },
+                        onDragCancel = { offsetY = 0f },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            offsetY += dragAmount.y
+                        },
+                    )
+                },
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             IconButton(
                 onClick = onClose,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(16.dp)
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(16.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.cd_close),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
             IconButton(
                 onClick = onRandomClick,
                 enabled = randomEnabled,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(16.dp)
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(16.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = Icons.Default.Casino,
                     contentDescription = stringResource(R.string.cd_shuffle_card),
-                    tint = if (randomEnabled) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    }
+                    tint =
+                        if (randomEnabled) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        },
                 )
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 question?.category?.let { category ->
                     CategoryPill(category = category)
@@ -379,7 +395,7 @@ private fun FullScreenQuestion(
                 }
                 Text(
                     text = "💬",
-                    style = MaterialTheme.typography.displayLarge
+                    style = MaterialTheme.typography.displayLarge,
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
@@ -388,7 +404,7 @@ private fun FullScreenQuestion(
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = MaterialTheme.typography.headlineMedium.lineHeight * 1.2f
+                    lineHeight = MaterialTheme.typography.headlineMedium.lineHeight * 1.2f,
                 )
             }
         }
@@ -399,58 +415,62 @@ private fun FullScreenQuestion(
 private fun HomeTopBar(
     onShuffleClick: () -> Unit,
     shuffleEnabled: Boolean,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
             Text(
                 text = stringResource(R.string.home_app_name),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
             Text(
                 text = stringResource(R.string.home_subtitle),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             IconButton(
                 onClick = onShuffleClick,
                 enabled = shuffleEnabled,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = Icons.Default.Casino,
                     contentDescription = stringResource(R.string.cd_shuffle_card),
-                    tint = if (shuffleEnabled) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    }
+                    tint =
+                        if (shuffleEnabled) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        },
                 )
             }
             IconButton(
                 onClick = onSettingsClick,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = stringResource(R.string.cd_settings),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -465,24 +485,24 @@ private fun QuestionCard(
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit,
     onSwipeUp: () -> Unit,
-    onSwipeDown: () -> Unit
+    onSwipeDown: () -> Unit,
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
     val cardRotation by animateFloatAsState(
         targetValue = offsetX * 0.04f,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "cardRotation"
+        label = "cardRotation",
     )
     val cardOffsetY by animateFloatAsState(
         targetValue = offsetY,
         animationSpec = spring(stiffness = Spring.StiffnessLow),
-        label = "cardOffsetY"
+        label = "cardOffsetY",
     )
 
     Box(
         modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         AnimatedContent(
             targetState = uiState.currentQuestion,
@@ -495,66 +515,70 @@ private fun QuestionCard(
                         (slideOutHorizontally(tween(400)) { it } + fadeOut(tween(300)))
                 }
             },
-            label = "questionCard"
+            label = "questionCard",
         ) { question ->
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .offset { IntOffset(0, cardOffsetY.roundToInt()) }
-                    .rotate(cardRotation)
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragEnd = {
-                                val isVerticalSwipe = abs(offsetY) > abs(offsetX)
-                                when {
-                                    isVerticalSwipe && offsetY < -VERTICAL_SWIPE_THRESHOLD -> onSwipeUp()
-                                    isVerticalSwipe && offsetY > VERTICAL_SWIPE_THRESHOLD -> onSwipeDown()
-                                    !isVerticalSwipe && offsetX < -SWIPE_THRESHOLD -> onSwipeLeft()
-                                    !isVerticalSwipe && offsetX > SWIPE_THRESHOLD -> onSwipeRight()
-                                }
-                                offsetX = 0f
-                                offsetY = 0f
-                            },
-                            onDragCancel = {
-                                offsetX = 0f
-                                offsetY = 0f
-                            },
-                            onDrag = { change, dragAmount ->
-                                change.consume()
-                                offsetX += dragAmount.x
-                                offsetY = (offsetY + dragAmount.y).coerceIn(-MAX_VERTICAL_NUDGE, MAX_VERTICAL_NUDGE)
-                            }
-                        )
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                        .offset { IntOffset(0, cardOffsetY.roundToInt()) }
+                        .rotate(cardRotation)
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragEnd = {
+                                    val isVerticalSwipe = abs(offsetY) > abs(offsetX)
+                                    when {
+                                        isVerticalSwipe && offsetY < -VERTICAL_SWIPE_THRESHOLD -> onSwipeUp()
+                                        isVerticalSwipe && offsetY > VERTICAL_SWIPE_THRESHOLD -> onSwipeDown()
+                                        !isVerticalSwipe && offsetX < -SWIPE_THRESHOLD -> onSwipeLeft()
+                                        !isVerticalSwipe && offsetX > SWIPE_THRESHOLD -> onSwipeRight()
+                                    }
+                                    offsetX = 0f
+                                    offsetY = 0f
+                                },
+                                onDragCancel = {
+                                    offsetX = 0f
+                                    offsetY = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    offsetX += dragAmount.x
+                                    offsetY = (offsetY + dragAmount.y).coerceIn(-MAX_VERTICAL_NUDGE, MAX_VERTICAL_NUDGE)
+                                },
+                            )
+                        },
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(24.dp)
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                shape = RoundedCornerShape(24.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
-                                )
-                            )
-                        )
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush =
+                                    Brush.linearGradient(
+                                        colors =
+                                            listOf(
+                                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f),
+                                            ),
+                                    ),
+                            ).padding(32.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     if (question == null) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Text(
                                 text = "🗂️",
-                                style = MaterialTheme.typography.displaySmall
+                                style = MaterialTheme.typography.displaySmall,
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
@@ -562,20 +586,20 @@ private fun QuestionCard(
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Medium,
                                 textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = stringResource(R.string.home_no_cards_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                         }
                     } else {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             CategoryPill(category = question.category)
                             Spacer(modifier = Modifier.height(24.dp))
@@ -585,7 +609,7 @@ private fun QuestionCard(
                                 fontWeight = FontWeight.Medium,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.2f
+                                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.2f,
                             )
                             Spacer(modifier = Modifier.height(32.dp))
                             Text(
@@ -593,7 +617,7 @@ private fun QuestionCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
@@ -607,17 +631,17 @@ private fun QuestionCard(
 private fun QuestionGrid(
     questions: List<Question>,
     onQuestionClick: (Question) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (questions.isEmpty()) {
         Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 Text(
                     text = "🗂️",
-                    style = MaterialTheme.typography.displaySmall
+                    style = MaterialTheme.typography.displaySmall,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
@@ -625,14 +649,14 @@ private fun QuestionGrid(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = stringResource(R.string.home_no_cards_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -644,46 +668,52 @@ private fun QuestionGrid(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(questions, key = { it.id }) { question ->
             GridQuestionCard(
                 question = question,
-                onClick = { onQuestionClick(question) }
+                onClick = { onQuestionClick(question) },
             )
         }
     }
 }
 
 @Composable
-private fun GridQuestionCard(question: Question, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun GridQuestionCard(
+    question: Question,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Card(
         onClick = onClick,
         modifier = modifier.aspectRatio(0.75f),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
-                        )
-                    )
-                )
-                .padding(10.dp),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush =
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f),
+                                    ),
+                            ),
+                    ).padding(10.dp),
+            contentAlignment = Alignment.Center,
         ) {
             // The full CategoryPill label (emoji + name) is too wide for a 3-column card and
             // would get clipped by the card's rounded corners, so just show the emoji here.
             Text(
                 text = question.category.emoji,
                 style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.align(Alignment.TopEnd)
+                modifier = Modifier.align(Alignment.TopEnd),
             )
             Text(
                 text = question.text,
@@ -692,14 +722,14 @@ private fun GridQuestionCard(question: Question, onClick: () -> Unit, modifier: 
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 5,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
-private fun categoryLabelRes(category: QuestionCategory): Int {
-    return when (category) {
+private fun categoryLabelRes(category: QuestionCategory): Int =
+    when (category) {
         is QuestionCategory.IceBreakers -> R.string.category_ice_breakers
         is QuestionCategory.Memories -> R.string.category_memories
         is QuestionCategory.Values -> R.string.category_values
@@ -707,26 +737,27 @@ private fun categoryLabelRes(category: QuestionCategory): Int {
         is QuestionCategory.DailyLife -> R.string.category_daily_life
         else -> R.string.category_ice_breakers
     }
-}
 
 @Composable
-private fun categoryDisplayLabel(category: QuestionCategory): String {
-    return category.emoji + " " + stringResource(categoryLabelRes(category))
-}
+private fun categoryDisplayLabel(category: QuestionCategory): String = category.emoji + " " + stringResource(categoryLabelRes(category))
 
 @Composable
-private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifier) {
+private fun CategoryPill(
+    category: QuestionCategory,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
         Text(
             text = categoryDisplayLabel(category),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
-            maxLines = 1
+            maxLines = 1,
         )
     }
 }
@@ -735,7 +766,7 @@ private fun CategoryPill(category: QuestionCategory, modifier: Modifier = Modifi
 private fun CategoryDropdown(
     selectedCategory: QuestionCategory?,
     onCategorySelected: (QuestionCategory?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var anchorHeightPx by remember { mutableIntStateOf(0) }
@@ -756,39 +787,40 @@ private fun CategoryDropdown(
 
     Box(modifier = modifier) {
         Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable { expanded = true }
-                .onGloballyPositioned { anchorHeightPx = it.size.height }
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { expanded = true }
+                    .onGloballyPositioned { anchorHeightPx = it.size.height }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = selectedLabel,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
+                maxLines = 1,
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
                 contentDescription = stringResource(R.string.cd_filter_by_category),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             offset = DpOffset(0.dp, -with(density) { anchorHeightPx.toDp() }),
-            properties = PopupProperties(focusable = true, clippingEnabled = false)
+            properties = PopupProperties(focusable = true, clippingEnabled = false),
         ) {
             DropdownMenuItem(
                 text = { Text(allLabel) },
                 onClick = {
                     expanded = false
                     onCategorySelected(null)
-                }
+                },
             )
             for ((category, label) in categoryLabels) {
                 DropdownMenuItem(
@@ -796,7 +828,7 @@ private fun CategoryDropdown(
                     onClick = {
                         expanded = false
                         onCategorySelected(category)
-                    }
+                    },
                 )
             }
         }
@@ -809,7 +841,11 @@ private fun CategoryDropdown(
 private const val MAX_VISIBLE_DOTS = 7
 
 @Composable
-private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier) {
+private fun ProgressDots(
+    current: Int,
+    total: Int,
+    modifier: Modifier = Modifier,
+) {
     if (total <= 0) return
     // The deck loops through every card in the category (nextQuestion/previousQuestion wrap via
     // modulo), so the indicator's page count/fraction are derived from the wrapped index rather
@@ -821,6 +857,6 @@ private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier
         activeDotColor = MaterialTheme.colorScheme.primary,
         dotColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
         dotCount = minOf(total, MAX_VISIBLE_DOTS),
-        modifier = modifier
+        modifier = modifier,
     )
 }

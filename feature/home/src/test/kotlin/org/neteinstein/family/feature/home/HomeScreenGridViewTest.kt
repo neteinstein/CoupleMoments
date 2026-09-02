@@ -22,15 +22,15 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class HomeScreenGridViewTest {
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val fakeQuestions = listOf(
-        Question(id = 1, text = "Grid question one?", languageCode = "en"),
-        Question(id = 2, text = "Grid question two?", languageCode = "en"),
-        Question(id = 3, text = "Grid question three?", languageCode = "en")
-    )
+    private val fakeQuestions =
+        listOf(
+            Question(id = 1, text = "Grid question one?", languageCode = "en"),
+            Question(id = 2, text = "Grid question two?", languageCode = "en"),
+            Question(id = 3, text = "Grid question three?", languageCode = "en"),
+        )
 
     private fun buildViewModel(): HomeViewModel {
         val getQuestionsUseCase: GetQuestionsUseCase = mockk()

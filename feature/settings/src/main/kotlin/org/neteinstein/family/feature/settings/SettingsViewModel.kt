@@ -26,7 +26,7 @@ class SettingsViewModel(
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase,
     private val appUpdateInstaller: AppUpdateInstaller,
     private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase,
-    private val updatesEnabled: Boolean = true
+    private val updatesEnabled: Boolean = true,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SettingsUiState(updatesEnabled = updatesEnabled))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()

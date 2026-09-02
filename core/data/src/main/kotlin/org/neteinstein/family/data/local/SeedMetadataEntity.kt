@@ -10,7 +10,10 @@ import androidx.room.PrimaryKey
  * fully replace seeded cards instead of only ever being able to add missing ones.
  */
 @Entity(tableName = "seed_metadata")
-data class SeedMetadataEntity(@PrimaryKey val id: Int = SINGLETON_ID, val version: Int) {
+data class SeedMetadataEntity(
+    @PrimaryKey val id: Int = SINGLETON_ID,
+    val version: Int,
+) {
     companion object {
         const val SINGLETON_ID = 0
     }

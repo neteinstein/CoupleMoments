@@ -1,8 +1,8 @@
 package org.neteinstein.family.domain.repository
 
-import java.io.File
 import org.neteinstein.family.domain.model.AppUpdate
 import org.neteinstein.family.domain.model.UpdateCheckResult
+import java.io.File
 
 /** Boundary between the update-check domain layer and GitHub Releases. */
 interface UpdateRepository {

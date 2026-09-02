@@ -12,7 +12,7 @@ import org.neteinstein.family.feature.splash.SplashScreen
 fun AppNavigation(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.Splash.route,
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
@@ -20,21 +20,21 @@ fun AppNavigation(navController: NavHostController) {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
-                }
+                },
             )
         }
         composable(Screen.Home.route) {
             HomeScreen(
                 onSettingsClick = {
                     navController.navigate(Screen.Settings.route)
-                }
+                },
             )
         }
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onBack = {
                     navController.navigateUp()
-                }
+                },
             )
         }
     }
