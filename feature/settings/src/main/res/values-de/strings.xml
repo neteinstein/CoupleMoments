@@ -6,7 +6,7 @@
     <string name="settings_language_subtitle">Sprache in den Android-Einstellungen ändern</string>
     <string name="section_about">Über</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_app_title_format">%1$s (Teil von %2$s)</string>
+    <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Familien näher zusammenbringen, eine Frage nach der anderen. ❤️</string>
     <string name="section_reset_cards">Karten Zurücksetzen</string>

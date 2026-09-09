@@ -6,7 +6,7 @@
     <string name="settings_language_subtitle">Changez la langue dans les paramètres Android</string>
     <string name="section_about">À propos</string>
     <string name="app_name">Family Moments</string>
-    <string name="settings_app_title_format">%1$s (fait partie de %2$s)</string>
+    <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Rapprocher les familles, une question à la fois. ❤️</string>
     <string name="section_reset_cards">Réinitialiser les Cartes</string>
