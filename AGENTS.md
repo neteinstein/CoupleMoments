@@ -16,6 +16,7 @@ Family Moments is an Android app that helps families spark meaningful conversati
 ./gradlew assembleDebug                  # compile (mirrors CI "Compile" job)
 ./gradlew testDebugUnitTest              # run all unit tests (mirrors CI "Unit Tests" job)
 ./gradlew createDebugUnitTestCoverageReport  # run tests + generate AGP built-in coverage reports (mirrors CI "Code Coverage" job)
+./gradlew assembleRelease && ./scripts/verify-obfuscation.sh  # build + check the minified/obfuscated release (mirrors CI "Minified Release" job)
 ```
 
 Run tests for a single module:
@@ -32,7 +33,7 @@ Run a single test class or method (`--tests` works with any of the module target
 
 `./gradlew ktlintCheck` runs the [ktlint Gradle plugin](https://github.com/JLLeitschuh/ktlint-gradle) (applied per-module, configured in each module's `build.gradle.kts` + root `.editorconfig`) — the formatting/style gate CI relies on. Run `./gradlew ktlintFormat` to auto-fix violations.
 
-CI (`.github/workflows/pr.yml`) runs four independent jobs on every PR into `main`/`develop`: `ktlint`, `assembleDebug`, `testDebugUnitTest`, and `createDebugUnitTestCoverageReport` (coverage report uploaded to Codecov). Coverage comes from AGP's built-in `enableUnitTestCoverage = true` (set per-module in `buildTypes { debug { ... } }`) — there is no separate Jacoco plugin applied.
+CI (`.github/workflows/pr.yml`) runs five independent jobs on every PR into `main`/`develop`: `ktlint`, `assembleDebug`, `assembleRelease` + `scripts/verify-obfuscation.sh` (see [Obfuscation and shrinking](#obfuscation-and-shrinking) — `assembleDebug` never runs R8, so this is what catches a broken keep rule), `testDebugUnitTest`, and `createDebugUnitTestCoverageReport` (coverage report uploaded to Codecov). Coverage comes from AGP's built-in `enableUnitTestCoverage = true` (set per-module in `buildTypes { debug { ... } }`) — there is no separate Jacoco plugin applied.
 
 ## Releases
 
@@ -45,6 +46,20 @@ After the GitHub Release step, the workflow also runs `publishPlaystoreReleaseBu
 **Troubleshooting a `403 PERMISSION_DENIED` from `publishPlaystoreReleaseBundle`:** the request that fails is `POST .../applications/<applicationId>/edits` (the very first call Gradle Play Publisher makes, before it touches any track), so the cause is always the service account's standing in the Play Console, not this repo's Gradle config. Check, in order: (1) the service account (the `client_email` inside the `ANDROID_PUBLISHER_CREDENTIALS` JSON) has been invited as a user under Play Console → Users and permissions, with access to *this specific app* (not just "all apps" from a different app list) and the "Release to production, exclude devices, and use Play App Signing" permission (or at least a testing-track release permission); (2) a first release for `applicationId` (`app/build.gradle.kts`) has been uploaded manually through the Play Console — the API can only publish updates, never the initial listing; (3) the Google Play Android Developer API is enabled on the Google Cloud project the service account key belongs to; (4) a newly-granted permission can take a few hours to propagate on Google's side, so a re-run after a short wait can resolve it with no config change at all.
 
 The `github` flavor keeps an in-app self-update flow: the Settings screen's "Update to latest" button (`feature:settings`'s `SettingsViewModel`/`SettingsScreen`) checks `https://api.github.com/repos/neteinstein/FamilyMoments/releases/latest` (`core:data`'s `GitHubUpdateRepositoryImpl`), compares the tag against the installed `versionName` (`core:domain`'s `isNewerVersion`), and downloads/installs the APK asset via `AppUpdateInstallerImpl` (a `FileProvider`-backed install flow gated by the `REQUEST_INSTALL_PACKAGES` permission, the `FileProvider`, and `UpdateApkCleanupReceiver` — all declared only in `app/src/github/AndroidManifest.xml`, merged in for that flavor only). The `playstore` flavor has this feature stripped entirely: `app/build.gradle.kts` sets `BuildConfig.UPDATES_ENABLED = false` for it, wired via Koin as a named `"updatesEnabled"` boolean (`app/.../di/AppModule.kt` → `feature/settings/.../di/SettingsModule.kt`) into `SettingsViewModel`, which skips the update check entirely and drives `SettingsUiState.updatesEnabled = false` so `SettingsScreen` never renders the "Updates" section; the Play Store flavor's manifest carries none of the permission/provider/receiver above since they're only declared in the `github` source set.
+
+### Obfuscation and shrinking
+
+The `release` build type (`app/build.gradle.kts`) is minified, obfuscated **and** resource-shrunk for both flavors — `isMinifyEnabled = true` + `isShrinkResources = true`, with R8 in full mode (`android.enableR8.fullMode=true` in `gradle.properties`). `debug` is untouched, so `assembleDebug` and every unit test run against unshrunk code; nothing about R8 is exercised by the debug pipeline.
+
+`app/proguard-rules.pro` deliberately keeps almost nothing. Everything this app resolves through ordinary Kotlin calls — Koin's `single { }`/`get()`/`by inject()` DSL (which captures `KClass` literals at compile time), use cases, ViewModels, domain models, Compose UI — is renamed consistently by R8 at both the definition and the call site, so keeping it only inflates the APK and weakens the obfuscation. **Only add a `-keep` for something reached by name at runtime**, and say in a comment what resolves it:
+
+- **Room** is the one such case in this codebase. `Room.databaseBuilder(...)` (`core/data/.../data/di/DataModule.kt`) resolves the KSP-generated `FamilyMomentsDatabase_Impl` with `Class.forName` on the runtime name of the class it is handed + `"_Impl"`, so `-keep class * extends androidx.room.RoomDatabase { <init>(); }` pins both halves. Renaming either independently is a runtime crash, not a build error.
+- **Manifest-declared components** (`MainActivity`, `FamilyMomentsApp`, `UpdateApkCleanupReceiver`, the `FileProvider`) need no rule here — AGP generates keep rules from the merged manifest.
+- **Resource shrinking** is safe only because nothing looks a resource up dynamically; every reference is a static `R.*` one. Adding a `Resources.getIdentifier` call anywhere means either a `tools:keep` entry or turning `isShrinkResources` back off.
+
+`scripts/verify-obfuscation.sh` reads R8's `mapping.txt` for each release variant and fails if no `org.neteinstein.family.*` class was renamed (i.e. obfuscation silently stopped happening) or if either Room name above lost its identity. The "Minified Release" PR job and the release workflow both run it — an over-broad `-keep` or a flipped `isMinifyEnabled` therefore fails CI rather than shipping.
+
+Obfuscated stack traces need the matching mapping file, and R8 emits a different one per build. `-keepattributes SourceFile,LineNumberTable` + `-renamesourcefileattribute SourceFile` keep traces line-accurate without shipping the original `.kt` filenames, and `.github/workflows/release.yml` attaches `*-mapping.txt` for both flavors to every GitHub Release (the `.aab` needs no asset — AGP embeds its mapping in the bundle, so the Play Console de-obfuscates that flavor itself). Run a trace through R8's `retrace` with the mapping from the exact release the crash came from.
 
 `.github/dependabot.yml` runs weekly `gradle` and `github-actions` update checks.
 
