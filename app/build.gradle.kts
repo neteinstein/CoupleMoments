@@ -128,7 +128,7 @@ android {
 // in the Play Console.
 play {
     enabled.set(false)
-    track.set(System.getenv("PLAY_TRACK") ?: "internal")
+    track.set(System.getenv("PLAY_TRACK")?.takeIf { it.isNotBlank() } ?: "internal")
     defaultToAppBundles.set(true)
 }
 
