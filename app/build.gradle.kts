@@ -73,7 +73,18 @@ android {
             isDebuggable = true
         }
         release {
+            // R8 runs in full mode (android.enableR8.fullMode in gradle.properties) over both
+            // distribution flavors: it strips unreachable code, obfuscates what is left, and -
+            // with isShrinkResources - drops resources nothing references any more. Every keep
+            // rule the app actually needs (Room's reflective "_Impl" lookup, stack-trace
+            // attributes) lives in proguard-rules.pro; "proguard-android-optimize.txt" is AGP's
+            // own baseline (the optimizing variant, i.e. without -dontoptimize).
             isMinifyEnabled = true
+            // Safe to pair with minification here because nothing in this app resolves a resource
+            // dynamically (no Resources.getIdentifier) - every reference is a static R.* one that
+            // the shrinker can see. Kept in lockstep with isMinifyEnabled: resource shrinking
+            // relies on the code shrinker's reachability analysis and is a no-op without it.
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

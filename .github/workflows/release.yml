@@ -89,6 +89,14 @@ jobs:
           APP_VERSION_NAME: "1.0.${{ github.run_number }}"
         run: ./gradlew assembleRelease bundlePlaystoreRelease --no-daemon --stacktrace
 
+      # Both release APKs are minified and obfuscated (app/build.gradle.kts + app/proguard-rules.pro).
+      # PR Checks runs this same assertion, but a squash/rebase merge can land a shrinker-config
+      # change on main that was never built as a release, so re-check here before publishing: a
+      # silently un-obfuscated build, or one that renamed the classes Room resolves by name, must
+      # not reach users.
+      - name: Verify obfuscation
+        run: ./scripts/verify-obfuscation.sh
+
       # Renames each build output to a release-facing artifact name and computes its SHA-1 so all
       # three can be surfaced consistently (asset names + release notes) in the next step.
       - name: Prepare release artifacts
@@ -116,6 +124,23 @@ jobs:
           echo "playstore_aab_path=$PLAYSTORE_AAB_PATH" >> "$GITHUB_OUTPUT"
           echo "playstore_aab_sha1=$PLAYSTORE_AAB_SHA1" >> "$GITHUB_OUTPUT"
 
+          # R8's rename table for each obfuscated APK above. Without the mapping file for the
+          # exact build a user is running, a crash report from it is unreadable - and R8 produces
+          # a different mapping on every build, so it has to be archived per release rather than
+          # regenerated later. The .aab does not need one attached: AGP embeds the mapping in the
+          # bundle, so the Play Console de-obfuscates that flavor's crashes by itself.
+          # Copied rather than moved, unlike the binaries above: mapping.txt is an output of the
+          # R8 task, and removing it would make Gradle re-run minification during the Play publish
+          # step below - producing a fresh, different mapping for the bundle it uploads than the
+          # one attached here.
+          GITHUB_MAPPING_PATH="$RUNNER_TEMP/FamilyMoments_version${VERSION_UNDERSCORE}-github-mapping.txt"
+          cp app/build/outputs/mapping/githubRelease/mapping.txt "$GITHUB_MAPPING_PATH"
+          echo "github_mapping_path=$GITHUB_MAPPING_PATH" >> "$GITHUB_OUTPUT"
+
+          PLAYSTORE_MAPPING_PATH="$RUNNER_TEMP/FamilyMoments_version${VERSION_UNDERSCORE}-playstore-mapping.txt"
+          cp app/build/outputs/mapping/playstoreRelease/mapping.txt "$PLAYSTORE_MAPPING_PATH"
+          echo "playstore_mapping_path=$PLAYSTORE_MAPPING_PATH" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -126,15 +151,21 @@ jobs:
           PLAYSTORE_SHA1: ${{ steps.artifact.outputs.playstore_sha1 }}
           PLAYSTORE_AAB_PATH: ${{ steps.artifact.outputs.playstore_aab_path }}
           PLAYSTORE_AAB_SHA1: ${{ steps.artifact.outputs.playstore_aab_sha1 }}
+          GITHUB_MAPPING_PATH: ${{ steps.artifact.outputs.github_mapping_path }}
+          PLAYSTORE_MAPPING_PATH: ${{ steps.artifact.outputs.playstore_mapping_path }}
         run: |
           gh release create "v${VERSION_NAME}" \
             "$GITHUB_APK_PATH" \
             "$PLAYSTORE_APK_PATH" \
             "$PLAYSTORE_AAB_PATH" \
+            "$GITHUB_MAPPING_PATH" \
+            "$PLAYSTORE_MAPPING_PATH" \
             --title "v${VERSION_NAME}" \
             --notes "**github flavor (self-updating) SHA-1:** \`${GITHUB_SHA1}\`
           **playstore flavor (no self-update) SHA-1:** \`${PLAYSTORE_SHA1}\`
-          **playstore flavor App Bundle (.aab) SHA-1:** \`${PLAYSTORE_AAB_SHA1}\` - download this and upload it by hand in the Play Console for the app's first release; after that, publishPlaystoreReleaseBundle below takes over automatically." \
+          **playstore flavor App Bundle (.aab) SHA-1:** \`${PLAYSTORE_AAB_SHA1}\` - download this and upload it by hand in the Play Console for the app's first release; after that, publishPlaystoreReleaseBundle below takes over automatically.
+
+          The two \`*-mapping.txt\` assets are R8's rename tables for this release's obfuscated APKs. A stack trace from either build only becomes readable when run through the matching one (\`retrace <mapping.txt> <trace.txt>\`); each release has its own." \
             --generate-notes
 
       # The `secrets` context isn't available in step-level `if:` conditions, so the
