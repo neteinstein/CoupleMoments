@@ -10,14 +10,14 @@
 # did. Reading it here turns "obfuscation is on and Room still resolves" into a PR gate.
 set -euo pipefail
 
-readonly APP_PACKAGE_PREFIX="org.neteinstein.family."
+readonly APP_PACKAGE_PREFIX="org.neteinstein.couples."
 # Room appends "_Impl" to the runtime name of the class passed to Room.databaseBuilder(...) and
 # looks the result up with Class.forName (core/data/.../data/di/DataModule.kt), so renaming either
 # of these independently breaks the database at runtime. Pinned by the RoomDatabase keep rule in
 # app/proguard-rules.pro; asserted here because the failure is a runtime crash, not a build error.
 readonly ROOM_KEPT_CLASSES=(
-    "org.neteinstein.family.data.local.FamilyMomentsDatabase"
-    "org.neteinstein.family.data.local.FamilyMomentsDatabase_Impl"
+    "org.neteinstein.couples.data.local.CoupleMomentsDatabase"
+    "org.neteinstein.couples.data.local.CoupleMomentsDatabase_Impl"
 )
 
 failures=0

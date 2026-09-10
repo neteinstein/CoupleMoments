@@ -31,7 +31,7 @@
 -allowaccessmodification
 
 # ── Room ─────────────────────────────────────────────────────────────────────
-# Room resolves the KSP-generated `FamilyMomentsDatabase_Impl` reflectively, by appending "_Impl"
+# Room resolves the KSP-generated `CoupleMomentsDatabase_Impl` reflectively, by appending "_Impl"
 # to the runtime name of the class handed to `Room.databaseBuilder(...)` (see
 # core/data/.../data/di/DataModule.kt). Renaming either half independently breaks that lookup, so
 # both the abstract database class and its generated subclass - which also matches this rule,
