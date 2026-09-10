@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backs app/src/github/AndroidManifest.xml's FileProvider <provider> entry - scopes the
+  content:// Uris AppUpdateInstallerImpl can request to exactly the cache subdirectory
+  GitHubUpdateRepositoryImpl downloads the update APK into (context.cacheDir/updates/). Keep this
+  path in sync with GitHubUpdateRepositoryImpl's UPDATE_CACHE_DIR_NAME constant.
+-->
+<paths>
+    <cache-path
+        name="app_updates"
+        path="updates/" />
+</paths>

@@ -1,0 +1,30 @@
+<resources>
+    <string name="settings_title">Einstellungen</string>
+    <string name="cd_back">Zurück</string>
+    <string name="section_app_preferences">App-Einstellungen</string>
+    <string name="settings_language_title">App-Sprache</string>
+    <string name="settings_language_subtitle">Sprache in den Android-Einstellungen ändern</string>
+    <string name="section_about">Über</string>
+    <string name="app_name">Couple Moments</string>
+    <string name="settings_app_title_format">%2$s: %1$s</string>
+    <string name="settings_version_format">Version %1$s</string>
+    <string name="settings_about_description">Familien näher zusammenbringen, eine Frage nach der anderen. ❤️</string>
+    <string name="section_reset_cards">Karten Zurücksetzen</string>
+    <string name="reset_cards_description">Ausgeblendete Karten (nach unten gewischt als bereits verwendet oder unerwünscht) bleiben außerhalb der Rotation. Setze sie zurück, um sie alle wiederzubekommen.</string>
+    <string name="reset_cards_button">Karten Zurücksetzen</string>
+    <string name="resetting_cards">Karten werden zurückgesetzt…</string>
+    <string name="reset_cards_done">Alle Karten sind wieder sichtbar.</string>
+    <string name="reset_dialog_title">Alle Karten zurücksetzen?</string>
+    <string name="reset_dialog_message">Alle von dir ausgeblendeten Karten werden wieder sichtbar.</string>
+    <string name="reset_button">Zurücksetzen</string>
+    <string name="cancel_button">Abbrechen</string>
+    <string name="section_updates">Updates</string>
+    <string name="update_description">Prüft die eigenen GitHub-Releases dieser App auf eine neuere Version und installiert sie.</string>
+    <string name="update_button">Auf neueste Version aktualisieren</string>
+    <string name="checking_updates">Suche nach Updates…</string>
+    <string name="downloading_update">Update wird heruntergeladen…</string>
+    <string name="up_to_date_format">Du hast die neueste Version (%1$s).</string>
+    <string name="sideloading_blocked_message">Erlaube dieser App, Updates zu installieren, um fortzufahren.</string>
+    <string name="enable_installing_updates">Installation von Updates erlauben</string>
+    <string name="settings_loopgain_footer">Couple Moments ist Teil der %1$s-Toolfamilie von %2$s</string>
+</resources>

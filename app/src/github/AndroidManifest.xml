@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged only into the "github" distribution flavor (see app/build.gradle.kts productFlavors)
+     - the direct-APK build distributed via GitHub Releases that keeps the in-app self-update
+     check/install flow. The "playstore" flavor has no such override, so none of this is present
+     in that build: the Play Store reviews/distributes updates itself and disallows apps
+     installing packages outside it. Also the only source of the INTERNET permission - the
+     "playstore" flavor makes no network calls at all (update checks are the app's only network
+     usage), so it must not declare INTERNET. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Needed to check GitHub Releases for updates and download the update APK
+         (GitHubUpdateRepositoryImpl). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Gates AppUpdateInstaller.canInstallPackages()/installPackage() (the Settings screen's
+         "Update to latest" button) - granting this is a special, per-app "install unknown apps"
+         toggle the user must flip in system Settings; the permission's mere presence here does
+         not enable sideloading by itself, it only lets the app ask the OS whether it's allowed. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application>
+
+        <!-- Lets AppUpdateInstaller hand a downloaded update APK (cached under
+             context.cacheDir/updates/ by GitHubUpdateRepositoryImpl) to the system Package
+             Installer as a content:// Uri - a plain file:// Uri would throw
+             FileUriExposedException under this app's targetSdk. The authority here must match
+             AppUpdateInstallerImpl's FILE_PROVIDER_AUTHORITY_SUFFIX exactly, and
+             update_file_paths.xml's cache-path must match GitHubUpdateRepositoryImpl's download
+             directory exactly. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.update.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_file_paths" />
+        </provider>
+
+        <!-- Deletes the APK GitHubUpdateRepositoryImpl downloaded to context.cacheDir once this
+             app finishes installing it, so it doesn't sit there wasting space. MY_PACKAGE_REPLACED
+             is one of the few broadcasts exempted from Android 8+'s implicit-broadcast background
+             restrictions, and is only delivered to the app that was just updated - see
+             UpdateApkCleanupReceiver. Must be manifest-declared (not registered at runtime) since
+             the app process is commonly killed during its own update install. -->
+        <receiver
+            android:name="org.neteinstein.couples.data.receiver.UpdateApkCleanupReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>

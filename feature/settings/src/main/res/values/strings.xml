@@ -1,0 +1,34 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="cd_back">Back</string>
+    <string name="section_app_preferences">App Preferences</string>
+    <string name="settings_language_title">App Language</string>
+    <string name="settings_language_subtitle">Change language in Android settings</string>
+    <string name="section_about">About</string>
+    <string name="app_name">Couple Moments</string>
+    <string name="settings_app_title_format">%2$s: %1$s</string>
+    <string name="settings_version_format">Version %1$s</string>
+    <string name="settings_about_description">Bringing families closer, one question at a time. ❤️</string>
+    <string name="section_reset_cards">Reset Cards</string>
+    <string name="reset_cards_description">Hidden cards (swiped down as already used or not wanted) stay out of rotation. Reset to bring them all back.</string>
+    <string name="reset_cards_button">Reset Cards</string>
+    <string name="resetting_cards">Resetting cards…</string>
+    <string name="reset_cards_done">All cards are visible again.</string>
+    <string name="reset_dialog_title">Reset all cards?</string>
+    <string name="reset_dialog_message">Every card you\'ve hidden will become visible again.</string>
+    <string name="reset_button">Reset</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="section_updates">Updates</string>
+    <string name="update_description">Checks this app\'s own GitHub releases for a newer version and installs it.</string>
+    <string name="update_button">Update to latest</string>
+    <string name="checking_updates">Checking for updates…</string>
+    <string name="downloading_update">Downloading update…</string>
+    <string name="up_to_date_format">You\'re on the latest version (%1$s).</string>
+    <string name="sideloading_blocked_message">Allow this app to install updates to continue.</string>
+    <string name="enable_installing_updates">Enable installing updates</string>
+    <!-- Brand and author names; not translated. They are injected into
+         settings_loopgain_footer, where each becomes a tappable link. -->
+    <string name="loopgain_name" translatable="false">LoopGain</string>
+    <string name="pedro_vicente_name" translatable="false">Pedro Vicente</string>
+    <string name="settings_loopgain_footer">Couple Moments is part of the %1$s family tools by %2$s</string>
+</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <string name="splash_app_name">Couple Moments</string>
+    <string name="splash_tagline">✨ Conversaciones más profundas en familia</string>
+    <string name="splash_loopgain_footer" translatable="false">Part of the LoopGain Toolbox</string>
+</resources>
