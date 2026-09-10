@@ -1,0 +1,30 @@
+<resources>
+    <string name="settings_title">Paramètres</string>
+    <string name="cd_back">Retour</string>
+    <string name="section_app_preferences">Préférences de l\'App</string>
+    <string name="settings_language_title">Langue de l\'App</string>
+    <string name="settings_language_subtitle">Changez la langue dans les paramètres Android</string>
+    <string name="section_about">À propos</string>
+    <string name="app_name">Couple Moments</string>
+    <string name="settings_app_title_format">%2$s: %1$s</string>
+    <string name="settings_version_format">Version %1$s</string>
+    <string name="settings_about_description">Rapprocher les familles, une question à la fois. ❤️</string>
+    <string name="section_reset_cards">Réinitialiser les Cartes</string>
+    <string name="reset_cards_description">Les cartes masquées (glissées vers le bas comme déjà utilisées ou non désirées) restent hors rotation. Réinitialisez pour toutes les récupérer.</string>
+    <string name="reset_cards_button">Réinitialiser les Cartes</string>
+    <string name="resetting_cards">Réinitialisation des cartes…</string>
+    <string name="reset_cards_done">Toutes les cartes sont de nouveau visibles.</string>
+    <string name="reset_dialog_title">Réinitialiser toutes les cartes ?</string>
+    <string name="reset_dialog_message">Toutes les cartes que vous avez masquées redeviendront visibles.</string>
+    <string name="reset_button">Réinitialiser</string>
+    <string name="cancel_button">Annuler</string>
+    <string name="section_updates">Mises à jour</string>
+    <string name="update_description">Vérifie les releases GitHub de cette app à la recherche d\'une version plus récente et l\'installe.</string>
+    <string name="update_button">Mettre à jour</string>
+    <string name="checking_updates">Recherche de mises à jour…</string>
+    <string name="downloading_update">Téléchargement de la mise à jour…</string>
+    <string name="up_to_date_format">Vous avez la dernière version (%1$s).</string>
+    <string name="sideloading_blocked_message">Autorisez cette app à installer des mises à jour pour continuer.</string>
+    <string name="enable_installing_updates">Autoriser l\'installation des mises à jour</string>
+    <string name="settings_loopgain_footer">Couple Moments fait partie de la famille d’outils %1$s, par %2$s</string>
+</resources>

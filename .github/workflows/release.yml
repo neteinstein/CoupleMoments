@@ -1,0 +1,211 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # Fail fast before spending CI time on lint/test/build if the release secrets aren't set up.
+      - name: Validate required secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          missing=()
+          [ -z "$KEYSTORE_BASE64" ] && missing+=("KEYSTORE_BASE64")
+          [ -z "$KEYSTORE_PASSWORD" ] && missing+=("KEYSTORE_PASSWORD")
+          [ -z "$KEY_ALIAS" ] && missing+=("KEY_ALIAS")
+          [ -z "$KEY_PASSWORD" ] && missing+=("KEY_PASSWORD")
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "::error::Missing required Action secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      # PR Checks (pr.yml) validates the PR branch/merge ref, but a squash- or rebase-merge lands
+      # a commit on main that was never itself built or tested, so this is the only gate that
+      # actually covers the exact commit about to be released.
+      - name: Run ktlint
+        run: ./gradlew ktlintCheck --console=plain --no-daemon --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Decode signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+
+      # Builds both distribution flavors' release APKs (assembleRelease aggregates
+      # assembleGithubRelease + assemblePlaystoreRelease - see app/build.gradle.kts
+      # productFlavors): "github" keeps the in-app self-update flow for the direct-APK build
+      # published below, "playstore" has that flow stripped entirely and is meant for upload to
+      # the Play Console instead. Also builds the "playstore" flavor's release App Bundle
+      # (bundlePlaystoreRelease) - Play Console requires an .aab, and per the note below the very
+      # first upload for a new app has to be done by hand there, so this gets attached to the
+      # GitHub Release as a downloadable asset for that one-time manual step even when
+      # ANDROID_PUBLISHER_CREDENTIALS isn't set up yet.
+      - name: Build signed release APKs and AAB
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: ./gradlew assembleRelease bundlePlaystoreRelease --no-daemon --stacktrace
+
+      # Both release APKs are minified and obfuscated (app/build.gradle.kts + app/proguard-rules.pro).
+      # PR Checks runs this same assertion, but a squash/rebase merge can land a shrinker-config
+      # change on main that was never built as a release, so re-check here before publishing: a
+      # silently un-obfuscated build, or one that renamed the classes Room resolves by name, must
+      # not reach users.
+      - name: Verify obfuscation
+        run: ./scripts/verify-obfuscation.sh
+
+      # Renames each build output to a release-facing artifact name and computes its SHA-1 so all
+      # three can be surfaced consistently (asset names + release notes) in the next step.
+      - name: Prepare release artifacts
+        id: artifact
+        env:
+          VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: |
+          VERSION_UNDERSCORE="${VERSION_NAME//./_}"
+
+          GITHUB_APK_PATH="app/build/outputs/apk/github/release/CoupleMoments_version${VERSION_UNDERSCORE}-github.apk"
+          mv app/build/outputs/apk/github/release/app-github-release.apk "$GITHUB_APK_PATH"
+          GITHUB_SHA1=$(sha1sum "$GITHUB_APK_PATH" | awk '{print $1}')
+          echo "github_apk_path=$GITHUB_APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "github_sha1=$GITHUB_SHA1" >> "$GITHUB_OUTPUT"
+
+          PLAYSTORE_APK_PATH="app/build/outputs/apk/playstore/release/CoupleMoments_version${VERSION_UNDERSCORE}-playstore.apk"
+          mv app/build/outputs/apk/playstore/release/app-playstore-release.apk "$PLAYSTORE_APK_PATH"
+          PLAYSTORE_SHA1=$(sha1sum "$PLAYSTORE_APK_PATH" | awk '{print $1}')
+          echo "playstore_apk_path=$PLAYSTORE_APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "playstore_sha1=$PLAYSTORE_SHA1" >> "$GITHUB_OUTPUT"
+
+          PLAYSTORE_AAB_PATH="app/build/outputs/bundle/playstoreRelease/CoupleMoments_version${VERSION_UNDERSCORE}-playstore.aab"
+          mv app/build/outputs/bundle/playstoreRelease/app-playstore-release.aab "$PLAYSTORE_AAB_PATH"
+          PLAYSTORE_AAB_SHA1=$(sha1sum "$PLAYSTORE_AAB_PATH" | awk '{print $1}')
+          echo "playstore_aab_path=$PLAYSTORE_AAB_PATH" >> "$GITHUB_OUTPUT"
+          echo "playstore_aab_sha1=$PLAYSTORE_AAB_SHA1" >> "$GITHUB_OUTPUT"
+
+          # R8's rename table for each obfuscated APK above. Without the mapping file for the
+          # exact build a user is running, a crash report from it is unreadable - and R8 produces
+          # a different mapping on every build, so it has to be archived per release rather than
+          # regenerated later. The .aab does not need one attached: AGP embeds the mapping in the
+          # bundle, so the Play Console de-obfuscates that flavor's crashes by itself.
+          # Copied rather than moved, unlike the binaries above: mapping.txt is an output of the
+          # R8 task, and removing it would make Gradle re-run minification during the Play publish
+          # step below - producing a fresh, different mapping for the bundle it uploads than the
+          # one attached here.
+          GITHUB_MAPPING_PATH="$RUNNER_TEMP/CoupleMoments_version${VERSION_UNDERSCORE}-github-mapping.txt"
+          cp app/build/outputs/mapping/githubRelease/mapping.txt "$GITHUB_MAPPING_PATH"
+          echo "github_mapping_path=$GITHUB_MAPPING_PATH" >> "$GITHUB_OUTPUT"
+
+          PLAYSTORE_MAPPING_PATH="$RUNNER_TEMP/CoupleMoments_version${VERSION_UNDERSCORE}-playstore-mapping.txt"
+          cp app/build/outputs/mapping/playstoreRelease/mapping.txt "$PLAYSTORE_MAPPING_PATH"
+          echo "playstore_mapping_path=$PLAYSTORE_MAPPING_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_NAME: "1.0.${{ github.run_number }}"
+          GITHUB_APK_PATH: ${{ steps.artifact.outputs.github_apk_path }}
+          GITHUB_SHA1: ${{ steps.artifact.outputs.github_sha1 }}
+          PLAYSTORE_APK_PATH: ${{ steps.artifact.outputs.playstore_apk_path }}
+          PLAYSTORE_SHA1: ${{ steps.artifact.outputs.playstore_sha1 }}
+          PLAYSTORE_AAB_PATH: ${{ steps.artifact.outputs.playstore_aab_path }}
+          PLAYSTORE_AAB_SHA1: ${{ steps.artifact.outputs.playstore_aab_sha1 }}
+          GITHUB_MAPPING_PATH: ${{ steps.artifact.outputs.github_mapping_path }}
+          PLAYSTORE_MAPPING_PATH: ${{ steps.artifact.outputs.playstore_mapping_path }}
+        run: |
+          gh release create "v${VERSION_NAME}" \
+            "$GITHUB_APK_PATH" \
+            "$PLAYSTORE_APK_PATH" \
+            "$PLAYSTORE_AAB_PATH" \
+            "$GITHUB_MAPPING_PATH" \
+            "$PLAYSTORE_MAPPING_PATH" \
+            --title "v${VERSION_NAME}" \
+            --notes "**github flavor (self-updating) SHA-1:** \`${GITHUB_SHA1}\`
+          **playstore flavor (no self-update) SHA-1:** \`${PLAYSTORE_SHA1}\`
+          **playstore flavor App Bundle (.aab) SHA-1:** \`${PLAYSTORE_AAB_SHA1}\` - download this and upload it by hand in the Play Console for the app's first release; after that, publishPlaystoreReleaseBundle below takes over automatically.
+
+          The two \`*-mapping.txt\` assets are R8's rename tables for this release's obfuscated APKs. A stack trace from either build only becomes readable when run through the matching one (\`retrace <mapping.txt> <trace.txt>\`); each release has its own." \
+            --generate-notes
+
+      # The `secrets` context isn't available in step-level `if:` conditions, so the
+      # presence check has to happen here (env is allowed) and get passed along via
+      # a step output for the `if:` conditions below to read.
+      - name: Check Play publisher credentials
+        id: play_creds
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
+        run: echo "has_credentials=${{ env.ANDROID_PUBLISHER_CREDENTIALS != '' }}" >> "$GITHUB_OUTPUT"
+
+      # Optional: only runs once a Play Console service account key is configured (see AGENTS.md).
+      # Uploads the playstore flavor's release App Bundle to the Play Console's "internal" track
+      # (or PLAY_TRACK, if set as a repo variable) via the Gradle Play Publisher plugin
+      # (app/build.gradle.kts) - it never touches the "github" flavor, which shares the same
+      # applicationId and must never be uploaded. Left off entirely until the secret exists so
+      # forks/clones without Play Console access keep getting GitHub Releases.
+      - name: Publish to Play Store
+        id: publish_play
+        if: steps.play_creds.outputs.has_credentials == 'true'
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
+          PLAY_TRACK: ${{ vars.PLAY_TRACK }}
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: ./gradlew publishPlaystoreReleaseBundle --no-daemon --stacktrace
+
+      # A 403 here is almost always the Play Console service account's standing (not invited to
+      # this app, no first manual release yet, API not enabled, or a still-propagating permission
+      # grant) rather than anything in this repo - see the "Troubleshooting a 403" note in
+      # AGENTS.md for the full checklist before assuming the workflow itself is broken.
+      - name: Play Store publish failure hint
+        if: failure() && steps.publish_play.outcome == 'failure'
+        run: |
+          echo "::error::publishPlaystoreReleaseBundle failed. If this was a 403/PERMISSION_DENIED from androidpublisher.googleapis.com, see the 'Troubleshooting a 403 PERMISSION_DENIED' note under ## Releases in AGENTS.md - it is almost always the service account's Play Console permissions/app access, a missing first manual release, or the Android Publisher API not being enabled, not this workflow."
+
+      - name: Skip Play Store publish
+        if: steps.play_creds.outputs.has_credentials != 'true'
+        run: echo "::notice::ANDROID_PUBLISHER_CREDENTIALS secret not set - skipping Play Store publish. See AGENTS.md for setup."

@@ -1,0 +1,108 @@
+package org.neteinstein.couples.feature.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.neteinstein.couples.domain.model.AppUpdate
+import org.neteinstein.couples.domain.model.UpdateCheckResult
+import org.neteinstein.couples.domain.repository.AppUpdateInstaller
+import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
+import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+
+/**
+ * Runs a background update check when Settings is entered so the "Update to latest" button can
+ * reflect availability immediately (green when a release is found), without auto-downloading.
+ *
+ * [updatesEnabled] is false on the Play Store flavor, which the Play Store itself updates - the
+ * self-update check never runs and SettingsScreen hides the "Updates" section entirely.
+ */
+class SettingsViewModel(
+    private val checkForUpdateUseCase: CheckForUpdateUseCase,
+    private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase,
+    private val appUpdateInstaller: AppUpdateInstaller,
+    private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase,
+    private val updatesEnabled: Boolean = true,
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(SettingsUiState(updatesEnabled = updatesEnabled))
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    fun onScreenEntered() {
+        if (!updatesEnabled) return
+        viewModelScope.launch {
+            when (val result = checkForUpdateUseCase().getOrNull()) {
+                is UpdateCheckResult.UpToDate ->
+                    _uiState.update { it.copy(updateStatus = UpdateStatus.UpToDate(result.currentVersionName)) }
+                is UpdateCheckResult.UpdateAvailable ->
+                    _uiState.update { it.copy(updateStatus = UpdateStatus.UpdateAvailable(result.update)) }
+                null -> Unit
+            }
+        }
+    }
+
+    /**
+     * Checks GitHub Releases and, if a newer build exists, downloads it and launches the system
+     * installer - unless [AppUpdateInstaller.canInstallPackages] says the OS will block that
+     * install outright, in which case this stops at [UpdateStatus.SideloadingBlocked] without
+     * downloading anything.
+     */
+    fun onUpdateClicked() {
+        val availableUpdate = (_uiState.value.updateStatus as? UpdateStatus.UpdateAvailable)?.update
+        if (availableUpdate != null) {
+            viewModelScope.launch { downloadAndInstall(availableUpdate) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(updateStatus = UpdateStatus.Checking) }
+            checkForUpdateUseCase()
+                .onSuccess { result -> handleCheckResultForUpdateClick(result) }
+                .onFailure { error ->
+                    _uiState.update { it.copy(updateStatus = UpdateStatus.Failed(error.toUserMessage())) }
+                }
+        }
+    }
+
+    /** Deep-links to the system "install unknown apps" settings page for this app. */
+    fun onEnableSideloadingClicked() {
+        appUpdateInstaller.openInstallPermissionSettings()
+    }
+
+    /** Makes every card hidden via swipe-down on Home visible again. */
+    fun onResetCardsClicked() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Resetting) }
+            resetUsedQuestionsUseCase()
+            _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Done) }
+        }
+    }
+
+    private suspend fun handleCheckResultForUpdateClick(result: UpdateCheckResult) {
+        when (result) {
+            is UpdateCheckResult.UpToDate ->
+                _uiState.update { it.copy(updateStatus = UpdateStatus.UpToDate(result.currentVersionName)) }
+            is UpdateCheckResult.UpdateAvailable -> downloadAndInstall(result.update)
+        }
+    }
+
+    private suspend fun downloadAndInstall(update: AppUpdate) {
+        if (!appUpdateInstaller.canInstallPackages()) {
+            _uiState.update { it.copy(updateStatus = UpdateStatus.SideloadingBlocked) }
+            return
+        }
+
+        _uiState.update { it.copy(updateStatus = UpdateStatus.Downloading) }
+        downloadAppUpdateUseCase(update)
+            .onSuccess { apkFile ->
+                appUpdateInstaller.installPackage(apkFile)
+                _uiState.update { it.copy(updateStatus = UpdateStatus.Idle) }
+            }.onFailure { error ->
+                _uiState.update { it.copy(updateStatus = UpdateStatus.Failed(error.toUserMessage())) }
+            }
+    }
+
+    private fun Throwable.toUserMessage(): String = message ?: "Something went wrong"
+}

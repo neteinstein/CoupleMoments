@@ -1,0 +1,30 @@
+<resources>
+    <string name="settings_title">Ajustes</string>
+    <string name="cd_back">Atrás</string>
+    <string name="section_app_preferences">Preferencias de la App</string>
+    <string name="settings_language_title">Idioma de la App</string>
+    <string name="settings_language_subtitle">Cambia el idioma en los ajustes de Android</string>
+    <string name="section_about">Acerca de</string>
+    <string name="app_name">Couple Moments</string>
+    <string name="settings_app_title_format">%2$s: %1$s</string>
+    <string name="settings_version_format">Versión %1$s</string>
+    <string name="settings_about_description">Acercando a las familias, una pregunta a la vez. ❤️</string>
+    <string name="section_reset_cards">Restablecer Cartas</string>
+    <string name="reset_cards_description">Las cartas ocultas (deslizadas hacia abajo por ya usadas o no deseadas) quedan fuera de la rotación. Restablece para recuperarlas todas.</string>
+    <string name="reset_cards_button">Restablecer Cartas</string>
+    <string name="resetting_cards">Restableciendo cartas…</string>
+    <string name="reset_cards_done">Todas las cartas están visibles de nuevo.</string>
+    <string name="reset_dialog_title">¿Restablecer todas las cartas?</string>
+    <string name="reset_dialog_message">Todas las cartas que has ocultado volverán a estar visibles.</string>
+    <string name="reset_button">Restablecer</string>
+    <string name="cancel_button">Cancelar</string>
+    <string name="section_updates">Actualizaciones</string>
+    <string name="update_description">Comprueba las versiones de GitHub de esta app en busca de una más reciente y la instala.</string>
+    <string name="update_button">Actualizar a la última versión</string>
+    <string name="checking_updates">Buscando actualizaciones…</string>
+    <string name="downloading_update">Descargando actualización…</string>
+    <string name="up_to_date_format">Tienes la última versión (%1$s).</string>
+    <string name="sideloading_blocked_message">Permite que esta app instale actualizaciones para continuar.</string>
+    <string name="enable_installing_updates">Permitir instalación de actualizaciones</string>
+    <string name="settings_loopgain_footer">Couple Moments forma parte de la familia de herramientas %1$s, de %2$s</string>
+</resources>

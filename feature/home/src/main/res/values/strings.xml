@@ -1,0 +1,30 @@
+<resources>
+    <string name="home_app_name">Couple Moments</string>
+    <string name="home_subtitle">Start a deep conversation</string>
+    <string name="home_swipe_hint">Swipe for a new question ← →</string>
+    <string name="home_vertical_swipe_hint">Swipe up to focus, down to hide ↑ ↓</string>
+    <string name="home_no_cards_title">No cards left in this category</string>
+    <string name="home_no_cards_subtitle">Pick another category, or reset cards in Settings to see them again.</string>
+    <string name="home_take_turns">Take turns sharing your answers</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_shuffle_card">Show a random card</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_filter_by_category">Filter by category</string>
+    <string name="cd_switch_to_grid_view">Switch to grid view</string>
+    <string name="cd_switch_to_swipe_view">Switch to card view</string>
+    <string name="category_all">All</string>
+    <string name="hide_card_title">Hide this card?</string>
+    <string name="hide_card_message">Hide this card (already used or don\'t want it). It won\'t be shown again until you reset cards in Settings.</string>
+    <string name="yes">Yes</string>
+    <string name="cancel">Cancel</string>
+    <string name="intimacy_gate_title">For the two of you only</string>
+    <string name="intimacy_gate_message">This category has romantic and sexual conversation starters meant for adult partners (18+). Continue?</string>
+    <string name="intimacy_gate_confirm">Continue</string>
+    <string name="intimacy_gate_dismiss">Not now</string>
+    <string name="category_ice_breakers">Ice Breakers</string>
+    <string name="category_memories">Memories</string>
+    <string name="category_values">Values</string>
+    <string name="category_future_dreams">Future Dreams</string>
+    <string name="category_daily_life">Daily Life</string>
+    <string name="category_intimacy">Intimacy</string>
+</resources>
