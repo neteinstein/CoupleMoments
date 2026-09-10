@@ -8,7 +8,7 @@
     <string name="app_name">Couple Moments</string>
     <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Version %1$s</string>
-    <string name="settings_about_description">Bringing families closer, one question at a time. ❤️</string>
+    <string name="settings_about_description">Strengthening couples, one question at a time. ❤️</string>
     <string name="section_reset_cards">Reset Cards</string>
     <string name="reset_cards_description">Hidden cards (swiped down as already used or not wanted) stay out of rotation. Reset to bring them all back.</string>
     <string name="reset_cards_button">Reset Cards</string>
