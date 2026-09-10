@@ -57,6 +57,11 @@ Or open the project directly in Android Studio and run it from there.
 5. Open Settings (top right) to change the app's language, reset hidden cards, or check for an
    app update.
 
+## Privacy
+
+Couple Moments collects no data and has no backend — everything stays on your device. See
+[`PRIVACY.md`](PRIVACY.md) for the full policy.
+
 ## Architecture
 
 Kotlin, Jetpack Compose + Material3, MVVM, Koin DI, one Gradle module per layer/feature:

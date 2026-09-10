@@ -1,0 +1,1 @@
+Erste Version: Fragen aus sechs Kategorien wischen, mischen oder im Raster durchsuchen. Läuft vollständig auf dem Gerät — kein Konto, keine Werbung, keine Datensammlung.

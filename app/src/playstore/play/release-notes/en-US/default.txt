@@ -1,0 +1,1 @@
+First release: swipe, shuffle, or grid-browse conversation starters across six categories. Runs entirely on-device — no account, no ads, no data collection.

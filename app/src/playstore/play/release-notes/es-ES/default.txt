@@ -1,0 +1,1 @@
+Primera versión: desliza, mezcla o navega en cuadrícula preguntas de seis categorías. Funciona totalmente en el dispositivo, sin cuenta, sin anuncios, sin recopilar datos.

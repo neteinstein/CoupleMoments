@@ -1,0 +1,1 @@
+Première version : glissez, mélangez ou parcourez en grille des questions réparties en six catégories. Fonctionne entièrement sur l'appareil — sans compte, sans pub, sans collecte de données.
