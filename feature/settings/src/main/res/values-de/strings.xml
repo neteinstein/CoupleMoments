@@ -8,7 +8,7 @@
     <string name="app_name">Couple Moments</string>
     <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Version %1$s</string>
-    <string name="settings_about_description">Familien näher zusammenbringen, eine Frage nach der anderen. ❤️</string>
+    <string name="settings_about_description">Paare stärken, eine Frage nach der anderen. ❤️</string>
     <string name="section_reset_cards">Karten Zurücksetzen</string>
     <string name="reset_cards_description">Ausgeblendete Karten (nach unten gewischt als bereits verwendet oder unerwünscht) bleiben außerhalb der Rotation. Setze sie zurück, um sie alle wiederzubekommen.</string>
     <string name="reset_cards_button">Karten Zurücksetzen</string>
