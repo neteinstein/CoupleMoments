@@ -76,5 +76,5 @@ updated policy.
 ## Contact
 
 Questions about this policy or the app can be sent to
-[neteinstein@gmail.com](mailto:neteinstein@gmail.com), or filed as an issue on the
+[play-store-neteinstein@googlegroups.com](mailto:play-store-neteinstein@googlegroups.com), or filed as an issue on the
 [project's GitHub repository](https://github.com/neteinstein/CoupleMoments).
