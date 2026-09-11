@@ -6,11 +6,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import org.neteinstein.couples.ui.R
 
-/** Renders the same campfire-scene artwork used by the launcher icon, so the splash screen matches it. */
+/** Renders the same mark used by the launcher icon, so the splash screen matches it. */
 @Composable
 fun CoupleMomentsLogo(modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(id = R.drawable.ic_campfire_scene),
+        painter = painterResource(id = R.drawable.ic_couple_moments_mark),
         contentDescription = null,
         modifier = modifier,
     )

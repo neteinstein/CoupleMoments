@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Splash screen icon - shares its artwork with the launcher's foreground layer
-     (ic_launcher_foreground.xml) so the app icon and splash mark match. No background is baked in
-     here: windowSplashScreenBackground (see themes.xml) already paints the matching page color
-     behind it, same as the adaptive icon's background layer.
+     Couple Moments mark: two figures leaning in toward each other with their clasped hands
+     meeting low between them and a heart nestled where their heads nearly touch. Shared here so
+     both the launcher icon (app/src/main/res/drawable/ic_launcher_foreground.xml, ic_splash_logo.xml)
+     and the in-app Compose splash screen (feature/splash) render the exact same artwork.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
