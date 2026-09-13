@@ -13,7 +13,7 @@
 
     <!-- Glow halo -->
     <path
-        android:fillColor="#FFDDB5"
+        android:fillColor="#FFDAD6"
         android:fillAlpha="0.45"
         android:pathData="M54,58m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0" />
 
@@ -23,10 +23,10 @@
         android:pivotY="82"
         android:rotation="-13">
         <path
-            android:fillColor="#BF6900"
+            android:fillColor="#8B4A40"
             android:pathData="M32,82 L32,68 A11,11 0 0 1 54,62 A11,11 0 0 1 54,82 Z" />
         <path
-            android:fillColor="#BF6900"
+            android:fillColor="#8B4A40"
             android:pathData="M40,38m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
     </group>
 
@@ -36,10 +36,10 @@
         android:pivotY="82"
         android:rotation="13">
         <path
-            android:fillColor="#D8471F"
+            android:fillColor="#E5342F"
             android:pathData="M76,82 L76,68 A11,11 0 0 0 54,62 A11,11 0 0 0 54,82 Z" />
         <path
-            android:fillColor="#D8471F"
+            android:fillColor="#E5342F"
             android:pathData="M68,38m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
     </group>
 
@@ -49,7 +49,7 @@
         android:pivotY="78"
         android:rotation="-18">
         <path
-            android:fillColor="#BF6900"
+            android:fillColor="#8B4A40"
             android:pathData="M45,78 A5.5,3.8 0 1 1 56,78 A5.5,3.8 0 1 1 45,78 Z" />
     </group>
     <group
@@ -57,7 +57,7 @@
         android:pivotY="78"
         android:rotation="18">
         <path
-            android:fillColor="#D8471F"
+            android:fillColor="#E5342F"
             android:pathData="M52,78 A5.5,3.8 0 1 1 63,78 A5.5,3.8 0 1 1 52,78 Z" />
     </group>
 

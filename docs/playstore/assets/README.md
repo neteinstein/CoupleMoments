@@ -4,7 +4,8 @@ Graphics for the Play Console's Store presence page (Main store listing → Grap
 generated, not hand-drawn — `generate.py` renders each one as SVG (matching the real app's
 colors from `core/ui/.../theme/Color.kt`, the launcher mark from
 `app/src/main/res/drawable/ic_launcher_foreground.xml`, and the `feature/home` /
-`feature/settings` screen layouts/copy) and rasterizes it with macOS's `sips`.
+`feature/settings` screen layouts/copy) and rasterizes it with macOS's `sips`, falling back to a
+headless Chromium `headless_shell` binary when `sips` isn't on PATH (e.g. on Linux).
 
 | File | Use | Spec |
 | --- | --- | --- |
@@ -28,7 +29,9 @@ captures — there's no Android emulator in this environment. Regenerate after a
 python3 docs/playstore/assets/generate.py
 ```
 
-Requires Python 3 with Pillow (`pip install pillow`) and macOS's `sips` (used to rasterize the
-intermediate SVGs; the .svg files are deleted after each run). For a pixel-exact capture, swap
-these for real device/emulator screenshots before submission if desired - the generated ones are
-accurate enough to submit as-is but aren't a substitute for the genuine article.
+Requires Python 3 with Pillow (`pip install pillow`) and either macOS's `sips` or a Chromium/Chrome
+build providing `headless_shell` (used to rasterize the intermediate SVGs; the .svg files are
+deleted after each run) - set `CHROME_BIN` to point at a specific binary if none is auto-detected.
+For a pixel-exact capture, swap these for real device/emulator screenshots before submission if
+desired - the generated ones are accurate enough to submit as-is but aren't a substitute for the
+genuine article.

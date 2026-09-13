@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates Play Store visual assets for Couple Moments as SVG, rasterized via macOS `sips`.
+"""Generates Play Store visual assets for Couple Moments as SVG, then rasterizes them.
 
 Colors and layout are taken from the real app: core/ui/.../theme/Color.kt (Material3 palette),
 app/src/main/res/drawable/ic_launcher_foreground.xml (mark), and feature/home + feature/settings
@@ -7,6 +7,7 @@ Compose screens (structure/copy).
 """
 import subprocess
 import os
+import shutil
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,8 +27,8 @@ ON_SURFACE_VARIANT = "#59413D"
 OUTLINE = "#8C7370"
 SPLASH_BG = "#F6C9C2"
 HEART = "#FF6F91"
-FIG_LEFT = "#BF6900"
-FIG_RIGHT = "#D8471F"
+FIG_LEFT = "#8B4A40"
+FIG_RIGHT = "#E5342F"
 WHITE = "#FFFFFF"
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
@@ -45,8 +46,33 @@ EMOJI_BALLOON = "\U0001F4AC"
 EMOJI_HEART_SMALL = "❤️"
 
 
-def run_sips(svg_path, png_path):
-    subprocess.run(["sips", "-s", "format", "png", svg_path, "--out", png_path], check=True, capture_output=True)
+def run_render(svg_path, png_path, width, height):
+    """Rasterizes svg_path to png_path at width x height.
+
+    Prefers macOS's `sips`; falls back to headless Chromium (no macOS available in this
+    environment) when `sips` isn't on PATH.
+    """
+    if shutil.which("sips"):
+        subprocess.run(["sips", "-s", "format", "png", svg_path, "--out", png_path], check=True, capture_output=True)
+        return
+    chrome = (
+        os.environ.get("CHROME_BIN")
+        or shutil.which("headless_shell")
+        or shutil.which("chromium")
+        or shutil.which("google-chrome")
+        or "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
+    )
+    # headless_shell (not the full `chromium` binary) is used here: the full binary's headless
+    # screenshot leaves a blank strip at the bottom of the image - window-size isn't the actual
+    # captured viewport size - while headless_shell renders exactly window-size with no gap.
+    subprocess.run(
+        [
+            chrome, "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+            "--force-device-scale-factor=1", f"--screenshot={png_path}",
+            f"--window-size={width},{height}", f"file://{svg_path}",
+        ],
+        check=True, capture_output=True,
+    )
 
 
 def write_svg(name, content):
@@ -252,7 +278,7 @@ def gen_icon():
 {mark(54, 54, 1.0)}
 </svg>'''
     p = write_svg("icon-512", svg)
-    run_sips(p, os.path.join(OUT_DIR, "icon-512.png"))
+    run_render(p, os.path.join(OUT_DIR, "icon-512.png"), 512, 512)
 
 
 def gen_feature_graphic():
@@ -303,7 +329,7 @@ def gen_feature_graphic():
 {badges}
 </svg>'''
     p = write_svg("feature-graphic-1024x500", svg)
-    run_sips(p, os.path.join(OUT_DIR, "feature-graphic-1024x500.png"))
+    run_render(p, os.path.join(OUT_DIR, "feature-graphic-1024x500.png"), 1024, 500)
 
 
 W, H = 1080, 1920
@@ -356,7 +382,7 @@ def gen_screenshot_home():
 {gesture_bar(W, 1876)}
 </svg>'''
     p = write_svg("screenshot-1-home", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-1-home.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-1-home.png"), W, H)
 
 
 def gen_screenshot_fullscreen():
@@ -379,7 +405,7 @@ def gen_screenshot_fullscreen():
 {gesture_bar(W, 1876)}
 </svg>'''
     p = write_svg("screenshot-2-fullscreen", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-2-fullscreen.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-2-fullscreen.png"), W, H)
 
 
 GRID_ITEMS = [
@@ -438,7 +464,7 @@ def gen_screenshot_grid():
 {gesture_bar(W, 1876)}
 </svg>'''
     p = write_svg("screenshot-3-grid", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-3-grid.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-3-grid.png"), W, H)
 
 
 def gen_screenshot_settings():
@@ -488,7 +514,7 @@ def gen_screenshot_settings():
 {gesture_bar(W, 1876)}
 </svg>'''
     p = write_svg("screenshot-4-settings", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-4-settings.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-4-settings.png"), W, H)
 
 
 gen_icon()
