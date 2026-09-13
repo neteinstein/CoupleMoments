@@ -338,8 +338,33 @@ W, H = 1080, 2400
 
 
 def gen_screenshot_home():
-    card_h = H - 680  # bottom-pinned nav below stays same distance from the bottom edge as at H=1920
+    # The real QuestionCard (feature/home HomeScreen.kt) only fillMaxWidth()s - it does NOT
+    # fillMaxHeight() - so the white card wraps its content and floats centered (Alignment.Center)
+    # inside the weight(1f) Box below the header, rather than stretching to fill it. Stretching the
+    # card itself (as an earlier version of this generator did) leaves a mostly-empty white card on
+    # a tall canvas; matching the real layout instead keeps the card content-sized and lets the
+    # (non-white, gradient) background show above/below it, which reads as intentional whitespace
+    # rather than a big blank card.
+    region_top = 300  # just below the swipe-hint text
     dots_cy = H - 296
+    region_bottom = dots_cy - 40  # just above the page-dots row
+
+    question = "What's the funniest thing that's happened to either of us this week?"
+    lines = wrap_text(question, 19)
+    font_size = 52
+    line_height = 68
+    pill_h = 58
+    gap_pill_question = 44
+    gap_question_caption = 60
+    pad_top, pad_bottom = 74, 94
+    content_extent = pill_h + gap_pill_question + (len(lines) - 1) * line_height + gap_question_caption
+    card_h = pad_top + content_extent + pad_bottom
+    card_top = (region_top + region_bottom) / 2 - card_h / 2
+
+    pill_y = card_top + pad_top
+    question_y = pill_y + pill_h + gap_pill_question
+    caption_y = question_y + (len(lines) - 1) * line_height + gap_question_caption
+
     dots = ""
     total, current = 7, 2
     for i in range(total):
@@ -349,7 +374,6 @@ def gen_screenshot_home():
         op = 1.0 if i == current else 0.4
         dots += f'<circle cx="{cx}" cy="{dots_cy}" r="{r}" fill="{fill}" opacity="{op}"/>'
 
-    question = "What's the funniest thing that's happened to either of us this week?"
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <defs>
   <radialGradient id="bgGrad" cx="50%" cy="0%" r="75%">
@@ -365,15 +389,15 @@ def gen_screenshot_home():
 {status_bar(W)}
 {top_bar(W, subtitle=True)}
 
-<rect x="60" y="336" width="960" height="{card_h}" rx="40" fill="#000000" fill-opacity="0.06"/>
-<rect x="60" y="326" width="960" height="{card_h}" rx="40" fill="{WHITE}" stroke="{SURFACE_VARIANT}" stroke-width="2"/>
-<rect x="60" y="326" width="960" height="{card_h}" rx="40" fill="url(#cardTint)"/>
+<rect x="60" y="{card_top+10}" width="960" height="{card_h}" rx="40" fill="#000000" fill-opacity="0.06"/>
+<rect x="60" y="{card_top}" width="960" height="{card_h}" rx="40" fill="{WHITE}" stroke="{SURFACE_VARIANT}" stroke-width="2"/>
+<rect x="60" y="{card_top}" width="960" height="{card_h}" rx="40" fill="url(#cardTint)"/>
 
-{pill(430, 400, 220, 56, SECONDARY_CONTAINER, EMOJI_ICE + " Ice Breakers", ON_SECONDARY_CONTAINER, 24, "600", "middle")}
+{pill(430, pill_y, 220, pill_h, SECONDARY_CONTAINER, EMOJI_ICE + " Ice Breakers", ON_SECONDARY_CONTAINER, 24, "600", "middle")}
 
-{text_lines(wrap_text(question, 21), W/2, 540, 62, 46, ON_SURFACE, text_anchor="middle")}
+{text_lines(lines, W/2, question_y, line_height, font_size, ON_SURFACE, text_anchor="middle")}
 
-<text x="{W/2}" y="{H-440}" font-family="{FONT}" font-size="26" font-style="italic" fill="{ON_SURFACE_VARIANT}"
+<text x="{W/2}" y="{caption_y}" font-family="{FONT}" font-size="26" font-style="italic" fill="{ON_SURFACE_VARIANT}"
       text-anchor="middle">Take turns sharing your answers</text>
 
 {dots}
@@ -426,6 +450,9 @@ GRID_ITEMS = [
     (EMOJI_MEMORIES, "What do you remember about the moment you first realized you liked me?"),
     (EMOJI_VALUES, "How can I best support you when you're having a hard day?"),
     (EMOJI_FUTURE, "If we designed our dream home, what's one unusual feature you'd want?"),
+    (EMOJI_DAILY, "What's one small thing I did recently that made you smile?"),
+    (EMOJI_ICE, "If we could teleport anywhere right now, where would we go?"),
+    (EMOJI_MEMORIES, "What's a memory that always makes you laugh when you think about it?"),
 ]
 
 
@@ -434,9 +461,11 @@ def gen_screenshot_grid():
     gap = 22
     cols = 3
     colw = (W - 2 * margin - (cols - 1) * gap) / cols
-    # Grow the cards (rather than just the gap below them) to fill the taller canvas, keeping the
-    # same gap between the grid and the "All" pill below it as at H=1920.
-    cardh = (H - 698.7) / 3
+    # The real GridQuestionCard (feature/home HomeScreen.kt) uses a fixed aspectRatio(0.75f) -
+    # cards don't stretch taller on a bigger screen, more of them just become visible at once - so
+    # keep that ratio here too and show an extra row (GRID_ITEMS below) to fill the taller canvas.
+    cardh = colw / 0.75
+    rows = -(-len(GRID_ITEMS) // cols)  # ceil division
     cards = ""
     for i, (emoji, text) in enumerate(GRID_ITEMS):
         r, c = divmod(i, cols)
@@ -450,7 +479,7 @@ def gen_screenshot_grid():
 <text x="{x+colw-16}" y="{y+34}" font-family="{FONT}" font-size="22" text-anchor="end">{emoji}</text>
 {text_lines(lines, x+colw/2, start_y, 25, 19, ON_SURFACE, text_anchor="middle")}'''
 
-    clip_bottom = 300 + 3 * cardh + 2 * gap + 20
+    clip_bottom = 300 + rows * cardh + (rows - 1) * gap + 20
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <defs>
   <linearGradient id="cardTint" x1="0" y1="0" x2="1" y2="1">
