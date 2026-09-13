@@ -11,10 +11,10 @@ headless Chromium `headless_shell` binary when `sips` isn't on PATH (e.g. on Lin
 | --- | --- | --- |
 | `icon-512.png` | Hi-res icon | 512×512, 32-bit PNG |
 | `feature-graphic-1024x500.png` | Feature graphic | 1024×500, PNG/JPEG, no alpha |
-| `screenshot-1-home.png` | Phone screenshot — swipe deck | 1080×1920 (9:16) |
-| `screenshot-2-fullscreen.png` | Phone screenshot — full-screen question | 1080×1920 |
-| `screenshot-3-grid.png` | Phone screenshot — grid view | 1080×1920 |
-| `screenshot-4-settings.png` | Phone screenshot — Settings | 1080×1920 |
+| `screenshot-1-home.png` | Phone screenshot — swipe deck | 1080×2400 (20:9, e.g. Pixel 10) |
+| `screenshot-2-fullscreen.png` | Phone screenshot — full-screen question | 1080×2400 |
+| `screenshot-3-grid.png` | Phone screenshot — grid view | 1080×2400 |
+| `screenshot-4-settings.png` | Phone screenshot — Settings | 1080×2400 |
 
 All are en-US only; Play falls back to this set for locales without their own screenshots. Add a
 `screenshots/<locale>/` subfolder if per-locale screenshots are ever wanted for the other listed
