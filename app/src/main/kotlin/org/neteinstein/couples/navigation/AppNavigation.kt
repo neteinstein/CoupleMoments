@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import org.neteinstein.couples.feature.home.HomeScreen
 import org.neteinstein.couples.feature.settings.SettingsScreen
 import org.neteinstein.couples.feature.splash.SplashScreen
 
@@ -24,7 +23,7 @@ fun AppNavigation(navController: NavHostController) {
             )
         }
         composable(Screen.Home.route) {
-            HomeScreen(
+            MainScreen(
                 onSettingsClick = {
                     navController.navigate(Screen.Settings.route)
                 },
