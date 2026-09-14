@@ -15,6 +15,7 @@ import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 import org.neteinstein.couples.ui.theme.CoupleMomentsTheme
 import org.robolectric.RobolectricTestRunner
@@ -39,6 +40,7 @@ class HomeScreenCategoryDropdownTest {
         val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
         val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
         val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase = mockk()
+        val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
         every { localeProvider.currentLanguageCode() } returns "en"
         // No fake questions: with a current question on screen, its own CategoryPill would show
         // the same "<emoji> <name>" text as a dropdown item of the same category, and
@@ -50,6 +52,7 @@ class HomeScreenCategoryDropdownTest {
         coEvery { markQuestionUsedUseCase(any()) } returns Unit
         coEvery { hasAcknowledgedIntimacyGateUseCase() } returns true
         coEvery { acknowledgeIntimacyGateUseCase() } returns Unit
+        coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         return HomeViewModel(
             getQuestionsUseCase,
             localeProvider,
@@ -57,6 +60,7 @@ class HomeScreenCategoryDropdownTest {
             markQuestionUsedUseCase,
             hasAcknowledgedIntimacyGateUseCase,
             acknowledgeIntimacyGateUseCase,
+            isQuestionsForParentsEnabledUseCase,
         )
     }
 

@@ -13,7 +13,9 @@
     <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Version %1$s</string>
     <string name="settings_about_description">Renforcer les couples, une question à la fois. ❤️</string>
-    <string name="section_reset_cards">Réinitialiser les Cartes</string>
+    <string name="section_card_management">Gestion des Cartes</string>
+    <string name="questions_for_parents_title">Questions de Couple Pour Parents</string>
+    <string name="questions_for_parents_subtitle">Inclut des questions pensées pour les couples avec enfants.</string>
     <string name="reset_cards_description">Les cartes masquées (glissées vers le bas comme déjà utilisées ou non désirées) restent hors rotation. Réinitialisez pour toutes les récupérer.</string>
     <string name="reset_cards_button">Réinitialiser les Cartes</string>
     <string name="resetting_cards">Réinitialisation des cartes…</string>

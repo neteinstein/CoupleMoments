@@ -14,7 +14,9 @@ import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
+import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 
 /**
@@ -31,6 +33,8 @@ class SettingsViewModel(
     private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase,
     private val getThemeModeUseCase: GetThemeModeUseCase,
     private val setThemeModeUseCase: SetThemeModeUseCase,
+    private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase,
+    private val setQuestionsForParentsEnabledUseCase: SetQuestionsForParentsEnabledUseCase,
     private val updatesEnabled: Boolean = true,
 ) : ViewModel() {
     private val _uiState =
@@ -49,6 +53,10 @@ class SettingsViewModel(
     }
 
     fun onScreenEntered() {
+        viewModelScope.launch {
+            val enabled = isQuestionsForParentsEnabledUseCase()
+            _uiState.update { it.copy(questionsForParentsEnabled = enabled) }
+        }
         if (!updatesEnabled) return
         viewModelScope.launch {
             when (val result = checkForUpdateUseCase().getOrNull()) {
@@ -58,6 +66,14 @@ class SettingsViewModel(
                     _uiState.update { it.copy(updateStatus = UpdateStatus.UpdateAvailable(result.update)) }
                 null -> Unit
             }
+        }
+    }
+
+    /** Persists the "Couple Questions For Parents" toggle and reflects it immediately in the UI. */
+    fun onQuestionsForParentsToggled(enabled: Boolean) {
+        viewModelScope.launch {
+            setQuestionsForParentsEnabledUseCase(enabled)
+            _uiState.update { it.copy(questionsForParentsEnabled = enabled) }
         }
     }
 

@@ -17,12 +17,14 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.couples.domain.model.Question
+import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.QuestionCategory
 import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,6 +36,7 @@ class HomeViewModelTest {
     private val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
     private val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
     private val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase = mockk()
+    private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
 
     private lateinit var viewModel: HomeViewModel
 
@@ -53,6 +56,7 @@ class HomeViewModelTest {
         coEvery { markQuestionUsedUseCase(any()) } returns Unit
         coEvery { hasAcknowledgedIntimacyGateUseCase() } returns true
         coEvery { acknowledgeIntimacyGateUseCase() } returns Unit
+        coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         viewModel =
             HomeViewModel(
                 getQuestionsUseCase,
@@ -61,6 +65,7 @@ class HomeViewModelTest {
                 markQuestionUsedUseCase,
                 hasAcknowledgedIntimacyGateUseCase,
                 acknowledgeIntimacyGateUseCase,
+                isQuestionsForParentsEnabledUseCase,
             )
     }
 
@@ -160,6 +165,7 @@ class HomeViewModelTest {
                     markQuestionUsedUseCase,
                     hasAcknowledgedIntimacyGateUseCase,
                     acknowledgeIntimacyGateUseCase,
+                    isQuestionsForParentsEnabledUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -349,5 +355,44 @@ class HomeViewModelTest {
             val state = viewModel.uiState.value
             assertEquals(fakeQuestions.size - 1, state.totalQuestions)
             assertFalse(state.currentQuestion?.id == 2)
+        }
+
+    @Test
+    fun `loadQuestions excludes WithKids-only questions when the parents toggle is off`() =
+        runTest {
+            val mixedAudienceQuestions =
+                listOf(
+                    Question(id = 1, text = "Both?", languageCode = "en", audience = QuestionAudience.Both),
+                    Question(id = 2, text = "Without kids?", languageCode = "en", audience = QuestionAudience.WithoutKids),
+                    Question(id = 3, text = "With kids?", languageCode = "en", audience = QuestionAudience.WithKids),
+                )
+            coEvery { getQuestionsUseCase("en") } returns mixedAudienceQuestions
+            coEvery { isQuestionsForParentsEnabledUseCase() } returns false
+
+            viewModel.loadQuestions("en")
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(2, state.totalQuestions)
+            assertFalse(state.questions.any { it.audience == QuestionAudience.WithKids })
+        }
+
+    @Test
+    fun `loadQuestions includes WithKids questions when the parents toggle is on`() =
+        runTest {
+            val mixedAudienceQuestions =
+                listOf(
+                    Question(id = 1, text = "Both?", languageCode = "en", audience = QuestionAudience.Both),
+                    Question(id = 2, text = "Without kids?", languageCode = "en", audience = QuestionAudience.WithoutKids),
+                    Question(id = 3, text = "With kids?", languageCode = "en", audience = QuestionAudience.WithKids),
+                )
+            coEvery { getQuestionsUseCase("en") } returns mixedAudienceQuestions
+            coEvery { isQuestionsForParentsEnabledUseCase() } returns true
+
+            viewModel.loadQuestions("en")
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(mixedAudienceQuestions.size, state.totalQuestions)
         }
 }

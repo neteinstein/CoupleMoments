@@ -13,7 +13,9 @@
     <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Versão %1$s</string>
     <string name="settings_about_description">A fortalecer casais, uma pergunta de cada vez. ❤️</string>
-    <string name="section_reset_cards">Redefinir Cartas</string>
+    <string name="section_card_management">Gestão das cartas</string>
+    <string name="questions_for_parents_title">Perguntas de Casal Para Pais</string>
+    <string name="questions_for_parents_subtitle">Inclui perguntas pensadas para casais com filhos.</string>
     <string name="reset_cards_description">Cartas ocultas (deslizadas para baixo como já usadas ou indesejadas) ficam fora da rotação. Redefina para trazê-las todas de volta.</string>
     <string name="reset_cards_button">Redefinir Cartas</string>
     <string name="resetting_cards">Redefinindo cartas…</string>
