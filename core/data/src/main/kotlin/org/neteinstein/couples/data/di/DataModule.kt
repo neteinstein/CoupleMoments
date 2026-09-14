@@ -9,11 +9,13 @@ import org.neteinstein.couples.data.locale.LocaleProviderImpl
 import org.neteinstein.couples.data.repository.GitHubUpdateRepositoryImpl
 import org.neteinstein.couples.data.repository.IntimacyGateRepositoryImpl
 import org.neteinstein.couples.data.repository.QuestionRepositoryImpl
+import org.neteinstein.couples.data.repository.ThemeModeRepositoryImpl
 import org.neteinstein.couples.data.repository.UsedQuestionsRepositoryImpl
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.repository.IntimacyGateRepository
 import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.repository.QuestionRepository
+import org.neteinstein.couples.domain.repository.ThemeModeRepository
 import org.neteinstein.couples.domain.repository.UpdateRepository
 import org.neteinstein.couples.domain.repository.UsedQuestionsRepository
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
@@ -22,10 +24,12 @@ import org.neteinstein.couples.domain.usecase.ClearDownloadedUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetRandomQuestionUseCase
+import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 
 val dataModule =
     module {
@@ -41,6 +45,7 @@ val dataModule =
         single<LocaleProvider> { LocaleProviderImpl() }
         single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
         single<IntimacyGateRepository> { IntimacyGateRepositoryImpl(androidContext()) }
+        single<ThemeModeRepository> { ThemeModeRepositoryImpl(androidContext()) }
         factory { GetRandomQuestionUseCase(get()) }
         factory { GetQuestionsUseCase(get()) }
         factory { GetUsedQuestionIdsUseCase(get()) }
@@ -48,6 +53,8 @@ val dataModule =
         factory { ResetUsedQuestionsUseCase(get()) }
         factory { HasAcknowledgedIntimacyGateUseCase(get()) }
         factory { AcknowledgeIntimacyGateUseCase(get()) }
+        factory { GetThemeModeUseCase(get()) }
+        factory { SetThemeModeUseCase(get()) }
 
         single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext()) }
         single<AppUpdateInstaller> { AppUpdateInstallerImpl(context = androidContext()) }

@@ -1,8 +1,10 @@
 package org.neteinstein.couples.di
 
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.neteinstein.couples.BuildConfig
+import org.neteinstein.couples.MainViewModel
 import org.neteinstein.couples.data.di.dataModule
 import org.neteinstein.couples.feature.home.di.homeModule
 import org.neteinstein.couples.feature.settings.di.settingsModule
@@ -13,6 +15,8 @@ val appModule =
         // Releases), false for "playstore" (which the Play Store itself updates) - see
         // app/build.gradle.kts productFlavors and feature/settings's SettingsViewModel/SettingsScreen.
         single(named("updatesEnabled")) { BuildConfig.UPDATES_ENABLED }
+
+        viewModel { MainViewModel(get()) }
 
         includes(dataModule, homeModule, settingsModule)
     }

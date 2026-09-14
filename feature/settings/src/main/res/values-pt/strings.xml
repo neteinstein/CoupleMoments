@@ -2,6 +2,10 @@
     <string name="settings_title">Configurações</string>
     <string name="cd_back">Voltar</string>
     <string name="section_app_preferences">Preferências do App</string>
+    <string name="settings_theme_title">Tema do App</string>
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_dark">Escuro</string>
+    <string name="theme_mode_system">Sistema</string>
     <string name="settings_language_title">Idioma do App</string>
     <string name="settings_language_subtitle">Altere o idioma nas configurações do Android</string>
     <string name="section_about">Sobre</string>

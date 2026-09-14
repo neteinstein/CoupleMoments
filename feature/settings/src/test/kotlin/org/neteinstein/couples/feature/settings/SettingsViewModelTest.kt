@@ -7,6 +7,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -17,11 +18,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.couples.domain.model.AppUpdate
+import org.neteinstein.couples.domain.model.ThemeMode
 import org.neteinstein.couples.domain.model.UpdateCheckResult
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,6 +35,9 @@ class SettingsViewModelTest {
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase = mockk()
     private val appUpdateInstaller: AppUpdateInstaller = mockk(relaxUnitFun = true)
     private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase = mockk()
+    private val themeModeState = MutableStateFlow(ThemeMode.System)
+    private val getThemeModeUseCase: GetThemeModeUseCase = mockk()
+    private val setThemeModeUseCase: SetThemeModeUseCase = mockk(relaxUnitFun = true)
 
     private val update = AppUpdate(versionName = "1.0.6", apkDownloadUrl = "https://example.com/app.apk")
 
@@ -39,12 +46,15 @@ class SettingsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        every { getThemeModeUseCase() } returns themeModeState
         viewModel =
             SettingsViewModel(
                 checkForUpdateUseCase,
                 downloadAppUpdateUseCase,
                 appUpdateInstaller,
                 resetUsedQuestionsUseCase,
+                getThemeModeUseCase,
+                setThemeModeUseCase,
             )
     }
 
@@ -159,6 +169,23 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `uiState reflects the persisted theme mode`() {
+        assertEquals(ThemeMode.System, viewModel.uiState.value.themeMode)
+    }
+
+    @Test
+    fun `onThemeModeSelected persists the chosen mode and updates uiState`() =
+        runTest {
+            coEvery { setThemeModeUseCase(ThemeMode.Dark) } answers { themeModeState.value = ThemeMode.Dark }
+
+            viewModel.onThemeModeSelected(ThemeMode.Dark)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { setThemeModeUseCase(ThemeMode.Dark) }
+            assertEquals(ThemeMode.Dark, viewModel.uiState.value.themeMode)
+        }
+
+    @Test
     fun `onScreenEntered skips the update check when updates are disabled`() =
         runTest {
             val playStoreViewModel =
@@ -167,6 +194,8 @@ class SettingsViewModelTest {
                     downloadAppUpdateUseCase,
                     appUpdateInstaller,
                     resetUsedQuestionsUseCase,
+                    getThemeModeUseCase,
+                    setThemeModeUseCase,
                     updatesEnabled = false,
                 )
 
