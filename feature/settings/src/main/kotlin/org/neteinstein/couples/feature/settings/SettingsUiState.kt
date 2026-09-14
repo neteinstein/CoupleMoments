@@ -1,12 +1,14 @@
 package org.neteinstein.couples.feature.settings
 
 import org.neteinstein.couples.domain.model.AppUpdate
+import org.neteinstein.couples.domain.model.ThemeMode
 
 data class SettingsUiState(
     val updateStatus: UpdateStatus = UpdateStatus.Idle,
     val resetCardsStatus: ResetCardsStatus = ResetCardsStatus.Idle,
     /** False on the Play Store flavor, which hides the "Updates" section entirely - see SettingsViewModel. */
     val updatesEnabled: Boolean = true,
+    val themeMode: ThemeMode = ThemeMode.System,
 )
 
 /** Drives the "Reset Cards" button and its status text on the Settings screen. */

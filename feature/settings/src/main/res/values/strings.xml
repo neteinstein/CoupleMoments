@@ -2,6 +2,10 @@
     <string name="settings_title">Settings</string>
     <string name="cd_back">Back</string>
     <string name="section_app_preferences">App Preferences</string>
+    <string name="settings_theme_title">App Theme</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="theme_mode_system">System</string>
     <string name="settings_language_title">App Language</string>
     <string name="settings_language_subtitle">Change language in Android settings</string>
     <string name="section_about">About</string>

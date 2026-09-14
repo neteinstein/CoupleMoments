@@ -8,11 +8,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.couples.domain.model.AppUpdate
+import org.neteinstein.couples.domain.model.ThemeMode
 import org.neteinstein.couples.domain.model.UpdateCheckResult
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 
 /**
  * Runs a background update check when Settings is entered so the "Update to latest" button can
@@ -26,10 +29,24 @@ class SettingsViewModel(
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase,
     private val appUpdateInstaller: AppUpdateInstaller,
     private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase,
+    private val getThemeModeUseCase: GetThemeModeUseCase,
+    private val setThemeModeUseCase: SetThemeModeUseCase,
     private val updatesEnabled: Boolean = true,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(SettingsUiState(updatesEnabled = updatesEnabled))
+    private val _uiState =
+        MutableStateFlow(SettingsUiState(updatesEnabled = updatesEnabled, themeMode = getThemeModeUseCase().value))
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            getThemeModeUseCase().collect { mode -> _uiState.update { it.copy(themeMode = mode) } }
+        }
+    }
+
+    /** Persists the chosen [mode]; [getThemeModeUseCase]'s shared flow reflects it back into [uiState]. */
+    fun onThemeModeSelected(mode: ThemeMode) {
+        viewModelScope.launch { setThemeModeUseCase(mode) }
+    }
 
     fun onScreenEntered() {
         if (!updatesEnabled) return
