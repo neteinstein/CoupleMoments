@@ -226,6 +226,7 @@ class SettingsViewModelTest {
     fun `onScreenEntered loads the persisted questionsForParents value`() =
         runTest {
             coEvery { isQuestionsForParentsEnabledUseCase() } returns true
+            coEvery { checkForUpdateUseCase() } returns Result.success(UpdateCheckResult.UpToDate("1.0.5"))
 
             viewModel.onScreenEntered()
             testDispatcher.scheduler.advanceUntilIdle()
