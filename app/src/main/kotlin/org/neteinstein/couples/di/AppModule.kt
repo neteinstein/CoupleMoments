@@ -6,6 +6,7 @@ import org.koin.dsl.module
 import org.neteinstein.couples.BuildConfig
 import org.neteinstein.couples.MainViewModel
 import org.neteinstein.couples.data.di.dataModule
+import org.neteinstein.couples.feature.game.di.gameModule
 import org.neteinstein.couples.feature.home.di.homeModule
 import org.neteinstein.couples.feature.settings.di.settingsModule
 
@@ -18,5 +19,5 @@ val appModule =
 
         viewModel { MainViewModel(get()) }
 
-        includes(dataModule, homeModule, settingsModule)
+        includes(dataModule, homeModule, gameModule, settingsModule)
     }
