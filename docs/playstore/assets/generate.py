@@ -345,18 +345,22 @@ def gen_screenshot_home():
     # a tall canvas; matching the real layout instead keeps the card content-sized and lets the
     # (non-white, gradient) background show above/below it, which reads as intentional whitespace
     # rather than a big blank card.
-    region_top = 300  # just below the swipe-hint text
-    dots_cy = H - 296
+    # Anchor positions below (region_top, dots_cy, and the bottom-nav row further down) are
+    # likewise measured from that same real screenshot's proportions, not just eyeballed.
+    region_top = 440  # just below the swipe-hint text
+    dots_cy = H - 228
     region_bottom = dots_cy - 40  # just above the page-dots row
 
+    # Sizes below are measured (in px, at this 1080-wide canvas) from an actual Pixel screenshot of
+    # this exact screen: ~101px line-to-line spacing, card spanning ~38-71% of screen height.
     question = "What's the funniest thing that's happened to either of us this week?"
     lines = wrap_text(question, 19)
-    font_size = 52
-    line_height = 68
-    pill_h = 58
-    gap_pill_question = 44
-    gap_question_caption = 60
-    pad_top, pad_bottom = 74, 94
+    font_size = 76
+    line_height = 101
+    pill_h = 84
+    gap_pill_question = 64
+    gap_question_caption = 88
+    pad_top, pad_bottom = 108, 136
     content_extent = pill_h + gap_pill_question + (len(lines) - 1) * line_height + gap_question_caption
     card_h = pad_top + content_extent + pad_bottom
     card_top = (region_top + region_bottom) / 2 - card_h / 2
@@ -393,21 +397,21 @@ def gen_screenshot_home():
 <rect x="60" y="{card_top}" width="960" height="{card_h}" rx="40" fill="{WHITE}" stroke="{SURFACE_VARIANT}" stroke-width="2"/>
 <rect x="60" y="{card_top}" width="960" height="{card_h}" rx="40" fill="url(#cardTint)"/>
 
-{pill(430, pill_y, 220, pill_h, SECONDARY_CONTAINER, EMOJI_ICE + " Ice Breakers", ON_SECONDARY_CONTAINER, 24, "600", "middle")}
+{pill(370, pill_y, 340, pill_h, SECONDARY_CONTAINER, EMOJI_ICE + " Ice Breakers", ON_SECONDARY_CONTAINER, 34, "600", "middle")}
 
 {text_lines(lines, W/2, question_y, line_height, font_size, ON_SURFACE, text_anchor="middle")}
 
-<text x="{W/2}" y="{caption_y}" font-family="{FONT}" font-size="26" font-style="italic" fill="{ON_SURFACE_VARIANT}"
+<text x="{W/2}" y="{caption_y}" font-family="{FONT}" font-size="38" font-style="italic" fill="{ON_SURFACE_VARIANT}"
       text-anchor="middle">Take turns sharing your answers</text>
 
 {dots}
 
-{pill(60, H-230, 150, 56, SURFACE_VARIANT, "All ▾", ON_SURFACE_VARIANT, 24, "600", "middle")}
+{pill(60, H-178, 150, 56, SURFACE_VARIANT, "All ▾", ON_SURFACE_VARIANT, 24, "600", "middle")}
 
-<circle cx="1000" cy="{H-120}" r="44" fill="{SURFACE_VARIANT}"/>
-{glyph_grid(1000, H-120)}
+<circle cx="1000" cy="{H-150}" r="44" fill="{SURFACE_VARIANT}"/>
+{glyph_grid(1000, H-150)}
 
-{gesture_bar(W, H-44)}
+{gesture_bar(W, H-31)}
 </svg>'''
     p = write_svg("screenshot-1-home", svg)
     run_render(p, os.path.join(OUT_DIR, "screenshot-1-home.png"), W, H)
