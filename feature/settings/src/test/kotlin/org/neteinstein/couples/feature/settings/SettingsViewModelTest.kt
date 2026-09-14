@@ -18,12 +18,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.neteinstein.couples.domain.model.AppUpdate
+import org.neteinstein.couples.domain.model.Question
+import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.ThemeMode
 import org.neteinstein.couples.domain.model.UpdateCheckResult
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
+import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
+import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
@@ -42,6 +47,9 @@ class SettingsViewModelTest {
     private val setThemeModeUseCase: SetThemeModeUseCase = mockk(relaxUnitFun = true)
     private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
     private val setQuestionsForParentsEnabledUseCase: SetQuestionsForParentsEnabledUseCase = mockk()
+    private val getQuestionsUseCase: GetQuestionsUseCase = mockk()
+    private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase = mockk()
+    private val localeProvider: LocaleProvider = mockk()
 
     private val update = AppUpdate(versionName = "1.0.6", apkDownloadUrl = "https://example.com/app.apk")
 
@@ -53,6 +61,9 @@ class SettingsViewModelTest {
         every { getThemeModeUseCase() } returns themeModeState
         coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         coEvery { setQuestionsForParentsEnabledUseCase(any()) } returns Unit
+        every { localeProvider.currentLanguageCode() } returns "en"
+        coEvery { getQuestionsUseCase("en") } returns emptyList()
+        coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
         viewModel =
             SettingsViewModel(
                 checkForUpdateUseCase,
@@ -63,6 +74,9 @@ class SettingsViewModelTest {
                 setThemeModeUseCase,
                 isQuestionsForParentsEnabledUseCase,
                 setQuestionsForParentsEnabledUseCase,
+                getQuestionsUseCase,
+                getUsedQuestionIdsUseCase,
+                localeProvider,
             )
     }
 
@@ -206,6 +220,9 @@ class SettingsViewModelTest {
                     setThemeModeUseCase,
                     isQuestionsForParentsEnabledUseCase,
                     setQuestionsForParentsEnabledUseCase,
+                    getQuestionsUseCase,
+                    getUsedQuestionIdsUseCase,
+                    localeProvider,
                     updatesEnabled = false,
                 )
 
@@ -242,5 +259,41 @@ class SettingsViewModelTest {
 
             coVerify { setQuestionsForParentsEnabledUseCase(true) }
             assertEquals(true, viewModel.uiState.value.questionsForParentsEnabled)
+        }
+
+    @Test
+    fun `onScreenEntered counts hidden cards against the audience-filtered total`() =
+        runTest {
+            val questions =
+                listOf(
+                    Question(id = 1, text = "a", languageCode = "en"),
+                    Question(id = 2, text = "b", languageCode = "en"),
+                    Question(id = 3, text = "c", languageCode = "en", audience = QuestionAudience.WithKids),
+                )
+            coEvery { getQuestionsUseCase("en") } returns questions
+            coEvery { getUsedQuestionIdsUseCase() } returns setOf(1)
+            coEvery { checkForUpdateUseCase() } returns Result.success(UpdateCheckResult.UpToDate("1.0.5"))
+
+            viewModel.onScreenEntered()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // questionsForParentsEnabled is false, so the WithKids question is excluded from the total.
+            assertEquals(2, viewModel.uiState.value.totalCardsCount)
+            assertEquals(1, viewModel.uiState.value.hiddenCardsCount)
+        }
+
+    @Test
+    fun `onResetCardsClicked refreshes counts to zero hidden after resetting`() =
+        runTest {
+            coEvery { getQuestionsUseCase("en") } returns
+                listOf(Question(id = 1, text = "a", languageCode = "en"))
+            coEvery { getUsedQuestionIdsUseCase() } returnsMany listOf(setOf(1), emptySet())
+            coEvery { resetUsedQuestionsUseCase() } returns Unit
+
+            viewModel.onResetCardsClicked()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(0, viewModel.uiState.value.hiddenCardsCount)
+            assertEquals(1, viewModel.uiState.value.totalCardsCount)
         }
 }
