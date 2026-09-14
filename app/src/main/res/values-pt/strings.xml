@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Couple Moments</string>
+    <string name="tab_questions">Perguntas</string>
+    <string name="tab_game">Jogo</string>
 </resources>
