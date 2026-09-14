@@ -16,6 +16,8 @@
     <string name="section_card_management">Kartenverwaltung</string>
     <string name="questions_for_parents_title">Paarfragen Für Eltern</string>
     <string name="questions_for_parents_subtitle">Enthält Fragen, die für Paare mit Kindern gedacht sind.</string>
+    <string name="questions_for_parents_option_without_kids">Ohne Kinder</string>
+    <string name="questions_for_parents_option_with_kids">Mit Kindern</string>
     <string name="reset_cards_description">Ausgeblendete Karten (nach unten gewischt als bereits verwendet oder unerwünscht) bleiben außerhalb der Rotation. Setze sie zurück, um sie alle wiederzubekommen.</string>
     <string name="reset_cards_button">Karten Zurücksetzen</string>
     <string name="resetting_cards">Karten werden zurückgesetzt…</string>
