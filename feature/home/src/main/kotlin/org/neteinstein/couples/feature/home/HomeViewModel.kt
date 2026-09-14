@@ -8,12 +8,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.couples.domain.model.Question
+import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.QuestionCategory
 import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 
 data class HomeUiState(
@@ -34,6 +36,7 @@ class HomeViewModel(
     private val markQuestionUsedUseCase: MarkQuestionUsedUseCase,
     private val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase,
     private val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase,
+    private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -42,6 +45,7 @@ class HomeViewModel(
     private var questions: List<Question> = emptyList()
     private var usedQuestionIds: Set<Int> = emptySet()
     private var loadedLanguageCode: String? = null
+    private var questionsForParentsEnabled: Boolean = false
 
     init {
         loadQuestions()
@@ -51,8 +55,9 @@ class HomeViewModel(
      * Re-checks the OS-applied app language and reloads questions if it changed since the last
      * load - the user can change it via Settings > App Language without this ViewModel (scoped to
      * the Home back stack entry) being recreated, so [init] alone isn't enough to pick that up.
-     * Otherwise, just refreshes which cards are hidden, so returning from Settings after a
-     * "Reset Cards" makes previously hidden cards reappear without needing a full reload.
+     * Otherwise, just refreshes which cards are hidden and the "Couple Questions For Parents"
+     * toggle, so returning from Settings after a "Reset Cards" or a toggle flip is reflected
+     * without needing a full reload.
      */
     fun onScreenEntered() {
         val languageCode = localeProvider.currentLanguageCode()
@@ -66,6 +71,7 @@ class HomeViewModel(
     private fun refreshUsedQuestions() {
         viewModelScope.launch {
             usedQuestionIds = getUsedQuestionIdsUseCase()
+            questionsForParentsEnabled = isQuestionsForParentsEnabledUseCase()
             applyFilter(_uiState.value.selectedCategory)
         }
     }
@@ -76,6 +82,7 @@ class HomeViewModel(
             loadedLanguageCode = languageCode
             allQuestions = getQuestionsUseCase(languageCode)
             usedQuestionIds = getUsedQuestionIdsUseCase()
+            questionsForParentsEnabled = isQuestionsForParentsEnabledUseCase()
             applyFilter(_uiState.value.selectedCategory)
         }
     }
@@ -126,8 +133,11 @@ class HomeViewModel(
     private fun applyFilter(category: QuestionCategory?) {
         questions =
             allQuestions
-                .filter { (category == null || it.category == category) && it.id !in usedQuestionIds }
-                .shuffled()
+                .filter {
+                    (category == null || it.category == category) &&
+                        it.id !in usedQuestionIds &&
+                        (questionsForParentsEnabled || it.audience != QuestionAudience.WithKids)
+                }.shuffled()
         val firstQuestion = questions.firstOrNull()
         _uiState.update {
             it.copy(

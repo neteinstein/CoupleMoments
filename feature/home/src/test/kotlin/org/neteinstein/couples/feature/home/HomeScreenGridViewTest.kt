@@ -16,6 +16,7 @@ import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 import org.neteinstein.couples.ui.theme.CoupleMomentsTheme
 import org.robolectric.RobolectricTestRunner
@@ -41,12 +42,14 @@ class HomeScreenGridViewTest {
         val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
         val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
         val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase = mockk()
+        val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
         every { localeProvider.currentLanguageCode() } returns "en"
         coEvery { getQuestionsUseCase(any()) } returns fakeQuestions
         coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
         coEvery { markQuestionUsedUseCase(any()) } returns Unit
         coEvery { hasAcknowledgedIntimacyGateUseCase() } returns true
         coEvery { acknowledgeIntimacyGateUseCase() } returns Unit
+        coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         return HomeViewModel(
             getQuestionsUseCase,
             localeProvider,
@@ -54,6 +57,7 @@ class HomeScreenGridViewTest {
             markQuestionUsedUseCase,
             hasAcknowledgedIntimacyGateUseCase,
             acknowledgeIntimacyGateUseCase,
+            isQuestionsForParentsEnabledUseCase,
         )
     }
 

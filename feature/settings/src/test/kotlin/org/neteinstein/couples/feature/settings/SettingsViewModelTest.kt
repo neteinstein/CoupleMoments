@@ -24,7 +24,9 @@ import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
+import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 import java.io.File
 
@@ -38,6 +40,8 @@ class SettingsViewModelTest {
     private val themeModeState = MutableStateFlow(ThemeMode.System)
     private val getThemeModeUseCase: GetThemeModeUseCase = mockk()
     private val setThemeModeUseCase: SetThemeModeUseCase = mockk(relaxUnitFun = true)
+    private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
+    private val setQuestionsForParentsEnabledUseCase: SetQuestionsForParentsEnabledUseCase = mockk()
 
     private val update = AppUpdate(versionName = "1.0.6", apkDownloadUrl = "https://example.com/app.apk")
 
@@ -47,6 +51,8 @@ class SettingsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         every { getThemeModeUseCase() } returns themeModeState
+        coEvery { isQuestionsForParentsEnabledUseCase() } returns false
+        coEvery { setQuestionsForParentsEnabledUseCase(any()) } returns Unit
         viewModel =
             SettingsViewModel(
                 checkForUpdateUseCase,
@@ -55,6 +61,8 @@ class SettingsViewModelTest {
                 resetUsedQuestionsUseCase,
                 getThemeModeUseCase,
                 setThemeModeUseCase,
+                isQuestionsForParentsEnabledUseCase,
+                setQuestionsForParentsEnabledUseCase,
             )
     }
 
@@ -196,6 +204,8 @@ class SettingsViewModelTest {
                     resetUsedQuestionsUseCase,
                     getThemeModeUseCase,
                     setThemeModeUseCase,
+                    isQuestionsForParentsEnabledUseCase,
+                    setQuestionsForParentsEnabledUseCase,
                     updatesEnabled = false,
                 )
 
@@ -205,5 +215,32 @@ class SettingsViewModelTest {
             coVerify(exactly = 0) { checkForUpdateUseCase() }
             assertEquals(false, playStoreViewModel.uiState.value.updatesEnabled)
             assertEquals(UpdateStatus.Idle, playStoreViewModel.uiState.value.updateStatus)
+        }
+
+    @Test
+    fun `questionsForParentsEnabled defaults to false so the toggle starts off`() {
+        assertEquals(false, viewModel.uiState.value.questionsForParentsEnabled)
+    }
+
+    @Test
+    fun `onScreenEntered loads the persisted questionsForParents value`() =
+        runTest {
+            coEvery { isQuestionsForParentsEnabledUseCase() } returns true
+            coEvery { checkForUpdateUseCase() } returns Result.success(UpdateCheckResult.UpToDate("1.0.5"))
+
+            viewModel.onScreenEntered()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(true, viewModel.uiState.value.questionsForParentsEnabled)
+        }
+
+    @Test
+    fun `onQuestionsForParentsToggled persists the new value and reflects it immediately`() =
+        runTest {
+            viewModel.onQuestionsForParentsToggled(true)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { setQuestionsForParentsEnabledUseCase(true) }
+            assertEquals(true, viewModel.uiState.value.questionsForParentsEnabled)
         }
 }

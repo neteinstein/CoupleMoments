@@ -5,4 +5,5 @@ data class Question(
     val text: String,
     val languageCode: String,
     val category: QuestionCategory = QuestionCategory.IceBreakers,
+    val audience: QuestionAudience = QuestionAudience.Both,
 )

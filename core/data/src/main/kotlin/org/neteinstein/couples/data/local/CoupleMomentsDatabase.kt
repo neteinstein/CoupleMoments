@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [CardEntity::class, SeedMetadataEntity::class], version = 2, exportSchema = false)
+@Database(entities = [CardEntity::class, SeedMetadataEntity::class], version = 3, exportSchema = false)
 abstract class CoupleMomentsDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
 
@@ -26,6 +26,19 @@ abstract class CoupleMomentsDatabase : RoomDatabase() {
                     db.execSQL(
                         "CREATE TABLE IF NOT EXISTS `seed_metadata` (`id` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))",
                     )
+                }
+            }
+
+        /**
+         * Adds [CardEntity.audience], defaulted to `both` for every already-seeded row. The
+         * default doesn't need to be accurate - [org.neteinstein.couples.data.repository.QuestionRepositoryImpl]
+         * reseeds from [org.neteinstein.couples.data.source.QuestionSeedData] right after this
+         * migration runs anyway, since that seed data bump also moved [QuestionSeedData.VERSION].
+         */
+        val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE `cards` ADD COLUMN `audience` TEXT NOT NULL DEFAULT 'both'")
                 }
             }
     }

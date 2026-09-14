@@ -38,6 +38,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -185,7 +186,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = stringResource(R.string.section_reset_cards),
+                    text = stringResource(R.string.section_card_management),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp),
@@ -200,10 +201,17 @@ fun SettingsScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    ResetCardsSection(
-                        status = uiState.resetCardsStatus,
-                        onResetCardsClicked = { showResetConfirmDialog = true },
-                    )
+                    Column {
+                        QuestionsForParentsToggle(
+                            enabled = uiState.questionsForParentsEnabled,
+                            onToggle = viewModel::onQuestionsForParentsToggled,
+                        )
+                        HorizontalDivider()
+                        ResetCardsSection(
+                            status = uiState.resetCardsStatus,
+                            onResetCardsClicked = { showResetConfirmDialog = true },
+                        )
+                    }
                 }
 
                 if (uiState.updatesEnabled) {
@@ -301,6 +309,41 @@ fun SettingsScreen(
                 }
             },
         )
+    }
+}
+
+/**
+ * Toggle for including [org.neteinstein.couples.domain.model.QuestionAudience.WithKids] questions
+ * alongside the default set (see [SettingsViewModel.onQuestionsForParentsToggled]). Off by default,
+ * so existing behavior is unchanged until the user opts in.
+ */
+@Composable
+private fun QuestionsForParentsToggle(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.questions_for_parents_title),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.questions_for_parents_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Switch(checked = enabled, onCheckedChange = onToggle)
     }
 }
 

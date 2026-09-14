@@ -13,7 +13,9 @@
     <string name="settings_app_title_format">%2$s: %1$s</string>
     <string name="settings_version_format">Versión %1$s</string>
     <string name="settings_about_description">Fortaleciendo parejas, una pregunta a la vez. ❤️</string>
-    <string name="section_reset_cards">Restablecer Cartas</string>
+    <string name="section_card_management">Gestión de Cartas</string>
+    <string name="questions_for_parents_title">Preguntas de Pareja Para Padres</string>
+    <string name="questions_for_parents_subtitle">Incluye preguntas pensadas para parejas con hijos.</string>
     <string name="reset_cards_description">Las cartas ocultas (deslizadas hacia abajo por ya usadas o no deseadas) quedan fuera de la rotación. Restablece para recuperarlas todas.</string>
     <string name="reset_cards_button">Restablecer Cartas</string>
     <string name="resetting_cards">Restableciendo cartas…</string>

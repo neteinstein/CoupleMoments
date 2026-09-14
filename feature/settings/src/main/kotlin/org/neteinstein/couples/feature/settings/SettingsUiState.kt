@@ -9,6 +9,8 @@ data class SettingsUiState(
     /** False on the Play Store flavor, which hides the "Updates" section entirely - see SettingsViewModel. */
     val updatesEnabled: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.System,
+    /** Whether "with kids" questions are included alongside the default set. Off by default. */
+    val questionsForParentsEnabled: Boolean = false,
 )
 
 /** Drives the "Reset Cards" button and its status text on the Settings screen. */
