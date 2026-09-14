@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.neteinstein.couples.domain.repository.LocaleProvider
 
 data class GameUiState(
     val currentQuestion: GameQuestion? = null,
@@ -13,13 +14,35 @@ data class GameUiState(
     val questions: List<GameQuestion> = emptyList(),
 )
 
-class GameViewModel : ViewModel() {
+class GameViewModel(
+    private val localeProvider: LocaleProvider,
+) : ViewModel() {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
-    private val questions: List<GameQuestion> = GameQuestions.all.shuffled()
+    private var questions: List<GameQuestion> = emptyList()
+    private var loadedLanguageCode: String? = null
 
     init {
+        loadQuestions()
+    }
+
+    /**
+     * Re-checks the OS-applied app language and reshuffles from that language's question set if
+     * it changed since the last load - the user can change it via Settings > App Language without
+     * this ViewModel (scoped to the Home back stack entry) being recreated, so [init] alone isn't
+     * enough to pick that up. Mirrors [org.neteinstein.couples.feature.home.HomeViewModel.onScreenEntered].
+     */
+    fun onScreenEntered() {
+        val languageCode = localeProvider.currentLanguageCode()
+        if (languageCode != loadedLanguageCode) {
+            loadQuestions(languageCode)
+        }
+    }
+
+    private fun loadQuestions(languageCode: String = localeProvider.currentLanguageCode()) {
+        loadedLanguageCode = languageCode
+        questions = GameQuestions.forLanguage(languageCode).shuffled()
         _uiState.update {
             it.copy(
                 currentQuestion = questions.firstOrNull(),

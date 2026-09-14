@@ -53,6 +53,7 @@ ktlint {
 }
 
 dependencies {
+    implementation(project(":core:domain"))
     implementation(project(":core:ui"))
     implementation(libs.koin.androidx.compose)
     implementation(libs.lifecycle.viewmodel.compose)
