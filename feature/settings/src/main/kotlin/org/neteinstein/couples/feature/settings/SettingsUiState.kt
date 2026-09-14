@@ -11,6 +11,10 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.System,
     /** Whether "with kids" questions are included alongside the default set. Off by default. */
     val questionsForParentsEnabled: Boolean = false,
+    /** Count of cards hidden via swipe-down on Home, out of [totalCardsCount] - see ResetCardsSection. */
+    val hiddenCardsCount: Int = 0,
+    /** Total cards available in the current language, matching [questionsForParentsEnabled]. */
+    val totalCardsCount: Int = 0,
 )
 
 /** Drives the "Reset Cards" button and its status text on the Settings screen. */

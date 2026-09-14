@@ -17,6 +17,7 @@
     <string name="questions_for_parents_title">Questions de Couple Pour Parents</string>
     <string name="questions_for_parents_subtitle">Inclut des questions pensées pour les couples avec enfants.</string>
     <string name="reset_cards_description">Les cartes masquées (glissées vers le bas comme déjà utilisées ou non désirées) restent hors rotation. Réinitialisez pour toutes les récupérer.</string>
+    <string name="reset_cards_hidden_count_format">%1$d sur %2$d masquée(s).</string>
     <string name="reset_cards_button">Réinitialiser les Cartes</string>
     <string name="resetting_cards">Réinitialisation des cartes…</string>
     <string name="reset_cards_done">Toutes les cartes sont de nouveau visibles.</string>

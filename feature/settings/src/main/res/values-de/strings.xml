@@ -17,6 +17,7 @@
     <string name="questions_for_parents_title">Paarfragen Für Eltern</string>
     <string name="questions_for_parents_subtitle">Enthält Fragen, die für Paare mit Kindern gedacht sind.</string>
     <string name="reset_cards_description">Ausgeblendete Karten (nach unten gewischt als bereits verwendet oder unerwünscht) bleiben außerhalb der Rotation. Setze sie zurück, um sie alle wiederzubekommen.</string>
+    <string name="reset_cards_hidden_count_format">%1$d von %2$d ausgeblendet.</string>
     <string name="reset_cards_button">Karten Zurücksetzen</string>
     <string name="resetting_cards">Karten werden zurückgesetzt…</string>
     <string name="reset_cards_done">Alle Karten sind wieder sichtbar.</string>

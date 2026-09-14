@@ -8,12 +8,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.couples.domain.model.AppUpdate
+import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.ThemeMode
 import org.neteinstein.couples.domain.model.UpdateCheckResult
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
+import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.CheckForUpdateUseCase
 import org.neteinstein.couples.domain.usecase.DownloadAppUpdateUseCase
+import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
+import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
@@ -35,6 +39,9 @@ class SettingsViewModel(
     private val setThemeModeUseCase: SetThemeModeUseCase,
     private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase,
     private val setQuestionsForParentsEnabledUseCase: SetQuestionsForParentsEnabledUseCase,
+    private val getQuestionsUseCase: GetQuestionsUseCase,
+    private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase,
+    private val localeProvider: LocaleProvider,
     private val updatesEnabled: Boolean = true,
 ) : ViewModel() {
     private val _uiState =
@@ -56,6 +63,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             val enabled = isQuestionsForParentsEnabledUseCase()
             _uiState.update { it.copy(questionsForParentsEnabled = enabled) }
+            refreshCardCounts(enabled)
         }
         if (!updatesEnabled) return
         viewModelScope.launch {
@@ -74,6 +82,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             setQuestionsForParentsEnabledUseCase(enabled)
             _uiState.update { it.copy(questionsForParentsEnabled = enabled) }
+            refreshCardCounts(enabled)
         }
     }
 
@@ -109,8 +118,24 @@ class SettingsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Resetting) }
             resetUsedQuestionsUseCase()
+            refreshCardCounts(_uiState.value.questionsForParentsEnabled)
             _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Done) }
         }
+    }
+
+    /**
+     * Recomputes [SettingsUiState.totalCardsCount]/[SettingsUiState.hiddenCardsCount] for the
+     * "Reset Cards" section, mirroring the same audience filter Home applies so the counts match
+     * what's actually browsable there.
+     */
+    private suspend fun refreshCardCounts(questionsForParentsEnabled: Boolean) {
+        val languageCode = localeProvider.currentLanguageCode()
+        val visibleQuestions =
+            getQuestionsUseCase(languageCode)
+                .filter { questionsForParentsEnabled || it.audience != QuestionAudience.WithKids }
+        val usedQuestionIds = getUsedQuestionIdsUseCase()
+        val hiddenCount = visibleQuestions.count { it.id in usedQuestionIds }
+        _uiState.update { it.copy(totalCardsCount = visibleQuestions.size, hiddenCardsCount = hiddenCount) }
     }
 
     private suspend fun handleCheckResultForUpdateClick(result: UpdateCheckResult) {

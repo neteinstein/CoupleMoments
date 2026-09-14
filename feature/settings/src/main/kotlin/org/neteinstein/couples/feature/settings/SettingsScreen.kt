@@ -209,6 +209,8 @@ fun SettingsScreen(
                         HorizontalDivider()
                         ResetCardsSection(
                             status = uiState.resetCardsStatus,
+                            hiddenCardsCount = uiState.hiddenCardsCount,
+                            totalCardsCount = uiState.totalCardsCount,
                             onResetCardsClicked = { showResetConfirmDialog = true },
                         )
                     }
@@ -355,6 +357,8 @@ private fun QuestionsForParentsToggle(
 @Composable
 private fun ResetCardsSection(
     status: ResetCardsStatus,
+    hiddenCardsCount: Int,
+    totalCardsCount: Int,
     onResetCardsClicked: () -> Unit,
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
@@ -363,6 +367,14 @@ private fun ResetCardsSection(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        if (totalCardsCount > 0) {
+            Text(
+                text = stringResource(R.string.reset_cards_hidden_count_format, hiddenCardsCount, totalCardsCount),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedButton(
             onClick = onResetCardsClicked,
