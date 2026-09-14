@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates Play Store visual assets for Couple Moments as SVG, rasterized via macOS `sips`.
+"""Generates Play Store visual assets for Couple Moments as SVG, then rasterizes them.
 
 Colors and layout are taken from the real app: core/ui/.../theme/Color.kt (Material3 palette),
 app/src/main/res/drawable/ic_launcher_foreground.xml (mark), and feature/home + feature/settings
@@ -7,6 +7,7 @@ Compose screens (structure/copy).
 """
 import subprocess
 import os
+import shutil
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,8 +27,8 @@ ON_SURFACE_VARIANT = "#59413D"
 OUTLINE = "#8C7370"
 SPLASH_BG = "#F6C9C2"
 HEART = "#FF6F91"
-FIG_LEFT = "#BF6900"
-FIG_RIGHT = "#D8471F"
+FIG_LEFT = "#8B4A40"
+FIG_RIGHT = "#E5342F"
 WHITE = "#FFFFFF"
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
@@ -45,8 +46,33 @@ EMOJI_BALLOON = "\U0001F4AC"
 EMOJI_HEART_SMALL = "❤️"
 
 
-def run_sips(svg_path, png_path):
-    subprocess.run(["sips", "-s", "format", "png", svg_path, "--out", png_path], check=True, capture_output=True)
+def run_render(svg_path, png_path, width, height):
+    """Rasterizes svg_path to png_path at width x height.
+
+    Prefers macOS's `sips`; falls back to headless Chromium (no macOS available in this
+    environment) when `sips` isn't on PATH.
+    """
+    if shutil.which("sips"):
+        subprocess.run(["sips", "-s", "format", "png", svg_path, "--out", png_path], check=True, capture_output=True)
+        return
+    chrome = (
+        os.environ.get("CHROME_BIN")
+        or shutil.which("headless_shell")
+        or shutil.which("chromium")
+        or shutil.which("google-chrome")
+        or "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
+    )
+    # headless_shell (not the full `chromium` binary) is used here: the full binary's headless
+    # screenshot leaves a blank strip at the bottom of the image - window-size isn't the actual
+    # captured viewport size - while headless_shell renders exactly window-size with no gap.
+    subprocess.run(
+        [
+            chrome, "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+            "--force-device-scale-factor=1", f"--screenshot={png_path}",
+            f"--window-size={width},{height}", f"file://{svg_path}",
+        ],
+        check=True, capture_output=True,
+    )
 
 
 def write_svg(name, content):
@@ -252,7 +278,7 @@ def gen_icon():
 {mark(54, 54, 1.0)}
 </svg>'''
     p = write_svg("icon-512", svg)
-    run_sips(p, os.path.join(OUT_DIR, "icon-512.png"))
+    run_render(p, os.path.join(OUT_DIR, "icon-512.png"), 512, 512)
 
 
 def gen_feature_graphic():
@@ -303,13 +329,46 @@ def gen_feature_graphic():
 {badges}
 </svg>'''
     p = write_svg("feature-graphic-1024x500", svg)
-    run_sips(p, os.path.join(OUT_DIR, "feature-graphic-1024x500.png"))
+    run_render(p, os.path.join(OUT_DIR, "feature-graphic-1024x500.png"), 1024, 500)
 
 
-W, H = 1080, 1920
+# 1080x2400 (20:9) matches a modern flagship phone (e.g. Pixel 10) rather than the squarer 16:9
+# (1080x1920) used previously, which read as tablet-proportioned next to a real phone screenshot.
+W, H = 1080, 2400
 
 
 def gen_screenshot_home():
+    # The real QuestionCard (feature/home HomeScreen.kt) only fillMaxWidth()s - it does NOT
+    # fillMaxHeight() - so the white card wraps its content and floats centered (Alignment.Center)
+    # inside the weight(1f) Box below the header, rather than stretching to fill it. Stretching the
+    # card itself (as an earlier version of this generator did) leaves a mostly-empty white card on
+    # a tall canvas; matching the real layout instead keeps the card content-sized and lets the
+    # (non-white, gradient) background show above/below it, which reads as intentional whitespace
+    # rather than a big blank card.
+    # Anchor positions below (region_top, dots_cy, and the bottom-nav row further down) are
+    # likewise measured from that same real screenshot's proportions, not just eyeballed.
+    region_top = 440  # just below the swipe-hint text
+    dots_cy = H - 228
+    region_bottom = dots_cy - 40  # just above the page-dots row
+
+    # Sizes below are measured (in px, at this 1080-wide canvas) from an actual Pixel screenshot of
+    # this exact screen: ~101px line-to-line spacing, card spanning ~38-71% of screen height.
+    question = "What's the funniest thing that's happened to either of us this week?"
+    lines = wrap_text(question, 19)
+    font_size = 76
+    line_height = 101
+    pill_h = 84
+    gap_pill_question = 64
+    gap_question_caption = 88
+    pad_top, pad_bottom = 108, 136
+    content_extent = pill_h + gap_pill_question + (len(lines) - 1) * line_height + gap_question_caption
+    card_h = pad_top + content_extent + pad_bottom
+    card_top = (region_top + region_bottom) / 2 - card_h / 2
+
+    pill_y = card_top + pad_top
+    question_y = pill_y + pill_h + gap_pill_question
+    caption_y = question_y + (len(lines) - 1) * line_height + gap_question_caption
+
     dots = ""
     total, current = 7, 2
     for i in range(total):
@@ -317,9 +376,8 @@ def gen_screenshot_home():
         r = 8 if i == current else 6
         fill = PRIMARY if i == current else OUTLINE
         op = 1.0 if i == current else 0.4
-        dots += f'<circle cx="{cx}" cy="1624" r="{r}" fill="{fill}" opacity="{op}"/>'
+        dots += f'<circle cx="{cx}" cy="{dots_cy}" r="{r}" fill="{fill}" opacity="{op}"/>'
 
-    question = "What's the funniest thing that's happened to either of us this week?"
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <defs>
   <radialGradient id="bgGrad" cx="50%" cy="0%" r="75%">
@@ -335,31 +393,35 @@ def gen_screenshot_home():
 {status_bar(W)}
 {top_bar(W, subtitle=True)}
 
-<rect x="60" y="336" width="960" height="1240" rx="40" fill="#000000" fill-opacity="0.06"/>
-<rect x="60" y="326" width="960" height="1240" rx="40" fill="{WHITE}" stroke="{SURFACE_VARIANT}" stroke-width="2"/>
-<rect x="60" y="326" width="960" height="1240" rx="40" fill="url(#cardTint)"/>
+<rect x="60" y="{card_top+10}" width="960" height="{card_h}" rx="40" fill="#000000" fill-opacity="0.06"/>
+<rect x="60" y="{card_top}" width="960" height="{card_h}" rx="40" fill="{WHITE}" stroke="{SURFACE_VARIANT}" stroke-width="2"/>
+<rect x="60" y="{card_top}" width="960" height="{card_h}" rx="40" fill="url(#cardTint)"/>
 
-{pill(430, 400, 220, 56, SECONDARY_CONTAINER, EMOJI_ICE + " Ice Breakers", ON_SECONDARY_CONTAINER, 24, "600", "middle")}
+{pill(370, pill_y, 340, pill_h, SECONDARY_CONTAINER, EMOJI_ICE + " Ice Breakers", ON_SECONDARY_CONTAINER, 34, "600", "middle")}
 
-{text_lines(wrap_text(question, 21), W/2, 540, 62, 46, ON_SURFACE, text_anchor="middle")}
+{text_lines(lines, W/2, question_y, line_height, font_size, ON_SURFACE, text_anchor="middle")}
 
-<text x="{W/2}" y="1480" font-family="{FONT}" font-size="26" font-style="italic" fill="{ON_SURFACE_VARIANT}"
+<text x="{W/2}" y="{caption_y}" font-family="{FONT}" font-size="38" font-style="italic" fill="{ON_SURFACE_VARIANT}"
       text-anchor="middle">Take turns sharing your answers</text>
 
 {dots}
 
-{pill(60, 1690, 150, 56, SURFACE_VARIANT, "All ▾", ON_SURFACE_VARIANT, 24, "600", "middle")}
+{pill(60, H-178, 150, 56, SURFACE_VARIANT, "All ▾", ON_SURFACE_VARIANT, 24, "600", "middle")}
 
-<circle cx="1000" cy="1800" r="44" fill="{SURFACE_VARIANT}"/>
-{glyph_grid(1000, 1800)}
+<circle cx="1000" cy="{H-150}" r="44" fill="{SURFACE_VARIANT}"/>
+{glyph_grid(1000, H-150)}
 
-{gesture_bar(W, 1876)}
+{gesture_bar(W, H-31)}
 </svg>'''
     p = write_svg("screenshot-1-home", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-1-home.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-1-home.png"), W, H)
 
 
 def gen_screenshot_fullscreen():
+    # Content block (pill/emoji/question) is vertically centered between the top icon row and the
+    # gesture bar; shift it down from its H=1920 position to keep that same centered ratio on the
+    # taller canvas, rather than leaving it stranded near the top with a big empty bottom half.
+    content_shift = int(round(0.5372 * (H - 1920)))
     question = "What's your favorite memory of the two of us together?"
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <rect width="{W}" height="{H}" fill="{SURFACE}"/>
@@ -370,16 +432,16 @@ def gen_screenshot_fullscreen():
 <circle cx="{W-128}" cy="146" r="34" fill="{SURFACE_VARIANT}"/>
 {glyph_dice(W-128, 146)}
 
-{pill(W/2-130, 760, 260, 58, SECONDARY_CONTAINER, EMOJI_MEMORIES + " Memories", ON_SECONDARY_CONTAINER, 25, "600", "middle")}
+{pill(W/2-130, 760+content_shift, 260, 58, SECONDARY_CONTAINER, EMOJI_MEMORIES + " Memories", ON_SECONDARY_CONTAINER, 25, "600", "middle")}
 
-<text x="{W/2}" y="1010" font-family="{FONT}" font-size="120" text-anchor="middle">&#128172;</text>
+<text x="{W/2}" y="{1010+content_shift}" font-family="{FONT}" font-size="120" text-anchor="middle">&#128172;</text>
 
-{text_lines(wrap_text(question, 17), W/2, 1180, 74, 54, ON_SURFACE, text_anchor="middle")}
+{text_lines(wrap_text(question, 17), W/2, 1180+content_shift, 74, 54, ON_SURFACE, text_anchor="middle")}
 
-{gesture_bar(W, 1876)}
+{gesture_bar(W, H-44)}
 </svg>'''
     p = write_svg("screenshot-2-fullscreen", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-2-fullscreen.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-2-fullscreen.png"), W, H)
 
 
 GRID_ITEMS = [
@@ -392,6 +454,9 @@ GRID_ITEMS = [
     (EMOJI_MEMORIES, "What do you remember about the moment you first realized you liked me?"),
     (EMOJI_VALUES, "How can I best support you when you're having a hard day?"),
     (EMOJI_FUTURE, "If we designed our dream home, what's one unusual feature you'd want?"),
+    (EMOJI_DAILY, "What's one small thing I did recently that made you smile?"),
+    (EMOJI_ICE, "If we could teleport anywhere right now, where would we go?"),
+    (EMOJI_MEMORIES, "What's a memory that always makes you laugh when you think about it?"),
 ]
 
 
@@ -400,7 +465,11 @@ def gen_screenshot_grid():
     gap = 22
     cols = 3
     colw = (W - 2 * margin - (cols - 1) * gap) / cols
+    # The real GridQuestionCard (feature/home HomeScreen.kt) uses a fixed aspectRatio(0.75f) -
+    # cards don't stretch taller on a bigger screen, more of them just become visible at once - so
+    # keep that ratio here too and show an extra row (GRID_ITEMS below) to fill the taller canvas.
     cardh = colw / 0.75
+    rows = -(-len(GRID_ITEMS) // cols)  # ceil division
     cards = ""
     for i, (emoji, text) in enumerate(GRID_ITEMS):
         r, c = divmod(i, cols)
@@ -414,7 +483,7 @@ def gen_screenshot_grid():
 <text x="{x+colw-16}" y="{y+34}" font-family="{FONT}" font-size="22" text-anchor="end">{emoji}</text>
 {text_lines(lines, x+colw/2, start_y, 25, 19, ON_SURFACE, text_anchor="middle")}'''
 
-    clip_bottom = 300 + 3 * cardh + 2 * gap + 20
+    clip_bottom = 300 + rows * cardh + (rows - 1) * gap + 20
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <defs>
   <linearGradient id="cardTint" x1="0" y1="0" x2="1" y2="1">
@@ -430,15 +499,15 @@ def gen_screenshot_grid():
 {cards}
 </g>
 
-{pill(60, 1700, 150, 56, SURFACE_VARIANT, "All ▾", ON_SURFACE_VARIANT, 24, "600", "middle")}
+{pill(60, H-220, 150, 56, SURFACE_VARIANT, "All ▾", ON_SURFACE_VARIANT, 24, "600", "middle")}
 
-<circle cx="1000" cy="1800" r="44" fill="{SURFACE_VARIANT}"/>
-{glyph_carousel(1000, 1800)}
+<circle cx="1000" cy="{H-120}" r="44" fill="{SURFACE_VARIANT}"/>
+{glyph_carousel(1000, H-120)}
 
-{gesture_bar(W, 1876)}
+{gesture_bar(W, H-44)}
 </svg>'''
     p = write_svg("screenshot-3-grid", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-3-grid.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-3-grid.png"), W, H)
 
 
 def gen_screenshot_settings():
@@ -456,6 +525,19 @@ def gen_screenshot_settings():
         "Reset to bring them all back.", 46)
     about_desc = "Strengthening couples, one question at a time. " + EMOJI_HEART_SMALL
 
+    # Sections are a top-anchored scrollable list in the real screen, so at H=1920 the leftover
+    # space below the footer was one large blank strip. Spread the extra height from the taller
+    # canvas across the gaps *between* sections instead, so the page reads as a well-composed
+    # screenshot rather than mostly-empty content pinned to the top third of the screen.
+    label1_y = 344
+    card1_y = 411
+    label2_y = 689
+    card2_y = 756
+    label3_y = 1194
+    card3_y = 1261
+    footer1_y = 1676
+    footer2_y = 1708
+
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
 <rect width="{W}" height="{H}" fill="{BACKGROUND}"/>
 {status_bar(W)}
@@ -465,30 +547,30 @@ def gen_screenshot_settings():
 <text x="112" y="158" font-family="{FONT}" font-size="38" font-weight="700" fill="{ON_SURFACE}">Settings</text>
 <line x1="0" y1="196" x2="{W}" y2="196" stroke="{SURFACE_VARIANT}" stroke-width="2"/>
 
-{section_label(258, "App Preferences")}
-{card(286, 130)}
-{glyph_globe(120, 351)}
-<text x="168" y="343" font-family="{FONT}" font-size="26" font-weight="600" fill="{ON_SURFACE}">App Language</text>
-<text x="168" y="378" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}">Change language in Android settings</text>
+{section_label(label1_y, "App Preferences")}
+{card(card1_y, 130)}
+{glyph_globe(120, card1_y+65)}
+<text x="168" y="{card1_y+57}" font-family="{FONT}" font-size="26" font-weight="600" fill="{ON_SURFACE}">App Language</text>
+<text x="168" y="{card1_y+92}" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}">Change language in Android settings</text>
 
-{section_label(478, "Reset Cards")}
-{card(506, 300)}
-{text_lines(reset_desc, 108, 564, 30, 22, ON_SURFACE)}
-{pill(108, 704, 260, 66, PRIMARY, "Reset Cards", ON_PRIMARY, 24, "700", "middle")}
+{section_label(label2_y, "Reset Cards")}
+{card(card2_y, 300)}
+{text_lines(reset_desc, 108, card2_y+58, 30, 22, ON_SURFACE)}
+{pill(108, card2_y+198, 260, 66, PRIMARY, "Reset Cards", ON_PRIMARY, 24, "700", "middle")}
 
-{section_label(864, "About")}
-{card(892, 220)}
-<text x="108" y="948" font-family="{FONT}" font-size="27" font-weight="700" fill="{ON_SURFACE}">Couple Moments: LoopGain</text>
-<text x="108" y="986" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}">Version 1.0.0</text>
-{text_lines(wrap_text(about_desc, 40), 108, 1030, 30, 22, ON_SURFACE)}
+{section_label(label3_y, "About")}
+{card(card3_y, 220)}
+<text x="108" y="{card3_y+56}" font-family="{FONT}" font-size="27" font-weight="700" fill="{ON_SURFACE}">Couple Moments: LoopGain</text>
+<text x="108" y="{card3_y+94}" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}">Version 1.0.0</text>
+{text_lines(wrap_text(about_desc, 40), 108, card3_y+138, 30, 22, ON_SURFACE)}
 
-<text x="{W/2}" y="1194" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}" text-anchor="middle">Couple Moments is part of the LoopGain family tools</text>
-<text x="{W/2}" y="1226" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}" text-anchor="middle">by Pedro Vicente</text>
+<text x="{W/2}" y="{footer1_y}" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}" text-anchor="middle">Couple Moments is part of the LoopGain family tools</text>
+<text x="{W/2}" y="{footer2_y}" font-family="{FONT}" font-size="21" fill="{ON_SURFACE_VARIANT}" text-anchor="middle">by Pedro Vicente</text>
 
-{gesture_bar(W, 1876)}
+{gesture_bar(W, H-44)}
 </svg>'''
     p = write_svg("screenshot-4-settings", svg)
-    run_sips(p, os.path.join(OUT_DIR, "screenshot-4-settings.png"))
+    run_render(p, os.path.join(OUT_DIR, "screenshot-4-settings.png"), W, H)
 
 
 gen_icon()
