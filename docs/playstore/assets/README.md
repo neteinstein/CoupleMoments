@@ -1,11 +1,6 @@
 # Play Store visual assets
 
-Graphics for the Play Console's Store presence page (Main store listing → Graphics). These are
-generated, not hand-drawn — `generate.py` renders each one as SVG (matching the real app's
-colors from `core/ui/.../theme/Color.kt`, the launcher mark from
-`app/src/main/res/drawable/ic_launcher_foreground.xml`, and the `feature/home` /
-`feature/settings` screen layouts/copy) and rasterizes it with macOS's `sips`, falling back to a
-headless Chromium `headless_shell` binary when `sips` isn't on PATH (e.g. on Linux).
+Graphics for the Play Console's Store presence page (Main store listing → Graphics).
 
 | File | Use | Spec |
 | --- | --- | --- |
@@ -20,10 +15,18 @@ All are en-US only; Play falls back to this set for locales without their own sc
 `screenshots/<locale>/` subfolder if per-locale screenshots are ever wanted for the other listed
 languages (`docs/playstore/play/listings/`).
 
+`icon-512.png` and `feature-graphic-1024x500.png` are generated, not hand-drawn —
+`generate.py` renders each one as SVG (matching the real app's colors from
+`core/ui/.../theme/Color.kt` and the launcher mark from
+`app/src/main/res/drawable/ic_launcher_foreground.xml`) and rasterizes it with macOS's `sips`,
+falling back to a headless Chromium `headless_shell` binary when `sips` isn't on PATH (e.g. on
+Linux). The four `screenshot-*.png` files are genuine device captures taken from an Android
+emulator (`sdk_gphone16k_arm64`, playstore debug build) — not generated — so they show the real
+running app.
+
 ## Regenerating
 
-The screenshots are faithful mockups (real strings, colors, and layout) rather than device
-captures — there's no Android emulator in this environment. Regenerate after a UI or copy change:
+Regenerate `icon-512.png` / `feature-graphic-1024x500.png` after a color or launcher-icon change:
 
 ```bash
 python3 docs/playstore/assets/generate.py
@@ -32,6 +35,18 @@ python3 docs/playstore/assets/generate.py
 Requires Python 3 with Pillow (`pip install pillow`) and either macOS's `sips` or a Chromium/Chrome
 build providing `headless_shell` (used to rasterize the intermediate SVGs; the .svg files are
 deleted after each run) - set `CHROME_BIN` to point at a specific binary if none is auto-detected.
-For a pixel-exact capture, swap these for real device/emulator screenshots before submission if
-desired - the generated ones are accurate enough to submit as-is but aren't a substitute for the
-genuine article.
+
+Recapture the `screenshot-*.png` files after a UI or copy change, from a running emulator:
+
+```bash
+./gradlew :app:assemblePlaystoreDebug
+adb install -r app/build/outputs/apk/playstore/debug/app-playstore-debug.apk
+```
+
+Then launch the app, disable animations (`adb shell settings put global window_animation_scale 0`
+etc.) for crisp captures, navigate to each of the four views (home swipe deck; swipe up on a card
+for the full-screen question; the grid icon, filtered to a single wholesome category such as
+Memories, to avoid surfacing Intimacy-category questions in a store screenshot; the settings gear),
+capture with `adb shell screencap -p /sdcard/shot.png` + `adb pull`, and downscale to 1080×2400
+with `sips -z 2400 1080 <capture>.png --out screenshot-N-name.png` (the emulator's native
+resolution is already a 20:9 aspect ratio, so this is a straight resize with no cropping).

@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
                     ThemeMode.System -> isSystemInDarkTheme()
                 }
 
-            CoupleMomentsTheme(darkTheme = darkTheme) {
+            CoupleMomentsTheme(darkTheme = darkTheme, dynamicColor = false) {
                 val navController = rememberNavController()
                 AppNavigation(navController = navController)
             }
