@@ -287,7 +287,9 @@ class SettingsViewModelTest {
         runTest {
             coEvery { getQuestionsUseCase("en") } returns
                 listOf(Question(id = 1, text = "a", languageCode = "en"))
-            coEvery { getUsedQuestionIdsUseCase() } returnsMany listOf(setOf(1), emptySet())
+            // onResetCardsClicked refreshes counts only after resetUsedQuestionsUseCase() runs, so this
+            // stands in for the now-cleared hidden set rather than a "before" value.
+            coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
             coEvery { resetUsedQuestionsUseCase() } returns Unit
 
             viewModel.onResetCardsClicked()
