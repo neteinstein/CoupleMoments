@@ -953,7 +953,7 @@ object QuestionSeedData {
                 text = "When do I need moments just for us? And just for myself?",
                 languageCode = "en",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.Both,
+                audience = QuestionAudience.WithKids,
             ),
             Question(
                 id = 142,
@@ -1072,7 +1072,7 @@ object QuestionSeedData {
                 text = "When do I need moments just for us? And just for myself?",
                 languageCode = "en",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.WithKids,
+                audience = QuestionAudience.Both,
             ),
             Question(
                 id = 164,
@@ -2196,7 +2196,7 @@ object QuestionSeedData {
                 text = "Em que momentos preciso de momentos só para nós? E só para mim?",
                 languageCode = "pt",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.Both,
+                audience = QuestionAudience.WithKids,
             ),
             Question(
                 id = 342,
@@ -2303,7 +2303,7 @@ object QuestionSeedData {
                 text = "Em que momentos preciso de momentos para nós? E só para mim?",
                 languageCode = "pt",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.WithKids,
+                audience = QuestionAudience.Both,
             ),
             Question(
                 id = 364,
@@ -3427,7 +3427,7 @@ object QuestionSeedData {
                 text = "¿En qué momentos necesito momentos solo para nosotros? ¿Y solo para mí?",
                 languageCode = "es",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.Both,
+                audience = QuestionAudience.WithKids,
             ),
             Question(
                 id = 542,
@@ -3546,7 +3546,7 @@ object QuestionSeedData {
                 text = "¿Cuándo necesito momentos solo para nosotros? ¿Y solo para mí?",
                 languageCode = "es",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.WithKids,
+                audience = QuestionAudience.Both,
             ),
             Question(
                 id = 564,
@@ -4700,7 +4700,7 @@ object QuestionSeedData {
                 text = "À quels moments ai-je besoin de moments juste pour nous ? Et juste pour moi ?",
                 languageCode = "fr",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.Both,
+                audience = QuestionAudience.WithKids,
             ),
             Question(
                 id = 742,
@@ -4843,7 +4843,7 @@ object QuestionSeedData {
                 text = "Quand ai-je besoin de moments rien que pour nous ? Et rien que pour moi ?",
                 languageCode = "fr",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.WithKids,
+                audience = QuestionAudience.Both,
             ),
             Question(
                 id = 764,
@@ -5973,7 +5973,7 @@ object QuestionSeedData {
                 text = "In welchen Momenten brauche ich Zeit nur für uns? Und nur für mich?",
                 languageCode = "de",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.Both,
+                audience = QuestionAudience.WithKids,
             ),
             Question(
                 id = 942,
@@ -6104,7 +6104,7 @@ object QuestionSeedData {
                 text = "Wann brauche ich Momente nur für uns? Und nur für mich?",
                 languageCode = "de",
                 category = QuestionCategory.DailyLife,
-                audience = QuestionAudience.WithKids,
+                audience = QuestionAudience.Both,
             ),
             Question(
                 id = 964,
