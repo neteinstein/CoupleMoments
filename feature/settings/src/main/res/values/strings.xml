@@ -16,6 +16,8 @@
     <string name="section_card_management">Card Management</string>
     <string name="questions_for_parents_title">Couple Questions For Parents</string>
     <string name="questions_for_parents_subtitle">Include questions written for couples with kids.</string>
+    <string name="questions_for_parents_option_without_kids">Without Kids</string>
+    <string name="questions_for_parents_option_with_kids">With Kids</string>
     <string name="reset_cards_description">Hidden cards (swiped down as already used or not wanted) stay out of rotation. Reset to bring them all back.</string>
     <string name="reset_cards_hidden_count_format">%1$d of %2$d hidden.</string>
     <string name="reset_cards_button">Reset Cards</string>

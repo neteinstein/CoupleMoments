@@ -20,8 +20,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -38,7 +40,6 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -202,9 +203,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column {
-                        QuestionsForParentsToggle(
+                        QuestionsForParentsSelector(
                             enabled = uiState.questionsForParentsEnabled,
-                            onToggle = viewModel::onQuestionsForParentsToggled,
+                            onSelected = viewModel::onQuestionsForParentsToggled,
                         )
                         HorizontalDivider()
                         ResetCardsSection(
@@ -315,37 +316,59 @@ fun SettingsScreen(
 }
 
 /**
- * Toggle for including [org.neteinstein.couples.domain.model.QuestionAudience.WithKids] questions
- * alongside the default set (see [SettingsViewModel.onQuestionsForParentsToggled]). Off by default,
- * so existing behavior is unchanged until the user opts in.
+ * Picker for including [org.neteinstein.couples.domain.model.QuestionAudience.WithKids] questions
+ * alongside the default set (see [SettingsViewModel.onQuestionsForParentsToggled]). Mirrors
+ * [ThemeModeSelector]'s segmented-button layout instead of a plain switch. "Without Kids" is
+ * selected by default, so existing behavior is unchanged until the user opts in.
  */
 @Composable
-private fun QuestionsForParentsToggle(
+private fun QuestionsForParentsSelector(
     enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
+    onSelected: (Boolean) -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.questions_for_parents_title),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.questions_for_parents_subtitle),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = stringResource(R.string.questions_for_parents_title),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = stringResource(R.string.questions_for_parents_subtitle),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            listOf(false, true).forEachIndexed { index, option ->
+                val selected = option == enabled
+                SegmentedButton(
+                    selected = selected,
+                    onClick = { onSelected(option) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                    icon = {
+                        SegmentedButtonDefaults.Icon(active = selected) {
+                            Icon(
+                                imageVector = if (option) Icons.Default.FamilyRestroom else Icons.Default.People,
+                                contentDescription = null,
+                                modifier = Modifier.size(SegmentedButtonDefaults.IconSize),
+                            )
+                        }
+                    },
+                ) {
+                    Text(
+                        text =
+                            stringResource(
+                                if (option) {
+                                    R.string.questions_for_parents_option_with_kids
+                                } else {
+                                    R.string.questions_for_parents_option_without_kids
+                                },
+                            ),
+                    )
+                }
+            }
         }
-        Spacer(modifier = Modifier.width(16.dp))
-        Switch(checked = enabled, onCheckedChange = onToggle)
     }
 }
 

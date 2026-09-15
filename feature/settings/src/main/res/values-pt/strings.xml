@@ -16,6 +16,8 @@
     <string name="section_card_management">Gestão das cartas</string>
     <string name="questions_for_parents_title">Perguntas de Casal Para Pais</string>
     <string name="questions_for_parents_subtitle">Inclui perguntas pensadas para casais com filhos.</string>
+    <string name="questions_for_parents_option_without_kids">Sem Filhos</string>
+    <string name="questions_for_parents_option_with_kids">Com Filhos</string>
     <string name="reset_cards_description">Cartas ocultas (deslizadas para baixo como já usadas ou indesejadas) ficam fora da rotação. Redefina para trazê-las todas de volta.</string>
     <string name="reset_cards_hidden_count_format">%1$d de %2$d ocultas.</string>
     <string name="reset_cards_button">Redefinir Cartas</string>
