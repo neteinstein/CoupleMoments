@@ -69,7 +69,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.neteinstein.couples.domain.model.ThemeMode
 
 private const val LOOPGAIN_URL = "https://loopgain.org"
-private const val PEDRO_VICENTE_URL = "https://pedrovicente.pt"
+private const val PEDRO_VICENTE_URL = "https://www.pedro.vicente.pt"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
