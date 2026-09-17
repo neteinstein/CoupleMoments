@@ -2,6 +2,10 @@ package org.neteinstein.couples.feature.splash
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -15,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +36,28 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
     val scale = remember { Animatable(0.4f) }
     val alpha = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
+
+    // A gentle heartbeat (double-thump, like the heart drawn at the logo's infinity crossing)
+    // that keeps beating for as long as the splash is on screen, layered on top of the one-shot
+    // entrance scale below rather than replacing it.
+    val heartbeat = rememberInfiniteTransition(label = "logoHeartbeat")
+    val heartbeatScale by heartbeat.animateFloat(
+        initialValue = 1f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation =
+                    keyframes {
+                        durationMillis = 1000
+                        1f at 0
+                        1.14f at 120 using FastOutSlowInEasing
+                        1f at 260 using FastOutSlowInEasing
+                        1.07f at 380 using FastOutSlowInEasing
+                        1f at 500 using FastOutSlowInEasing
+                    },
+            ),
+        label = "heartbeatScale",
+    )
 
     LaunchedEffect(Unit) {
         // Logo scale + fade in
@@ -76,7 +103,9 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
                 modifier =
                     Modifier
                         .size(160.dp)
-                        .scale(scale.value)
+                        // Only layer the continuous heartbeat on top once the one-shot entrance
+                        // scale has essentially settled, so the two don't visibly fight.
+                        .scale(scale.value * (if (scale.value > 0.98f) heartbeatScale else 1f))
                         .alpha(alpha.value),
             )
             Spacer(modifier = Modifier.height(24.dp))
@@ -84,7 +113,8 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
                 text = stringResource(R.string.splash_app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                // Matches the app title's color on the Questions/Game tabs.
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.alpha(textAlpha.value),
             )
             Spacer(modifier = Modifier.height(8.dp))

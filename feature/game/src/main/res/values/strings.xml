@@ -1,5 +1,5 @@
 <resources>
-    <string name="game_title">Couple Game Time</string>
+    <string name="game_title">Couple Game</string>
     <string name="game_top_bar_subtitle">Little details that can make a difference</string>
     <string name="game_subtitle">Do we know each other well?</string>
     <string name="game_swipe_hint">Swipe for a new question ← →</string>
