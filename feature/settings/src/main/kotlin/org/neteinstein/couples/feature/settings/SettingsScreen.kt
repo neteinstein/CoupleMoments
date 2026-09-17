@@ -3,6 +3,15 @@ package org.neteinstein.couples.feature.settings
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -52,6 +61,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -407,16 +417,22 @@ private fun ResetCardsSection(
             Text(text = stringResource(R.string.reset_cards_button))
         }
 
-        when (status) {
-            is ResetCardsStatus.Idle -> Unit
-            is ResetCardsStatus.Resetting -> UpdateStatusRow(text = stringResource(R.string.resetting_cards))
-            is ResetCardsStatus.Done ->
-                Text(
-                    text = stringResource(R.string.reset_cards_done),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+        AnimatedContent(
+            targetState = status,
+            transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(150)) },
+            label = "resetCardsStatus",
+        ) { animatedStatus ->
+            when (animatedStatus) {
+                is ResetCardsStatus.Idle -> Unit
+                is ResetCardsStatus.Resetting -> UpdateStatusRow(text = stringResource(R.string.resetting_cards))
+                is ResetCardsStatus.Done ->
+                    Text(
+                        text = stringResource(R.string.reset_cards_done),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+            }
         }
     }
 }
@@ -451,38 +467,46 @@ private fun UpdateSection(
             Text(text = stringResource(R.string.update_button))
         }
 
-        when (status) {
-            is UpdateStatus.Idle -> Unit
-            is UpdateStatus.Checking -> UpdateStatusRow(text = stringResource(R.string.checking_updates))
-            is UpdateStatus.Downloading -> UpdateStatusRow(text = stringResource(R.string.downloading_update))
-            is UpdateStatus.UpToDate ->
-                Text(
-                    text = stringResource(R.string.up_to_date_format, status.currentVersionName),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            is UpdateStatus.UpdateAvailable -> Unit
-            is UpdateStatus.Failed ->
-                Text(
-                    text = status.message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            is UpdateStatus.SideloadingBlocked -> {
-                Text(
-                    text = stringResource(R.string.sideloading_blocked_message),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onEnableSideloadingClicked,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(text = stringResource(R.string.enable_installing_updates))
+        AnimatedContent(
+            targetState = status,
+            transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(150)) },
+            label = "updateStatus",
+        ) { animatedStatus ->
+            when (animatedStatus) {
+                is UpdateStatus.Idle -> Unit
+                is UpdateStatus.Checking -> UpdateStatusRow(text = stringResource(R.string.checking_updates))
+                is UpdateStatus.Downloading -> UpdateStatusRow(text = stringResource(R.string.downloading_update))
+                is UpdateStatus.UpToDate ->
+                    Text(
+                        text = stringResource(R.string.up_to_date_format, animatedStatus.currentVersionName),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                is UpdateStatus.UpdateAvailable -> Unit
+                is UpdateStatus.Failed ->
+                    Text(
+                        text = animatedStatus.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                is UpdateStatus.SideloadingBlocked -> {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.sideloading_blocked_message),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = onEnableSideloadingClicked,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(text = stringResource(R.string.enable_installing_updates))
+                        }
+                    }
                 }
             }
         }
@@ -619,10 +643,23 @@ private fun SettingsItem(
     subtitle: String,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = tween(durationMillis = 100, easing = FastOutSlowInEasing),
+        label = "settingsItemPressScale",
+    )
     Card(
         onClick = onClick,
+        interactionSource = interactionSource,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(0.dp),
+        modifier =
+            Modifier.graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            },
     ) {
         Row(
             modifier =

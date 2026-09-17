@@ -3,15 +3,16 @@ package org.neteinstein.couples.feature.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -72,8 +73,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -83,7 +87,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,6 +94,7 @@ import mx.platacard.pagerindicator.PagerIndicator
 import org.koin.androidx.compose.koinViewModel
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.model.QuestionCategory
+import org.neteinstein.couples.ui.animation.OriginReveal
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -114,6 +118,10 @@ fun HomeScreen(
     }
     var isGridView by remember { mutableStateOf(false) }
     var showHideConfirmDialog by remember { mutableStateOf(false) }
+    // Bounds (in root coordinates) of whichever card/tile last opened the full-screen overlay, so
+    // it can visually grow from there instead of always expanding from the screen's center.
+    var deckCardBounds by remember { mutableStateOf<Rect?>(null) }
+    var revealOrigin by remember { mutableStateOf<Rect?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.onScreenEntered()
@@ -154,7 +162,10 @@ fun HomeScreen(
             ) {
                 // Top bar
                 HomeTopBar(
-                    onShuffleClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
+                    onShuffleClick = {
+                        revealOrigin = null
+                        uiState.questions.randomOrNull()?.let { fullScreenQuestion = it }
+                    },
                     shuffleEnabled = uiState.questions.isNotEmpty(),
                     onSettingsClick = onSettingsClick,
                 )
@@ -189,7 +200,10 @@ fun HomeScreen(
                 } else if (isGridView) {
                     QuestionGrid(
                         questions = uiState.questions,
-                        onQuestionClick = { fullScreenQuestion = it },
+                        onQuestionClick = { question, bounds ->
+                            revealOrigin = bounds
+                            fullScreenQuestion = question
+                        },
                         modifier = Modifier.weight(1f),
                     )
                 } else {
@@ -197,6 +211,7 @@ fun HomeScreen(
                         uiState = uiState,
                         swipeDirection = swipeDirection,
                         modifier = Modifier.weight(1f),
+                        onCardPositioned = { deckCardBounds = it },
                         onSwipeLeft = {
                             swipeDirection = -1
                             viewModel.nextQuestion()
@@ -205,7 +220,10 @@ fun HomeScreen(
                             swipeDirection = 1
                             viewModel.previousQuestion()
                         },
-                        onSwipeUp = { fullScreenQuestion = uiState.currentQuestion },
+                        onSwipeUp = {
+                            revealOrigin = deckCardBounds
+                            fullScreenQuestion = uiState.currentQuestion
+                        },
                         onSwipeDown = { showHideConfirmDialog = true },
                     )
                 }
@@ -261,26 +279,18 @@ fun HomeScreen(
 
             AnimatedVisibility(
                 visible = fullScreenQuestion != null,
-                enter =
-                    fadeIn(tween(200)) +
-                        expandIn(
-                            animationSpec = tween(400, easing = FastOutSlowInEasing),
-                            expandFrom = Alignment.Center,
-                        ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
-                exit =
-                    fadeOut(tween(200)) +
-                        shrinkOut(
-                            animationSpec = tween(300, easing = FastOutSlowInEasing),
-                            shrinkTowards = Alignment.Center,
-                        ) { fullSize -> IntSize(fullSize.width, (fullSize.height * 0.35f).roundToInt()) },
+                enter = EnterTransition.None,
+                exit = ExitTransition.None,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                FullScreenQuestion(
-                    question = lastFullScreenQuestion,
-                    onClose = { fullScreenQuestion = null },
-                    onRandomClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
-                    randomEnabled = uiState.questions.isNotEmpty(),
-                )
+                OriginReveal(origin = revealOrigin) {
+                    FullScreenQuestion(
+                        question = lastFullScreenQuestion,
+                        onClose = { fullScreenQuestion = null },
+                        onRandomClick = { uiState.questions.randomOrNull()?.let { fullScreenQuestion = it } },
+                        randomEnabled = uiState.questions.isNotEmpty(),
+                    )
+                }
             }
         }
     }
@@ -500,6 +510,7 @@ private fun QuestionCard(
     uiState: HomeUiState,
     swipeDirection: Int,
     modifier: Modifier = Modifier,
+    onCardPositioned: (Rect) -> Unit = {},
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit,
     onSwipeUp: () -> Unit,
@@ -507,14 +518,16 @@ private fun QuestionCard(
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
+    // A bouncy damping ratio (instead of the critically-damped default) makes a released drag
+    // that didn't cross the swipe threshold settle back to center with a little overshoot wobble.
     val cardRotation by animateFloatAsState(
         targetValue = offsetX * 0.04f,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "cardRotation",
     )
     val cardOffsetY by animateFloatAsState(
         targetValue = offsetY,
-        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "cardOffsetY",
     )
 
@@ -535,12 +548,24 @@ private fun QuestionCard(
             },
             label = "questionCard",
         ) { question ->
+            // Flips the newly-entering card face-up (independent of the slide transition above),
+            // so each new question is revealed rather than just appearing already flat.
+            val flipRotationY = remember(question) { Animatable(90f) }
+            val density = LocalDensity.current
+            LaunchedEffect(question) {
+                flipRotationY.animateTo(0f, animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing))
+            }
             Card(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
-                        .offset { IntOffset(0, cardOffsetY.roundToInt()) }
+                        .onGloballyPositioned { onCardPositioned(it.boundsInRoot()) }
+                        .graphicsLayer {
+                            rotationY = flipRotationY.value
+                            cameraDistance = 12 * density.density
+                            alpha = 1f - (flipRotationY.value / 90f) * 0.4f
+                        }.offset { IntOffset(0, cardOffsetY.roundToInt()) }
                         .rotate(cardRotation)
                         .pointerInput(Unit) {
                             detectDragGestures(
@@ -648,7 +673,7 @@ private fun QuestionCard(
 @Composable
 private fun QuestionGrid(
     questions: List<Question>,
-    onQuestionClick: (Question) -> Unit,
+    onQuestionClick: (Question, Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (questions.isEmpty()) {
@@ -691,7 +716,7 @@ private fun QuestionGrid(
         items(questions, key = { it.id }) { question ->
             GridQuestionCard(
                 question = question,
-                onClick = { onQuestionClick(question) },
+                onClick = { bounds -> onQuestionClick(question, bounds) },
             )
         }
     }
@@ -700,12 +725,16 @@ private fun QuestionGrid(
 @Composable
 private fun GridQuestionCard(
     question: Question,
-    onClick: () -> Unit,
+    onClick: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var bounds by remember { mutableStateOf(Rect.Zero) }
     Card(
-        onClick = onClick,
-        modifier = modifier.aspectRatio(0.75f),
+        onClick = { onClick(bounds) },
+        modifier =
+            modifier
+                .aspectRatio(0.75f)
+                .onGloballyPositioned { bounds = it.boundsInRoot() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(16.dp),
@@ -872,12 +901,32 @@ private fun ProgressDots(
     // modulo), so the indicator's page count/fraction are derived from the wrapped index rather
     // than the raw, ever-increasing current.
     val visibleIndex = current % total
+    val animatedFraction by animateFloatAsState(
+        targetValue = visibleIndex.toFloat(),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "progressDotsFraction",
+    )
+    // A quick scale burst on top of the indicator's own morph gives the active dot a tactile pop
+    // whenever the current card changes.
+    val pulseScale = remember { Animatable(1f) }
+    LaunchedEffect(visibleIndex) {
+        pulseScale.snapTo(1f)
+        pulseScale.animateTo(1.25f, animationSpec = tween(durationMillis = 100, easing = FastOutSlowInEasing))
+        pulseScale.animateTo(
+            1f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        )
+    }
     PagerIndicator(
         pageCount = total,
-        currentPageFraction = rememberUpdatedState(visibleIndex.toFloat()),
+        currentPageFraction = rememberUpdatedState(animatedFraction),
         activeDotColor = MaterialTheme.colorScheme.primary,
         dotColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
         dotCount = minOf(total, MAX_VISIBLE_DOTS),
-        modifier = modifier,
+        modifier =
+            modifier.graphicsLayer {
+                scaleX = pulseScale.value
+                scaleY = pulseScale.value
+            },
     )
 }
