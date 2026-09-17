@@ -15,18 +15,25 @@ All are en-US only; Play falls back to this set for locales without their own sc
 `screenshots/<locale>/` subfolder if per-locale screenshots are ever wanted for the other listed
 languages (`docs/playstore/play/listings/`).
 
-`icon-512.png` and `feature-graphic-1024x500.png` are generated, not hand-drawn —
-`generate.py` renders each one as SVG (matching the real app's colors from
-`core/ui/.../theme/Color.kt` and the launcher mark from
-`app/src/main/res/drawable/ic_launcher_foreground.xml`) and rasterizes it with macOS's `sips`,
-falling back to a headless Chromium `headless_shell` binary when `sips` isn't on PATH (e.g. on
-Linux). The four `screenshot-*.png` files are genuine device captures taken from an Android
-emulator (`sdk_gphone16k_arm64`, playstore debug build) — not generated — so they show the real
-running app.
+`icon-512.png` is a static, designer-sourced asset (the app's mark, exported at 512×512) — it is
+not generated. The same artwork (minus its opaque background) also backs the Android launcher icon
+at `app/src/main/res/drawable-*/ic_launcher_foreground.png` (plus the monochrome/themed variant and
+`ic_splash_logo.png`) and the shared in-app mark at
+`core/ui/src/main/res/drawable-*/ic_couple_moments_mark.png`; update all of those together when the
+mark changes.
+
+`feature-graphic-1024x500.png` is generated — `generate.py` renders it as SVG (matching the real
+app's colors from `core/ui/.../theme/Color.kt`, and embedding
+`app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png` for the mark) and rasterizes it with
+macOS's `sips`, falling back to a headless Chromium `headless_shell` binary when `sips` isn't on
+PATH (e.g. on Linux). The four `screenshot-*.png` files are genuine device captures taken from an
+Android emulator (`sdk_gphone16k_arm64`, playstore debug build) — not generated — so they show the
+real running app.
 
 ## Regenerating
 
-Regenerate `icon-512.png` / `feature-graphic-1024x500.png` after a color or launcher-icon change:
+Regenerate `feature-graphic-1024x500.png` after a color change (or after the mark itself changes -
+see above):
 
 ```bash
 python3 docs/playstore/assets/generate.py

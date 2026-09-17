@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Generates Play Store visual assets for Couple Moments as SVG, then rasterizes them.
 
-Colors and layout are taken from the real app: core/ui/.../theme/Color.kt (Material3 palette),
-app/src/main/res/drawable/ic_launcher_foreground.xml (mark), and feature/home + feature/settings
-Compose screens (structure/copy).
+Colors and layout are taken from the real app: core/ui/.../theme/Color.kt (Material3 palette)
+and feature/home + feature/settings Compose screens (structure/copy). The mark itself
+(icon-512.png) is a static designer-sourced asset, not generated here - this script only embeds
+it into the feature graphic's card. Regenerate icon-512.png (and the matching Android
+drawable-*/ic_launcher_foreground.png etc.) by hand when the mark changes.
 """
+import base64
 import subprocess
 import os
 import shutil
@@ -25,10 +28,6 @@ ON_SURFACE = "#241A17"
 SURFACE_VARIANT = "#F2DEDA"
 ON_SURFACE_VARIANT = "#59413D"
 OUTLINE = "#8C7370"
-SPLASH_BG = "#F6C9C2"
-HEART = "#FF6F91"
-FIG_LEFT = "#8B4A40"
-FIG_RIGHT = "#E5342F"
 WHITE = "#FFFFFF"
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
@@ -119,31 +118,23 @@ def text_lines(lines, x, start_y, line_height, font_size, fill, weight="500", st
     return "\n".join(out)
 
 
-def mark(cx, cy, scale=1.0):
-    """Two leaning figures + clasped hands + heart, matching ic_launcher_foreground.xml,
-    centered at (cx, cy) at the given scale (1.0 == the original 108x108 viewport)."""
-    s = scale
+def mark_image_data_uri():
+    """Base64 data URI for the transparent-background mark (the same static designer-sourced
+    artwork as icon-512.png, minus its opaque background), for embedding in the feature graphic's
+    white card - icon-512.png itself is opaque (Play Store requires no alpha), which would show as
+    a visible pink square inset inside the card."""
+    mark_path = os.path.join(OUT_DIR, "..", "..", "..", "app", "src", "main", "res",
+                              "drawable-xxxhdpi", "ic_launcher_foreground.png")
+    with open(mark_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("ascii")
+    return f"data:image/png;base64,{b64}"
+
+
+def mark(cx, cy, size):
+    """<image> of icon-512.png, centered at (cx, cy), size x size."""
     return (
-        f'<g transform="translate({cx - 54*s},{cy - 54*s}) scale({s})">'
-        f'<path fill="{PRIMARY_CONTAINER}" fill-opacity="0.45" '
-        f'd="M54,58m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0" />'
-        f'<g transform="rotate(-13, 54, 82)">'
-        f'<path fill="{FIG_LEFT}" d="M32,82 L32,68 A11,11 0 0 1 54,62 A11,11 0 0 1 54,82 Z" />'
-        f'<path fill="{FIG_LEFT}" d="M40,38m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />'
-        f'</g>'
-        f'<g transform="rotate(13, 54, 82)">'
-        f'<path fill="{FIG_RIGHT}" d="M76,82 L76,68 A11,11 0 0 0 54,62 A11,11 0 0 0 54,82 Z" />'
-        f'<path fill="{FIG_RIGHT}" d="M68,38m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />'
-        f'</g>'
-        f'<g transform="rotate(-18, 50.5, 78)">'
-        f'<path fill="{FIG_LEFT}" d="M45,78 A5.5,3.8 0 1 1 56,78 A5.5,3.8 0 1 1 45,78 Z" />'
-        f'</g>'
-        f'<g transform="rotate(18, 57.5, 78)">'
-        f'<path fill="{FIG_RIGHT}" d="M52,78 A5.5,3.8 0 1 1 63,78 A5.5,3.8 0 1 1 52,78 Z" />'
-        f'</g>'
-        f'<path fill="{HEART}" fill-opacity="0.95" '
-        f'd="M54,42 C52,39 47,39 47,43.4 C47,47.8 51,51 54,54.2 C57,51 61,47.8 61,43.4 C61,39 56,39 54,42 Z" />'
-        f'</g>'
+        f'<image href="{mark_image_data_uri()}" x="{cx - size / 2}" y="{cy - size / 2}" '
+        f'width="{size}" height="{size}" />'
     )
 
 
@@ -272,15 +263,6 @@ def top_bar(width, subtitle=True, settings_glyph="grid"):
 {hint}'''
 
 
-def gen_icon():
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
-<rect width="108" height="108" fill="{SPLASH_BG}"/>
-{mark(54, 54, 1.0)}
-</svg>'''
-    p = write_svg("icon-512", svg)
-    run_render(p, os.path.join(OUT_DIR, "icon-512.png"), 512, 512)
-
-
 def gen_feature_graphic():
     q1 = "What's the best inside joke we have together?"
     q2 = "What's your favorite memory of the two of us together?"
@@ -323,7 +305,7 @@ def gen_feature_graphic():
 {card1}
 {card2}
 <rect x="64" y="70" width="150" height="150" rx="34" fill="{WHITE}"/>
-{mark(139, 145, 1.05)}
+{mark(139, 145, 124)}
 <text x="64" y="268" font-family="{FONT}" font-size="62" font-weight="800" fill="{PRIMARY}">Couple Moments</text>
 <text x="66" y="304" font-family="{FONT}" font-size="25" font-weight="400" fill="{ON_SURFACE_VARIANT}">Swipe your way to deeper conversations</text>
 {badges}
@@ -573,7 +555,6 @@ def gen_screenshot_settings():
     run_render(p, os.path.join(OUT_DIR, "screenshot-4-settings.png"), W, H)
 
 
-gen_icon()
 gen_feature_graphic()
 gen_screenshot_home()
 gen_screenshot_fullscreen()
@@ -585,7 +566,7 @@ gen_screenshot_settings()
 from PIL import Image  # noqa: E402
 
 for _name in [
-    "icon-512", "feature-graphic-1024x500", "screenshot-1-home",
+    "feature-graphic-1024x500", "screenshot-1-home",
     "screenshot-2-fullscreen", "screenshot-3-grid", "screenshot-4-settings",
 ]:
     _png = os.path.join(OUT_DIR, f"{_name}.png")
