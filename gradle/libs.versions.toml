@@ -19,7 +19,7 @@ json = "20260814"
 ktlintGradle = "14.2.0"
 room = "2.8.5"
 ksp = "2.3.11"
-robolectric = "4.16.1"
+robolectric = "4.17"
 pagerIndicator = "0.0.9"
 playPublisher = "4.1.1"
 
