@@ -13,7 +13,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -538,13 +538,14 @@ private fun QuestionCard(
         AnimatedContent(
             targetState = uiState.currentQuestion,
             transitionSpec = {
-                if (swipeDirection <= 0) {
-                    (slideInHorizontally(tween(400)) { it } + fadeIn(tween(300))) togetherWith
-                        (slideOutHorizontally(tween(400)) { -it } + fadeOut(tween(300)))
-                } else {
-                    (slideInHorizontally(tween(400)) { -it } + fadeIn(tween(300))) togetherWith
-                        (slideOutHorizontally(tween(400)) { it } + fadeOut(tween(300)))
-                }
+                // The new card scales in from behind (lower z-index) while the old one
+                // slides out on top, so the next card reads as revealed rather than
+                // arriving from off-screen.
+                val exitTargetOffsetX = if (swipeDirection <= 0) { width: Int -> -width } else { width: Int -> width }
+                (scaleIn(initialScale = 0.85f, animationSpec = tween(400)) + fadeIn(tween(300)))
+                    .togetherWith(
+                        slideOutHorizontally(tween(400), targetOffsetX = exitTargetOffsetX) + fadeOut(tween(300)),
+                    ).apply { targetContentZIndex = -1f }
             },
             label = "questionCard",
         ) { question ->
