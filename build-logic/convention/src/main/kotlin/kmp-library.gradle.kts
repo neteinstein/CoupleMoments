@@ -84,4 +84,13 @@ ktlint {
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
         reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
     }
+    // Compose Multiplatform's resource generator (`compose.components.resources`, used by
+    // `kmp-compose-library`) registers its generated accessors (e.g. `ActualResourceCollectors.kt`
+    // under build/generated/compose/resourceGenerator/...) as a real Kotlin source directory, which
+    // the plain `com.android.library` setup never had - so ktlint now sees and lints code this repo
+    // doesn't own and can't fix. Exclude anything under a module's build/ directory; this had no
+    // effect on the modules that don't generate anything there.
+    filter {
+        exclude { it.file.path.contains("${layout.buildDirectory.get().asFile.path}${java.io.File.separator}") }
+    }
 }

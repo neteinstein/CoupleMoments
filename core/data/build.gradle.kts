@@ -47,6 +47,13 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+    // KMP migration groundwork (step 4, sub-step 1 of 3): ThemeModeRepositoryImpl,
+    // IntimacyGateRepositoryImpl and QuestionsForParentsRepositoryImpl now depend on the
+    // multiplatform `Settings` interface instead of raw `Context.getSharedPreferences(...)`, so
+    // the eventual `core:data` -> `kmp-library` conversion is mechanical for these three repos.
+    // This module itself is still Android-only (`com.android.library`) - only the Android actual
+    // (`SharedPreferencesSettings`, wired in DataModule.kt) is used for now.
+    implementation(libs.multiplatform.settings)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

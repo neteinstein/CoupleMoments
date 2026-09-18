@@ -1,7 +1,10 @@
 package org.neteinstein.couples.data.di
 
+import android.content.Context
 import androidx.room.Room
+import com.russhwolf.settings.SharedPreferencesSettings
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.neteinstein.couples.data.installer.AppUpdateInstallerImpl
 import org.neteinstein.couples.data.local.CoupleMomentsDatabase
@@ -48,9 +51,30 @@ val dataModule =
         single<QuestionRepository> { QuestionRepositoryImpl(get(), get()) }
         single<LocaleProvider> { LocaleProviderImpl() }
         single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
-        single<IntimacyGateRepository> { IntimacyGateRepositoryImpl(androidContext()) }
-        single<ThemeModeRepository> { ThemeModeRepositoryImpl(androidContext()) }
-        single<QuestionsForParentsRepository> { QuestionsForParentsRepositoryImpl(androidContext()) }
+
+        // KMP migration groundwork (step 4, sub-step 1 of 3): each repo below now depends on the
+        // multiplatform `Settings` interface rather than a raw `Context`. `SharedPreferencesSettings`
+        // is the Android actual - it's just a thin wrapper around the exact same
+        // `SharedPreferences` file name/keys these repos always used, so existing installs keep
+        // their saved values. Each gets its own named `Settings` singleton (bound to its own
+        // preexisting prefs file) rather than one shared instance, to preserve on-disk
+        // compatibility - these were three separate files before and must stay that way.
+        single(named("themeModeSettings")) {
+            SharedPreferencesSettings(androidContext().getSharedPreferences("theme_mode", Context.MODE_PRIVATE))
+        }
+        single(named("intimacyGateSettings")) {
+            SharedPreferencesSettings(androidContext().getSharedPreferences("intimacy_gate", Context.MODE_PRIVATE))
+        }
+        single(named("questionsForParentsSettings")) {
+            SharedPreferencesSettings(
+                androidContext().getSharedPreferences("questions_for_parents", Context.MODE_PRIVATE),
+            )
+        }
+        single<IntimacyGateRepository> { IntimacyGateRepositoryImpl(get(named("intimacyGateSettings"))) }
+        single<ThemeModeRepository> { ThemeModeRepositoryImpl(get(named("themeModeSettings"))) }
+        single<QuestionsForParentsRepository> {
+            QuestionsForParentsRepositoryImpl(get(named("questionsForParentsSettings")))
+        }
         factory { GetRandomQuestionUseCase(get()) }
         factory { GetQuestionsUseCase(get()) }
         factory { GetUsedQuestionIdsUseCase(get()) }

@@ -53,6 +53,12 @@ kotlin {
         // androidMain rather than commonMain. Each one below is a judgment call made in this step;
         // revisit when iOS/wasmJs targets are actually added.
         androidMain.dependencies {
+            // `compose-material-icons` below has no explicit version in the catalog (it never did
+            // pre-KMP either) - it resolves through this BOM platform, exactly like the old
+            // module's top-level `api(platform(libs.compose.bom))` did. CI caught this: without it,
+            // Gradle fails resolving androidCompileClasspath with "Could not find
+            // androidx.compose.material:material-icons-extended:." (empty version).
+            api(platform(libs.compose.bom))
             // Lifecycle's Compose integration (`collectAsStateWithLifecycle`,
             // `viewModel()`/`koinViewModel()` scoping) has no Compose Multiplatform artifact swap
             // wired into this repo yet (gradle/libs.versions.toml keeps the multiplatform

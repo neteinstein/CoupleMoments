@@ -1,7 +1,6 @@
 package org.neteinstein.couples.data.repository
 
-import android.content.Context
-import android.content.SharedPreferences
+import com.russhwolf.settings.Settings
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -12,25 +11,20 @@ import org.junit.Before
 import org.junit.Test
 
 class QuestionsForParentsRepositoryImplTest {
-    private val context: Context = mockk()
-    private val prefs: SharedPreferences = mockk()
-    private val editor: SharedPreferences.Editor = mockk()
+    private val settings: Settings = mockk()
 
     private lateinit var repository: QuestionsForParentsRepositoryImpl
 
     @Before
     fun setUp() {
-        every { context.getSharedPreferences("questions_for_parents", Context.MODE_PRIVATE) } returns prefs
-        every { prefs.edit() } returns editor
-        every { editor.putBoolean(any(), any()) } returns editor
-        every { editor.apply() } returns Unit
-        repository = QuestionsForParentsRepositoryImpl(context)
+        every { settings.putBoolean(any(), any()) } returns Unit
+        repository = QuestionsForParentsRepositoryImpl(settings)
     }
 
     @Test
     fun `isEnabled returns false before it's ever been set`() =
         runTest {
-            every { prefs.getBoolean("enabled", false) } returns false
+            every { settings.getBoolean("enabled", false) } returns false
 
             assertFalse(repository.isEnabled())
         }
@@ -38,7 +32,7 @@ class QuestionsForParentsRepositoryImplTest {
     @Test
     fun `isEnabled returns true once setEnabled(true) has been called`() =
         runTest {
-            every { prefs.getBoolean("enabled", false) } returns true
+            every { settings.getBoolean("enabled", false) } returns true
 
             assertTrue(repository.isEnabled())
         }
@@ -48,8 +42,7 @@ class QuestionsForParentsRepositoryImplTest {
         runTest {
             repository.setEnabled(true)
 
-            verify { editor.putBoolean("enabled", true) }
-            verify { editor.apply() }
+            verify { settings.putBoolean("enabled", true) }
         }
 
     @Test
@@ -57,7 +50,6 @@ class QuestionsForParentsRepositoryImplTest {
         runTest {
             repository.setEnabled(false)
 
-            verify { editor.putBoolean("enabled", false) }
-            verify { editor.apply() }
+            verify { settings.putBoolean("enabled", false) }
         }
 }
