@@ -35,7 +35,14 @@ kotlin {
         compileSdk = 37
         minSdk = 32
 
-        // Unit tests (src/androidUnitTest + commonTest) and instrumented tests respectively.
+        // Host-side unit tests (src/androidHostTest + commonTest) and instrumented tests
+        // respectively. NOTE: this AGP KMP-library plugin names things differently from the
+        // legacy com.android.library plugin - the host-test source set is `androidHostTest` (not
+        // `androidUnitTest`), and the Gradle task it registers is `testAndroidHostTest` (not
+        // `testDebugUnitTest`). CI must invoke `testAndroidHostTest` explicitly, alongside the
+        // still-plain-Android modules' `testDebugUnitTest`, or a KMP-converted module's tests
+        // silently never run (Gradle skips a requested task name a project doesn't have, with no
+        // error) - see the commit that discovered this the hard way.
         withHostTestBuilder {}.configure {}
         withDeviceTestBuilder {
             sourceSetTreeName = "test"

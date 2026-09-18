@@ -12,7 +12,7 @@ kotlin {
             implementation(libs.coroutines.core)
         }
 
-        androidUnitTest.dependencies {
+        androidHostTest.dependencies {
             implementation(libs.junit)
             implementation(libs.mockk)
             implementation(libs.coroutines.test)
