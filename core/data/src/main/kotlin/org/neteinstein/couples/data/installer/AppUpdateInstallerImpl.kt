@@ -50,9 +50,8 @@ class AppUpdateInstallerImpl(
     override suspend fun installPackage(apkBytes: ByteArray) {
         val apkFile =
             withContext(Dispatchers.IO) {
-                File(context.cacheDir, UPDATE_CACHE_DIR_NAME).apply { mkdirs() }
-                    .let { dir -> File(dir, "update.apk") }
-                    .apply { writeBytes(apkBytes) }
+                val updatesDir = File(context.cacheDir, UPDATE_CACHE_DIR_NAME).apply { mkdirs() }
+                File(updatesDir, "update.apk").apply { writeBytes(apkBytes) }
             }
         val apkUri = FileProvider.getUriForFile(context, "${context.packageName}.$FILE_PROVIDER_AUTHORITY_SUFFIX", apkFile)
         val intent =
