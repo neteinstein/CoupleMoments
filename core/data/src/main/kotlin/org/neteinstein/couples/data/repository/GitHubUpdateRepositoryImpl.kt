@@ -38,7 +38,7 @@ class GitHubUpdateRepositoryImpl(
             }
         }
 
-    override suspend fun downloadUpdate(update: AppUpdate): Result<File> =
+    override suspend fun downloadUpdate(update: AppUpdate): Result<ByteArray> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val updatesDir = updatesDir()
@@ -47,9 +47,14 @@ class GitHubUpdateRepositoryImpl(
                 updatesDir.deleteRecursively()
                 updatesDir.mkdirs()
 
+                // Domain boundary is `Result<ByteArray>` (needed for `core:data`'s future
+                // Ktor/multiplatform conversion), but the Android-only install flow still needs a
+                // real file on disk inside the FileProvider-scoped cache directory (see
+                // `update_file_paths.xml`), so this impl still writes one internally and returns
+                // its bytes.
                 val apkFile = File(updatesDir, "CoupleMoments-${update.versionName}.apk")
                 downloadToFile(url = update.apkDownloadUrl, destination = apkFile)
-                apkFile
+                apkFile.readBytes()
             }
         }
 

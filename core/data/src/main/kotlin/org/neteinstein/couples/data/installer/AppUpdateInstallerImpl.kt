@@ -37,8 +37,12 @@ class AppUpdateInstallerImpl(
      * a `FileProvider` whose authority matches [FILE_PROVIDER_AUTHORITY_SUFFIX] below, scoped to
      * exactly the cache subdirectory the update APK is downloaded into (see
      * `update_file_paths.xml`, `GitHubUpdateRepositoryImpl`).
+     *
+     * [path] adapts the `core:domain` interface's `String` boundary back to a [File] here, at the
+     * Android-only implementation.
      */
-    override fun installPackage(apkFile: File) {
+    override fun installPackage(path: String) {
+        val apkFile = File(path)
         val apkUri = FileProvider.getUriForFile(context, "${context.packageName}.$FILE_PROVIDER_AUTHORITY_SUFFIX", apkFile)
         val intent =
             Intent(Intent.ACTION_VIEW).apply {

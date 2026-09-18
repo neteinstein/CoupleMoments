@@ -1,42 +1,21 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.ktlint)
+    id("kmp-library")
 }
 
-android {
-    namespace = "org.neteinstein.couples.domain"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 32
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+kotlin {
+    android {
+        namespace = "org.neteinstein.couples.domain"
     }
 
-    buildTypes {
-        debug {
-            enableUnitTestCoverage = true
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.coroutines.core)
+        }
+
+        androidUnitTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.coroutines.test)
         }
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-
-ktlint {
-    android.set(true)
-    ignoreFailures.set(false)
-    reporters {
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
-    }
-}
-
-dependencies {
-    implementation(libs.coroutines.core)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    testImplementation(libs.coroutines.test)
 }

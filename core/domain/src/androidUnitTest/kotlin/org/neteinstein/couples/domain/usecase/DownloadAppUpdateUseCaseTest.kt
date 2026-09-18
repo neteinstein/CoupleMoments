@@ -8,7 +8,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.neteinstein.couples.domain.model.AppUpdate
 import org.neteinstein.couples.domain.repository.UpdateRepository
-import java.io.File
 
 class DownloadAppUpdateUseCaseTest {
     private val repository: UpdateRepository = mockk()
@@ -16,20 +15,20 @@ class DownloadAppUpdateUseCaseTest {
     private val update = AppUpdate(versionName = "1.0.6", apkDownloadUrl = "https://example.com/app.apk")
 
     @Test
-    fun `invoke returns downloaded file from repository`() =
+    fun `invoke returns downloaded bytes from repository`() =
         runTest {
-            val file = File("/tmp/app.apk")
-            coEvery { repository.downloadUpdate(update) } returns Result.success(file)
+            val bytes = byteArrayOf(1, 2, 3)
+            coEvery { repository.downloadUpdate(update) } returns Result.success(bytes)
 
             val result = useCase(update)
 
-            assertEquals(Result.success(file), result)
+            assertEquals(Result.success(bytes), result)
         }
 
     @Test
     fun `invoke passes the update to the repository`() =
         runTest {
-            coEvery { repository.downloadUpdate(update) } returns Result.success(File("/tmp/app.apk"))
+            coEvery { repository.downloadUpdate(update) } returns Result.success(byteArrayOf(1, 2, 3))
 
             useCase(update)
 

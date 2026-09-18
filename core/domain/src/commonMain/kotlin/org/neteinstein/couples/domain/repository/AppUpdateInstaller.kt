@@ -1,7 +1,5 @@
 package org.neteinstein.couples.domain.repository
 
-import java.io.File
-
 /**
  * Hands a downloaded update APK to the system Package Installer, and checks/deep-links into the
  * "install unknown apps" (sideloading) permission screen that gates it. Declared here (rather than
@@ -17,9 +15,9 @@ interface AppUpdateInstaller {
     fun openInstallPermissionSettings()
 
     /**
-     * Launches the system Package Installer for [apkFile]. Requires [canInstallPackages] to
-     * already be true - callers are expected to check that (and route to
+     * Launches the system Package Installer for the APK at [path]. Requires
+     * [canInstallPackages] to already be true - callers are expected to check that (and route to
      * [openInstallPermissionSettings] instead) before ever calling this.
      */
-    fun installPackage(apkFile: File)
+    fun installPackage(path: String)
 }
