@@ -1,18 +1,11 @@
 package org.neteinstein.couples.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 
 private val lightColorScheme =
     lightColorScheme(
@@ -68,6 +61,24 @@ private val darkColorScheme =
         outline = OutlineDark,
     )
 
+/**
+ * Platform hook for Material You dynamic color (Android 12+/API 31+, via
+ * `dynamicLightColorScheme`/`dynamicDarkColorScheme` reading the device wallpaper through the
+ * platform's own context/window APIs). Returns `null` on platforms/OS versions with no dynamic
+ * color support, in which case [CoupleMomentsTheme] falls back to the static [lightColorScheme]/
+ * [darkColorScheme] defined above.
+ */
+@Composable
+expect fun platformColorScheme(darkTheme: Boolean): ColorScheme?
+
+/**
+ * Platform hook for theme-driven OS chrome that lives outside Compose's own draw tree (Android:
+ * status bar icon appearance, via `WindowCompat`'s insets controller). No-op on platforms with no
+ * equivalent surface.
+ */
+@Composable
+expect fun PlatformStatusBarEffect(darkTheme: Boolean)
+
 @Composable
 fun CoupleMomentsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -75,22 +86,10 @@ fun CoupleMomentsTheme(
     content: @Composable () -> Unit,
 ) {
     val colorScheme =
-        when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                val context = LocalContext.current
-                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            }
-            darkTheme -> darkColorScheme
-            else -> lightColorScheme
-        }
+        (if (dynamicColor) platformColorScheme(darkTheme) else null)
+            ?: if (darkTheme) darkColorScheme else lightColorScheme
 
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-        }
-    }
+    PlatformStatusBarEffect(darkTheme)
 
     MaterialTheme(
         colorScheme = colorScheme,
