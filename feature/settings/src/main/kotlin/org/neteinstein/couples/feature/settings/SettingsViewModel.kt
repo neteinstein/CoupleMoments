@@ -22,7 +22,6 @@ import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCas
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
-import java.io.File
 
 /**
  * Runs a background update check when Settings is entered so the "Update to latest" button can
@@ -156,12 +155,10 @@ class SettingsViewModel(
         _uiState.update { it.copy(updateStatus = UpdateStatus.Downloading) }
         downloadAppUpdateUseCase(update)
             .onSuccess { apkBytes ->
-                // `downloadAppUpdateUseCase` returns raw bytes (the `core:domain` boundary is
-                // Android-agnostic for `core:data`'s future Ktor/multiplatform conversion), but
-                // `AppUpdateInstaller.installPackage` still needs a filesystem path - write the
-                // bytes back out and hand it the resulting file's path.
-                val apkFile = File.createTempFile("update", ".apk").apply { writeBytes(apkBytes) }
-                appUpdateInstaller.installPackage(apkFile.absolutePath)
+                // installPackage takes raw bytes and owns where it stages them (a
+                // FileProvider-scoped cache directory on Android) - the ViewModel needs no
+                // filesystem/Context knowledge of its own.
+                appUpdateInstaller.installPackage(apkBytes)
                 _uiState.update { it.copy(updateStatus = UpdateStatus.Idle) }
             }.onFailure { error ->
                 _uiState.update { it.copy(updateStatus = UpdateStatus.Failed(error.toUserMessage())) }

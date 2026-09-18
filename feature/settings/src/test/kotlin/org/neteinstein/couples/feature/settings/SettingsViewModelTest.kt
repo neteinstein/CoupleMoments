@@ -120,7 +120,7 @@ class SettingsViewModelTest {
             viewModel.onUpdateClicked()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { appUpdateInstaller.installPackage(any()) }
+            coVerify { appUpdateInstaller.installPackage(any()) }
             assertEquals(UpdateStatus.Idle, viewModel.uiState.value.updateStatus)
         }
 
@@ -149,7 +149,7 @@ class SettingsViewModelTest {
             viewModel.onUpdateClicked()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { appUpdateInstaller.installPackage(any()) }
+            coVerify { appUpdateInstaller.installPackage(any()) }
         }
 
     @Test

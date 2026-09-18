@@ -40,22 +40,7 @@ class GitHubUpdateRepositoryImpl(
 
     override suspend fun downloadUpdate(update: AppUpdate): Result<ByteArray> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val updatesDir = updatesDir()
-                // Only one downloaded update is ever "current" - clear out anything left over
-                // from a previous check before writing the new one.
-                updatesDir.deleteRecursively()
-                updatesDir.mkdirs()
-
-                // Domain boundary is `Result<ByteArray>` (needed for `core:data`'s future
-                // Ktor/multiplatform conversion), but the Android-only install flow still needs a
-                // real file on disk inside the FileProvider-scoped cache directory (see
-                // `update_file_paths.xml`), so this impl still writes one internally and returns
-                // its bytes.
-                val apkFile = File(updatesDir, "CoupleMoments-${update.versionName}.apk")
-                downloadToFile(url = update.apkDownloadUrl, destination = apkFile)
-                apkFile.readBytes()
-            }
+            runCatching { downloadBytes(update.apkDownloadUrl) }
         }
 
     override suspend fun clearDownloadedUpdate(): Result<Unit> =
@@ -66,6 +51,10 @@ class GitHubUpdateRepositoryImpl(
             }
         }
 
+    // Not written to by this class any more (downloadUpdate fetches bytes directly - see below) -
+    // kept only so clearDownloadedUpdate() can clear whatever AppUpdateInstallerImpl staged there
+    // during a previous install. Must match update_file_paths.xml's <cache-path path="updates/">
+    // and AppUpdateInstallerImpl's own copy of this constant.
     private fun updatesDir(): File = File(context.cacheDir, UPDATE_CACHE_DIR_NAME)
 
     // getPackageInfo(String, Int) is deprecated in favor of the PackageInfoFlags overload added in
@@ -97,19 +86,14 @@ class GitHubUpdateRepositoryImpl(
         }
     }
 
-    private fun downloadToFile(
-        url: String,
-        destination: File,
-    ) {
+    private fun downloadBytes(url: String): ByteArray {
         val connection = URL(url).openConnection() as HttpURLConnection
         try {
             val responseCode = connection.responseCode
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 error("APK download failed with HTTP $responseCode")
             }
-            connection.inputStream.use { input ->
-                destination.outputStream().use { output -> input.copyTo(output) }
-            }
+            return connection.inputStream.use { it.readBytes() }
         } finally {
             connection.disconnect()
         }

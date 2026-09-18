@@ -15,9 +15,12 @@ interface AppUpdateInstaller {
     fun openInstallPermissionSettings()
 
     /**
-     * Launches the system Package Installer for the APK at [path]. Requires
+     * Writes [apkBytes] to wherever this platform's implementation needs them staged (e.g. a
+     * FileProvider-scoped cache directory on Android) and launches the system Package Installer.
+     * Takes raw bytes rather than a path so callers never need platform file-path knowledge -
+     * only the implementation, which owns where it stages the file, does. Requires
      * [canInstallPackages] to already be true - callers are expected to check that (and route to
      * [openInstallPermissionSettings] instead) before ever calling this.
      */
-    fun installPackage(path: String)
+    suspend fun installPackage(apkBytes: ByteArray)
 }
