@@ -55,10 +55,15 @@ kotlin {
         androidMain.dependencies {
             // `compose-material-icons` below has no explicit version in the catalog (it never did
             // pre-KMP either) - it resolves through this BOM platform, exactly like the old
-            // module's top-level `api(platform(libs.compose.bom))` did. CI caught this: without it,
-            // Gradle fails resolving androidCompileClasspath with "Could not find
-            // androidx.compose.material:material-icons-extended:." (empty version).
-            api(platform(libs.compose.bom))
+            // module's top-level `api(platform(libs.compose.bom))` did. CI caught two issues here
+            // in turn: first, omitting this entirely fails androidCompileClasspath resolution with
+            // "Could not find androidx.compose.material:material-icons-extended:." (empty
+            // version); then, the bare `platform(...)` call failed with "Unresolved reference
+            // 'platform'" - the top-level Gradle Kotlin DSL `platform()` extension function is on
+            // `DependencyHandler`, which `kotlin { sourceSets { X.dependencies { ... } } }`'s
+            // `KotlinDependencyHandler` scope does not extend, so it must be qualified via
+            // `project.dependencies.platform(...)` to resolve the real `DependencyHandler`.
+            api(project.dependencies.platform(libs.compose.bom))
             // Lifecycle's Compose integration (`collectAsStateWithLifecycle`,
             // `viewModel()`/`koinViewModel()` scoping) has no Compose Multiplatform artifact swap
             // wired into this repo yet (gradle/libs.versions.toml keeps the multiplatform
