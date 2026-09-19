@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +19,7 @@ import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
+import org.neteinstein.couples.ui.theme.CoupleMomentsTheme
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -26,6 +28,11 @@ import org.robolectric.annotation.Config
 class HomeScreenGridViewTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    @Before
+    fun setUpComposeResourcesContext() {
+        initComposeResourcesTestContext()
+    }
 
     private val fakeQuestions =
         listOf(
@@ -63,7 +70,7 @@ class HomeScreenGridViewTest {
     @Test
     fun `switching to grid view shows every question as a card`() {
         composeTestRule.setContent {
-            HomeScreenTestHost {
+            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
@@ -80,7 +87,7 @@ class HomeScreenGridViewTest {
     @Test
     fun `tapping a grid card opens it full screen`() {
         composeTestRule.setContent {
-            HomeScreenTestHost {
+            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
@@ -97,7 +104,7 @@ class HomeScreenGridViewTest {
     @Test
     fun `switching back to card view restores the swipe hints`() {
         composeTestRule.setContent {
-            HomeScreenTestHost {
+            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }

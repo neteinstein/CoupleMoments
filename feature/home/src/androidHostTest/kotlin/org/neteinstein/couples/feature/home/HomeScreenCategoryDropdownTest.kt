@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,6 +18,7 @@ import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
+import org.neteinstein.couples.ui.theme.CoupleMomentsTheme
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -31,6 +33,11 @@ import org.robolectric.annotation.Config
 class HomeScreenCategoryDropdownTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    @Before
+    fun setUpComposeResourcesContext() {
+        initComposeResourcesTestContext()
+    }
 
     private fun buildViewModel(): HomeViewModel {
         val getQuestionsUseCase: GetQuestionsUseCase = mockk()
@@ -66,7 +73,7 @@ class HomeScreenCategoryDropdownTest {
     @Test
     fun `pressing the category filter opens the dropdown without crashing and lists every category`() {
         composeTestRule.setContent {
-            HomeScreenTestHost {
+            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
@@ -85,7 +92,7 @@ class HomeScreenCategoryDropdownTest {
     @Test
     fun `selecting a category from the dropdown closes the menu and updates the selection`() {
         composeTestRule.setContent {
-            HomeScreenTestHost {
+            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
