@@ -1,6 +1,12 @@
 [versions]
-agp = "9.4.0"
-kotlin = "2.4.20"
+# KMP migration: agp/kotlin are pinned to the combination proven green in the sibling
+# neteinstein/loopgain project (Kotlin 2.4.10 + AGP 9.3.0 + Compose Multiplatform 1.11.1), rather
+# than this repo's previous 9.4.0/2.4.20. AGP 9 provides Kotlin compilation built in, so AGP and
+# Kotlin move as a pair and running two parallel pins in one build is not worth the fragility.
+# Both are bumped back up as a follow-up once the `kmp` branch is green end to end.
+agp = "9.3.0"
+kotlin = "2.4.10"
+composeMultiplatform = "1.11.1"
 coroutines = "1.11.0"
 lifecycle = "2.10.0"
 navigationCompose = "2.10.1"
@@ -15,13 +21,20 @@ mockk = "1.14.11"
 coroutinesTest = "1.11.0"
 koinTest = "4.2.2"
 splashscreen = "1.2.0"
-json = "20260814"
 ktlintGradle = "14.2.0"
-room = "2.8.5"
-ksp = "2.3.12"
 robolectric = "4.17"
 pagerIndicator = "0.0.9"
 playPublisher = "4.1.1"
+
+# --- KMP migration: not wired into any module yet (see the rollout steps in the migration plan) --
+sqldelight = "2.4.0"
+multiplatformSettings = "1.3.0"
+ktor = "3.5.2"
+kotlinxSerialization = "1.11.0"
+# org.jetbrains.androidx.navigation - the multiplatform build of Navigation Compose, a DIFFERENT
+# group id from the androidx.navigation one `navigationCompose` above pins for today's Android-only
+# `app` module. Both entries coexist until step 6 converts `app`, which is where one of them wins.
+navigationComposeMultiplatform = "2.9.2"
 
 [libraries]
 # Compose BOM
@@ -41,6 +54,14 @@ activity-compose = { group = "androidx.activity", name = "activity-compose", ver
 
 # Lifecycle
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+# androidx.lifecycle:lifecycle-viewmodel has shipped genuine Kotlin Multiplatform artifacts (common,
+# android, iOS, JS, wasmJs) since Lifecycle 2.8.0 - unlike lifecycle-runtime-ktx above, it is safe to
+# use from commonMain. Needed there directly because HomeViewModel (feature:home, KMP migration step
+# 5) extends androidx.lifecycle.ViewModel and uses viewModelScope from commonMain source.
+lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+# lifecycle-viewmodel-compose/-runtime-compose are likewise genuine KMP artifacts (same androidx.lifecycle
+# group/package on every platform) - used from commonMain by any feature screen's
+# collectAsStateWithLifecycle()/koinViewModel() call, starting with feature:home.
 lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 
@@ -55,6 +76,10 @@ coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinCompose" }
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+# Multiplatform-compatible replacements for koin-androidx-compose (KMP migration step 5, feature
+# modules) - koinViewModel() moves from org.koin.androidx.compose to org.koin.compose.viewmodel.
+koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koinCompose" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koinCompose" }
 
 # Core
 core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.0" }
@@ -70,21 +95,56 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koinTest" }
 koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koinTest" }
-json = { group = "org.json", name = "json", version.ref = "json" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 # Pager Indicator
 pager-indicator = { group = "mx.platacard", name = "compose-pager-indicator", version.ref = "pagerIndicator" }
 
-# Room
-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+# --------------------------------------------------------------------------------------------
+# KMP migration libraries. Declared here so the versions are agreed once, but NOT referenced by
+# any module yet - each is wired in by the rollout step that needs it:
+#   * SQLDelight + multiplatform-settings  -> step 4 (`core:data`), replacing Room and raw
+#     SharedPreferences. `native-driver` is only consumed once iOS targets exist (step 7).
+#   * Ktor                                 -> step 4, replacing HttpURLConnection + org.json in
+#     GitHubUpdateRepositoryImpl. `client-darwin` is iOS-only (step 7).
+#   * navigation-compose (JetBrains build) -> step 6 (`app` glue module).
+# --------------------------------------------------------------------------------------------
+
+# SQLDelight
+sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
+sqldelight-native-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
+sqldelight-coroutines-extensions = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
+
+# Multiplatform Settings
+multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settings", version.ref = "multiplatformSettings" }
+multiplatform-settings-coroutines = { group = "com.russhwolf", name = "multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }
+
+# Ktor
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# Kotlinx Serialization (the @Serializable DTOs Ktor's JSON content negotiation needs)
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Navigation Compose - multiplatform build (org.jetbrains.androidx, not androidx)
+navigation-compose-multiplatform = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "navigationComposeMultiplatform" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+# KMP migration. `kotlin-compose` below is the Compose *compiler* plugin and is shared by the
+# Android-only modules and the Compose Multiplatform ones alike (loopgain pins the same
+# `org.jetbrains.kotlin.plugin.compose` at the Kotlin version), so there is deliberately no second
+# alias for it. These three are consumed by build-logic's convention plugins, not by modules.
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+# sqldelight/kotlin-serialization: applied by core:data (KMP migration step 4).
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
 play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }

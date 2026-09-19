@@ -154,8 +154,11 @@ class SettingsViewModel(
 
         _uiState.update { it.copy(updateStatus = UpdateStatus.Downloading) }
         downloadAppUpdateUseCase(update)
-            .onSuccess { apkFile ->
-                appUpdateInstaller.installPackage(apkFile)
+            .onSuccess { apkBytes ->
+                // installPackage takes raw bytes and owns where it stages them (a
+                // FileProvider-scoped cache directory on Android) - the ViewModel needs no
+                // filesystem/Context knowledge of its own.
+                appUpdateInstaller.installPackage(apkBytes)
                 _uiState.update { it.copy(updateStatus = UpdateStatus.Idle) }
             }.onFailure { error ->
                 _uiState.update { it.copy(updateStatus = UpdateStatus.Failed(error.toUserMessage())) }

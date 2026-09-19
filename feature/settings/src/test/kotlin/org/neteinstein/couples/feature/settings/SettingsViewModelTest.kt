@@ -33,7 +33,6 @@ import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCas
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
-import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -114,14 +113,14 @@ class SettingsViewModelTest {
             viewModel.onScreenEntered()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            val apkFile = File("/tmp/app.apk")
+            val apkBytes = byteArrayOf(1, 2, 3)
             every { appUpdateInstaller.canInstallPackages() } returns true
-            coEvery { downloadAppUpdateUseCase(update) } returns Result.success(apkFile)
+            coEvery { downloadAppUpdateUseCase(update) } returns Result.success(apkBytes)
 
             viewModel.onUpdateClicked()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { appUpdateInstaller.installPackage(apkFile) }
+            coVerify { appUpdateInstaller.installPackage(any()) }
             assertEquals(UpdateStatus.Idle, viewModel.uiState.value.updateStatus)
         }
 
@@ -145,12 +144,12 @@ class SettingsViewModelTest {
         runTest {
             coEvery { checkForUpdateUseCase() } returns Result.success(UpdateCheckResult.UpdateAvailable(update))
             every { appUpdateInstaller.canInstallPackages() } returns true
-            coEvery { downloadAppUpdateUseCase(update) } returns Result.success(File("/tmp/app.apk"))
+            coEvery { downloadAppUpdateUseCase(update) } returns Result.success(byteArrayOf(1, 2, 3))
 
             viewModel.onUpdateClicked()
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { appUpdateInstaller.installPackage(any()) }
+            coVerify { appUpdateInstaller.installPackage(any()) }
         }
 
     @Test

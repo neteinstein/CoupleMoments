@@ -140,21 +140,31 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # testAndroidHostTest runs KMP-converted modules' host-side unit tests (the
+      # com.android.kotlin.multiplatform.library plugin's withHostTestBuilder registers this task
+      # name, not testDebugUnitTest - see build-logic's kmp-library.gradle.kts). Requesting both
+      # task names lets this single invocation cover the plain-Android modules and the
+      # KMP-converted ones during the migration; Gradle silently skips a requested task name a
+      # given module doesn't have, so neither name being absent from some modules is an error.
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest testAndroidHostTest --no-daemon --stacktrace
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: unit-test-results
-          path: '**/build/test-results/testDebugUnitTest/**.xml'
+          path: |
+            **/build/test-results/testDebugUnitTest/**.xml
+            **/build/test-results/testAndroidHostTest/**.xml
 
       - name: Publish unit test results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: '**/build/test-results/testDebugUnitTest/**.xml'
+          files: |
+            **/build/test-results/testDebugUnitTest/**.xml
+            **/build/test-results/testAndroidHostTest/**.xml
           comment_title: '🧪 Unit Test Results'
 
   # ─── Code Coverage ──────────────────────────────────────────────────────────

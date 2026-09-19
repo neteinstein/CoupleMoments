@@ -7,18 +7,20 @@
 # Why this exists: `isMinifyEnabled`/`isShrinkResources` (app/build.gradle.kts) and the keep rules
 # in app/proguard-rules.pro can regress silently - a stray blanket `-keep`, or minification being
 # switched off - and the build still succeeds, so only the mapping file shows what R8 actually
-# did. Reading it here turns "obfuscation is on and Room still resolves" into a PR gate.
+# did. Reading it here turns "obfuscation is on" into a PR gate.
+#
+# Historical note: this used to also assert that Room's reflectively-resolved
+# `CoupleMomentsDatabase`/`CoupleMomentsDatabase_Impl` class names survived obfuscation unchanged
+# (Room does a runtime `Class.forName` lookup that a renamed pair would break). core:data's KMP
+# migration replaced Room with SQLDelight, whose generated classes are constructed directly by
+# normal Kotlin calls - no reflection, no keep rule, no name-survival check needed - so that
+# assertion was removed along with the `-keep class * extends androidx.room.RoomDatabase` rule in
+# app/proguard-rules.pro. If this codebase ever reintroduces reflective name resolution
+# (`Class.forName`, `Resources.getIdentifier`, a `ServiceLoader`, ...), add its keep rule there and
+# a matching assertion here, the same way this used to work for Room.
 set -euo pipefail
 
 readonly APP_PACKAGE_PREFIX="org.neteinstein.couples."
-# Room appends "_Impl" to the runtime name of the class passed to Room.databaseBuilder(...) and
-# looks the result up with Class.forName (core/data/.../data/di/DataModule.kt), so renaming either
-# of these independently breaks the database at runtime. Pinned by the RoomDatabase keep rule in
-# app/proguard-rules.pro; asserted here because the failure is a runtime crash, not a build error.
-readonly ROOM_KEPT_CLASSES=(
-    "org.neteinstein.couples.data.local.CoupleMomentsDatabase"
-    "org.neteinstein.couples.data.local.CoupleMomentsDatabase_Impl"
-)
 
 failures=0
 

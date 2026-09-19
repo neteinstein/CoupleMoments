@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import java.io.File
 
@@ -31,14 +33,26 @@ class AppUpdateInstallerImpl(
     }
 
     /**
-     * Uses a [FileProvider] `content://` URI rather than a plain `file://` one: a cache-dir-backed
-     * file can't be shared as a raw `file://` URI with another app (the Package Installer) under
-     * this app's targetSdk - that throws `FileUriExposedException` - so `app`'s manifest declares
-     * a `FileProvider` whose authority matches [FILE_PROVIDER_AUTHORITY_SUFFIX] below, scoped to
-     * exactly the cache subdirectory the update APK is downloaded into (see
-     * `update_file_paths.xml`, `GitHubUpdateRepositoryImpl`).
+     * Stages [apkBytes] into `context.cacheDir/$UPDATE_CACHE_DIR_NAME/` - exactly the directory
+     * `update_file_paths.xml`'s `<cache-path>` grants this app's `FileProvider` access to - then
+     * uses a [FileProvider] `content://` URI rather than a plain `file://` one to hand it to the
+     * Package Installer: a cache-dir-backed file can't be shared as a raw `file://` URI with
+     * another app under this app's targetSdk - that throws `FileUriExposedException` - so `app`'s
+     * manifest declares a `FileProvider` whose authority matches [FILE_PROVIDER_AUTHORITY_SUFFIX]
+     * below.
+     *
+     * Takes bytes (not a path) so this class - the only one that needs to know the staging
+     * directory - is the sole place that literal has to match `update_file_paths.xml` and
+     * [org.neteinstein.couples.data.repository.GitHubUpdateRepositoryImpl]'s own copy of it (kept
+     * for [org.neteinstein.couples.data.repository.GitHubUpdateRepositoryImpl.clearDownloadedUpdate]'s
+     * cleanup, since that runs independently of an install ever happening).
      */
-    override fun installPackage(apkFile: File) {
+    override suspend fun installPackage(apkBytes: ByteArray) {
+        val apkFile =
+            withContext(Dispatchers.IO) {
+                val updatesDir = File(context.cacheDir, UPDATE_CACHE_DIR_NAME).apply { mkdirs() }
+                File(updatesDir, "update.apk").apply { writeBytes(apkBytes) }
+            }
         val apkUri = FileProvider.getUriForFile(context, "${context.packageName}.$FILE_PROVIDER_AUTHORITY_SUFFIX", apkFile)
         val intent =
             Intent(Intent.ACTION_VIEW).apply {
@@ -53,5 +67,9 @@ class AppUpdateInstallerImpl(
         // Must exactly match the FileProvider <provider> authority declared in app's
         // AndroidManifest.xml (that side prefixes it with "${applicationId}.").
         const val FILE_PROVIDER_AUTHORITY_SUFFIX = "update.fileprovider"
+
+        // Must match update_file_paths.xml's <cache-path path="updates/"> and
+        // GitHubUpdateRepositoryImpl's own UPDATE_CACHE_DIR_NAME constant.
+        const val UPDATE_CACHE_DIR_NAME = "updates"
     }
 }
