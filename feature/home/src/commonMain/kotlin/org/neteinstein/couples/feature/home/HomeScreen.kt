@@ -1,6 +1,5 @@
 package org.neteinstein.couples.feature.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -67,7 +66,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +78,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,11 +87,43 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import mx.platacard.pagerindicator.PagerIndicator
-import org.koin.androidx.compose.koinViewModel
+import couplemoments.feature.home.generated.resources.Res
+import couplemoments.feature.home.generated.resources.cancel
+import couplemoments.feature.home.generated.resources.category_all
+import couplemoments.feature.home.generated.resources.category_daily_life
+import couplemoments.feature.home.generated.resources.category_future_dreams
+import couplemoments.feature.home.generated.resources.category_ice_breakers
+import couplemoments.feature.home.generated.resources.category_intimacy
+import couplemoments.feature.home.generated.resources.category_memories
+import couplemoments.feature.home.generated.resources.category_values
+import couplemoments.feature.home.generated.resources.cd_close
+import couplemoments.feature.home.generated.resources.cd_filter_by_category
+import couplemoments.feature.home.generated.resources.cd_settings
+import couplemoments.feature.home.generated.resources.cd_shuffle_card
+import couplemoments.feature.home.generated.resources.cd_switch_to_grid_view
+import couplemoments.feature.home.generated.resources.cd_switch_to_swipe_view
+import couplemoments.feature.home.generated.resources.hide_card_message
+import couplemoments.feature.home.generated.resources.hide_card_title
+import couplemoments.feature.home.generated.resources.home_app_name
+import couplemoments.feature.home.generated.resources.home_no_cards_subtitle
+import couplemoments.feature.home.generated.resources.home_no_cards_title
+import couplemoments.feature.home.generated.resources.home_subtitle
+import couplemoments.feature.home.generated.resources.home_swipe_hint
+import couplemoments.feature.home.generated.resources.home_take_turns
+import couplemoments.feature.home.generated.resources.home_vertical_swipe_hint
+import couplemoments.feature.home.generated.resources.intimacy_gate_confirm
+import couplemoments.feature.home.generated.resources.intimacy_gate_dismiss
+import couplemoments.feature.home.generated.resources.intimacy_gate_message
+import couplemoments.feature.home.generated.resources.intimacy_gate_title
+import couplemoments.feature.home.generated.resources.yes
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.model.QuestionCategory
 import org.neteinstein.couples.ui.animation.OriginReveal
+import org.neteinstein.couples.ui.component.PagerIndicator
+import org.neteinstein.couples.ui.component.PlatformBackHandler
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -127,7 +156,7 @@ fun HomeScreen(
         viewModel.onScreenEntered()
     }
 
-    BackHandler(enabled = fullScreenQuestion != null) { fullScreenQuestion = null }
+    PlatformBackHandler(enabled = fullScreenQuestion != null) { fullScreenQuestion = null }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -175,13 +204,13 @@ fun HomeScreen(
                 // Subtitle
                 if (!isGridView) {
                     Text(
-                        text = stringResource(R.string.home_swipe_hint),
+                        text = stringResource(Res.string.home_swipe_hint),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
                     Text(
-                        text = stringResource(R.string.home_vertical_swipe_hint),
+                        text = stringResource(Res.string.home_vertical_swipe_hint),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -271,7 +300,7 @@ fun HomeScreen(
                     imageVector = if (isGridView) Icons.Default.ViewCarousel else Icons.Default.GridView,
                     contentDescription =
                         stringResource(
-                            if (isGridView) R.string.cd_switch_to_swipe_view else R.string.cd_switch_to_grid_view,
+                            if (isGridView) Res.string.cd_switch_to_swipe_view else Res.string.cd_switch_to_grid_view,
                         ),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -298,8 +327,8 @@ fun HomeScreen(
     if (showHideConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showHideConfirmDialog = false },
-            title = { Text(stringResource(R.string.hide_card_title)) },
-            text = { Text(stringResource(R.string.hide_card_message)) },
+            title = { Text(stringResource(Res.string.hide_card_title)) },
+            text = { Text(stringResource(Res.string.hide_card_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -307,12 +336,12 @@ fun HomeScreen(
                         viewModel.markCurrentQuestionAsUsed()
                     },
                 ) {
-                    Text(stringResource(R.string.yes))
+                    Text(stringResource(Res.string.yes))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showHideConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             },
         )
@@ -321,16 +350,16 @@ fun HomeScreen(
     if (uiState.showIntimacyGate) {
         AlertDialog(
             onDismissRequest = viewModel::onIntimacyGateDismissed,
-            title = { Text(stringResource(R.string.intimacy_gate_title)) },
-            text = { Text(stringResource(R.string.intimacy_gate_message)) },
+            title = { Text(stringResource(Res.string.intimacy_gate_title)) },
+            text = { Text(stringResource(Res.string.intimacy_gate_message)) },
             confirmButton = {
                 TextButton(onClick = viewModel::onIntimacyGateConfirmed) {
-                    Text(stringResource(R.string.intimacy_gate_confirm))
+                    Text(stringResource(Res.string.intimacy_gate_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = viewModel::onIntimacyGateDismissed) {
-                    Text(stringResource(R.string.intimacy_gate_dismiss))
+                    Text(stringResource(Res.string.intimacy_gate_dismiss))
                 }
             },
         )
@@ -380,7 +409,7 @@ private fun FullScreenQuestion(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.cd_close),
+                    contentDescription = stringResource(Res.string.cd_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -399,7 +428,7 @@ private fun FullScreenQuestion(
             ) {
                 Icon(
                     imageVector = Icons.Default.Casino,
-                    contentDescription = stringResource(R.string.cd_shuffle_card),
+                    contentDescription = stringResource(Res.string.cd_shuffle_card),
                     tint =
                         if (randomEnabled) {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -455,13 +484,13 @@ private fun HomeTopBar(
     ) {
         Column {
             Text(
-                text = stringResource(R.string.home_app_name),
+                text = stringResource(Res.string.home_app_name),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = stringResource(R.string.home_subtitle),
+                text = stringResource(Res.string.home_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -478,7 +507,7 @@ private fun HomeTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Casino,
-                    contentDescription = stringResource(R.string.cd_shuffle_card),
+                    contentDescription = stringResource(Res.string.cd_shuffle_card),
                     tint =
                         if (shuffleEnabled) {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -497,7 +526,7 @@ private fun HomeTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = stringResource(R.string.cd_settings),
+                    contentDescription = stringResource(Res.string.cd_settings),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -626,7 +655,7 @@ private fun QuestionCard(
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
-                                text = stringResource(R.string.home_no_cards_title),
+                                text = stringResource(Res.string.home_no_cards_title),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Medium,
                                 textAlign = TextAlign.Center,
@@ -634,7 +663,7 @@ private fun QuestionCard(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = stringResource(R.string.home_no_cards_subtitle),
+                                text = stringResource(Res.string.home_no_cards_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -657,7 +686,7 @@ private fun QuestionCard(
                             )
                             Spacer(modifier = Modifier.height(32.dp))
                             Text(
-                                text = stringResource(R.string.home_take_turns),
+                                text = stringResource(Res.string.home_take_turns),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -689,7 +718,7 @@ private fun QuestionGrid(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = stringResource(R.string.home_no_cards_title),
+                    text = stringResource(Res.string.home_no_cards_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
@@ -697,7 +726,7 @@ private fun QuestionGrid(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = stringResource(R.string.home_no_cards_subtitle),
+                    text = stringResource(Res.string.home_no_cards_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -776,15 +805,15 @@ private fun GridQuestionCard(
     }
 }
 
-private fun categoryLabelRes(category: QuestionCategory): Int =
+private fun categoryLabelRes(category: QuestionCategory): StringResource =
     when (category) {
-        is QuestionCategory.IceBreakers -> R.string.category_ice_breakers
-        is QuestionCategory.Memories -> R.string.category_memories
-        is QuestionCategory.Values -> R.string.category_values
-        is QuestionCategory.FutureDreams -> R.string.category_future_dreams
-        is QuestionCategory.DailyLife -> R.string.category_daily_life
-        is QuestionCategory.Intimacy -> R.string.category_intimacy
-        else -> R.string.category_ice_breakers
+        is QuestionCategory.IceBreakers -> Res.string.category_ice_breakers
+        is QuestionCategory.Memories -> Res.string.category_memories
+        is QuestionCategory.Values -> Res.string.category_values
+        is QuestionCategory.FutureDreams -> Res.string.category_future_dreams
+        is QuestionCategory.DailyLife -> Res.string.category_daily_life
+        is QuestionCategory.Intimacy -> Res.string.category_intimacy
+        else -> Res.string.category_ice_breakers
     }
 
 @Composable
@@ -820,7 +849,7 @@ private fun CategoryDropdown(
     var expanded by remember { mutableStateOf(false) }
     var anchorHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
-    val allLabel = stringResource(R.string.category_all)
+    val allLabel = stringResource(Res.string.category_all)
     // Deliberately unrolled instead of looping over QuestionCategory.all: calling a @Composable
     // function with an argument sourced from a loop/forEach/map variable reproducibly corrupted
     // that argument under this project's exact Kotlin/Compose compiler version (see git history
@@ -856,7 +885,7 @@ private fun CategoryDropdown(
             )
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = stringResource(R.string.cd_filter_by_category),
+                contentDescription = stringResource(Res.string.cd_filter_by_category),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -887,8 +916,8 @@ private fun CategoryDropdown(
 }
 
 // Capped so a category with many cards doesn't lay out (and re-measure on every swipe) an
-// unbounded row of dots - mx.platacard's PagerIndicator windows dotCount dots around the
-// current page, so this stays a small fixed-size row no matter how large total gets.
+// unbounded row of dots - core:ui's PagerIndicator windows dotCount dots around the current page,
+// so this stays a small fixed-size row no matter how large total gets.
 private const val MAX_VISIBLE_DOTS = 7
 
 @Composable
@@ -899,16 +928,12 @@ private fun ProgressDots(
 ) {
     if (total <= 0) return
     // The deck loops through every card in the category (nextQuestion/previousQuestion wrap via
-    // modulo), so the indicator's page count/fraction are derived from the wrapped index rather
-    // than the raw, ever-increasing current.
+    // modulo), so the indicator's page count/current page are derived from the wrapped index
+    // rather than the raw, ever-increasing current.
     val visibleIndex = current % total
-    val animatedFraction by animateFloatAsState(
-        targetValue = visibleIndex.toFloat(),
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-        label = "progressDotsFraction",
-    )
-    // A quick scale burst on top of the indicator's own morph gives the active dot a tactile pop
-    // whenever the current card changes.
+    // A quick scale burst gives the active dot a tactile pop whenever the current card changes -
+    // core:ui's PagerIndicator snaps between dots rather than spring-morphing (see its doc comment),
+    // so this pulse is this screen's own added motion on top of it.
     val pulseScale = remember { Animatable(1f) }
     LaunchedEffect(visibleIndex) {
         pulseScale.snapTo(1f)
@@ -920,10 +945,10 @@ private fun ProgressDots(
     }
     PagerIndicator(
         pageCount = total,
-        currentPageFraction = rememberUpdatedState(animatedFraction),
+        currentPage = visibleIndex,
+        dotCount = minOf(total, MAX_VISIBLE_DOTS),
         activeDotColor = MaterialTheme.colorScheme.primary,
         dotColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-        dotCount = minOf(total, MAX_VISIBLE_DOTS),
         modifier =
             modifier.graphicsLayer {
                 scaleX = pulseScale.value

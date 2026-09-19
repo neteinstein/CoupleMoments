@@ -54,6 +54,14 @@ activity-compose = { group = "androidx.activity", name = "activity-compose", ver
 
 # Lifecycle
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+# androidx.lifecycle:lifecycle-viewmodel has shipped genuine Kotlin Multiplatform artifacts (common,
+# android, iOS, JS, wasmJs) since Lifecycle 2.8.0 - unlike lifecycle-runtime-ktx above, it is safe to
+# use from commonMain. Needed there directly because HomeViewModel (feature:home, KMP migration step
+# 5) extends androidx.lifecycle.ViewModel and uses viewModelScope from commonMain source.
+lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
+# lifecycle-viewmodel-compose/-runtime-compose are likewise genuine KMP artifacts (same androidx.lifecycle
+# group/package on every platform) - used from commonMain by any feature screen's
+# collectAsStateWithLifecycle()/koinViewModel() call, starting with feature:home.
 lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 
@@ -68,6 +76,10 @@ coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinCompose" }
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+# Multiplatform-compatible replacements for koin-androidx-compose (KMP migration step 5, feature
+# modules) - koinViewModel() moves from org.koin.androidx.compose to org.koin.compose.viewmodel.
+koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koinCompose" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koinCompose" }
 
 # Core
 core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.0" }

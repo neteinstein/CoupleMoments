@@ -15,27 +15,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Groundwork for replacing `mx.platacard:compose-pager-indicator` (used today by
- * `feature:home`/`feature:game`'s `ProgressDots`, see
- * `feature/home/src/main/kotlin/org/neteinstein/couples/feature/home/HomeScreen.kt`) with a
- * hand-rolled, Compose Multiplatform-safe component - `mx.platacard`'s artifact has no
- * multiplatform build. NOT wired into any feature screen yet: `ProgressDots` currently needs
- * fractional-page animation (`currentPageFraction: State<Float>`, for the spring-driven morph
- * between dots as the deck swipes) and a fixed-size windowing of the dot row around the current
- * page for decks with many cards (`dotCount`/`MAX_VISIBLE_DOTS`) - reproducing that behavior
- * faithfully is deliberately out of scope for this step (see the KMP migration plan's rollout
- * steps for `feature:home`/`feature:game`). This is a simpler, integer-page building block only:
- * a plain row of dots with the current page highlighted, styled to roughly match `ProgressDots`'
- * `activeDotColor`/`dotColor` usage.
- *
- * Do not call this from `feature:home`/`feature:game` yet - those modules aren't converted to KMP
- * in this step, and swapping their pager indicator implementation is separate follow-up work.
+ * Replacement for `mx.platacard:compose-pager-indicator` (used by `feature:home`/`feature:game`'s
+ * `ProgressDots`) - that artifact has no multiplatform build. [dotCount] windows the row to at
+ * most that many dots, centered on [currentPage], matching `mx.platacard`'s behavior of keeping a
+ * fixed-size row for decks with many pages. Unlike `mx.platacard`'s `currentPageFraction`, page
+ * changes snap rather than spring-morph between dots - a deliberate, documented trade-off for the
+ * KMP migration's Android-only feature-module conversion step (see the migration plan's rollout
+ * steps); callers layer their own scale/pulse animation on top via [modifier] if they want extra
+ * motion on page change (see `ProgressDots` in `feature/home/.../HomeScreen.kt`).
  */
 @Composable
 fun PagerIndicator(
     pageCount: Int,
     currentPage: Int,
     modifier: Modifier = Modifier,
+    dotCount: Int = pageCount,
     activeDotColor: Color = MaterialTheme.colorScheme.primary,
     dotColor: Color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
     dotSize: Dp = 8.dp,
@@ -43,11 +37,15 @@ fun PagerIndicator(
     spacing: Dp = 6.dp,
 ) {
     if (pageCount <= 0) return
+    val windowSize = dotCount.coerceIn(1, pageCount)
+    val maxWindowStart = (pageCount - windowSize).coerceAtLeast(0)
+    val windowStart = (currentPage - windowSize / 2).coerceIn(0, maxWindowStart)
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(spacing),
     ) {
-        repeat(pageCount) { page ->
+        repeat(windowSize) { offset ->
+            val page = windowStart + offset
             val isActive = page == currentPage
             Box(
                 modifier =

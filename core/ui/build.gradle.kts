@@ -48,6 +48,14 @@ kotlin {
             // UNVERIFIED-IN-THIS-ENVIRONMENT choice; flag it if `:core:ui:tasks` or a real build
             // ever runs and this line is the one that fails to resolve.
             api(compose.animation)
+            // `org.jetbrains.compose.material:material-icons-extended`, exposed as
+            // `compose.materialIconsExtended` by the Gradle extension - the Compose Multiplatform build
+            // of `androidx.compose.material:material-icons-extended`, published under the exact same
+            // `androidx.compose.material.icons.*` package, so no import changes were needed at any call
+            // site. Resolves the FOLLOW-UP RISK flagged below when this module was Android-only: moved
+            // here (out of androidMain) now that feature:home (KMP migration step 5) uses
+            // `Icons.Default.*` directly from commonMain source.
+            api(compose.materialIconsExtended)
             // `compose.foundation` (Box, layout, gestures, ...) is deliberately NOT re-declared as
             // `api` here, matching the pre-KMP module, which never listed
             // `androidx.compose.foundation:foundation` explicitly either - Material3's own POM
@@ -61,43 +69,33 @@ kotlin {
         // androidMain rather than commonMain. Each one below is a judgment call made in this step;
         // revisit when iOS/wasmJs targets are actually added.
         androidMain.dependencies {
-            // `compose-material-icons` below has no explicit version in the catalog (it never did
-            // pre-KMP either) - it resolves through this BOM platform, exactly like the old
-            // module's top-level `api(platform(libs.compose.bom))` did. CI caught two issues here
-            // in turn: first, omitting this entirely fails androidCompileClasspath resolution with
-            // "Could not find androidx.compose.material:material-icons-extended:." (empty
-            // version); then, the bare `platform(...)` call failed with "Unresolved reference
+            // Historically needed to give `compose-material-icons` (formerly declared here) an
+            // explicit version - kept regardless, since some androidx.compose.* artifact resolved
+            // from this classpath will eventually need it. CI caught two issues here in turn when
+            // this was first added: first, omitting it entirely fails androidCompileClasspath
+            // resolution with "Could not find androidx.compose.material:material-icons-extended:."
+            // (empty version); then, a bare `platform(...)` call failed with "Unresolved reference
             // 'platform'" - the top-level Gradle Kotlin DSL `platform()` extension function is on
             // `DependencyHandler`, which `kotlin { sourceSets { X.dependencies { ... } } }`'s
             // `KotlinDependencyHandler` scope does not extend, so it must be qualified via
             // `project.dependencies.platform(...)` to resolve the real `DependencyHandler`.
             api(project.dependencies.platform(libs.compose.bom))
-            // Lifecycle's Compose integration (`collectAsStateWithLifecycle`,
-            // `viewModel()`/`koinViewModel()` scoping) has no Compose Multiplatform artifact swap
-            // wired into this repo yet (gradle/libs.versions.toml keeps the multiplatform
-            // lifecycle group unlisted, unlike sqldelight/ktor/multiplatform-settings, which are
-            // pre-declared for later steps) - keep depending on the exact same Android-only
-            // catalog aliases this module already exposed pre-KMP. Re-evaluate once iOS/wasmJs
-            // targets exist; a real multiplatform lifecycle artifact swap belongs to that step,
-            // not this Android-only one.
+            // `lifecycle-runtime-compose`/`lifecycle-viewmodel-compose` DO ship genuine Kotlin
+            // Multiplatform artifacts since Lifecycle 2.8.0 (see the versions.toml comment next to
+            // `lifecycle-viewmodel`) - feature:home (KMP migration step 5) already depends on the
+            // multiplatform builds directly in its own commonMain for exactly that reason. Kept
+            // Android-only *here* only because nothing in core:ui itself needs them yet; if a
+            // future core:ui composable needs `collectAsStateWithLifecycle`/`koinViewModel`, move
+            // these two to commonMain instead of re-declaring the multiplatform artifact locally in
+            // every feature module.
             api(libs.lifecycle.runtime.compose)
             api(libs.lifecycle.viewmodel.compose)
-            // Compose Multiplatform *does* ship a documented multiplatform equivalent of
-            // `androidx.compose.material:material-icons-extended`
-            // (`org.jetbrains.compose.material:material-icons-extended`, exposed as
-            // `compose.materialIconsExtended` by the Gradle extension) - but unlike
-            // `compose.animation` above, icon usage is not required to compile anything inside
-            // `core:ui` itself today (this module has no Icon usage; only feature:home/
-            // feature:game, not yet converted, use it), so there is no forcing function to take
-            // the unverified-in-this-environment risk here. Kept as the pre-KMP Android-only
-            // catalog alias, `androidMain`-scoped. FOLLOW-UP RISK: when feature:home/feature:game
-            // convert, either confirm `compose.materialIconsExtended` resolves and move this to
-            // `commonMain`, or keep it Android-only permanently and have iOS icons come from a
-            // different source (e.g. SF Symbols via expect/actual, or a bundled icon font) -
-            // exactly the kind of multiplatform-compatible replacement the `mx.platacard`
-            // pager-indicator swap already anticipates for a different dependency.
-            api(libs.compose.material.icons)
             implementation(libs.core.ktx)
+            // Backs PlatformBackHandler.android.kt's actual, which wraps
+            // androidx.activity.compose.BackHandler - Android-only, no multiplatform equivalent
+            // declared in the catalog (see PlatformBackHandler.kt's expect/actual for why this is
+            // scoped via expect/actual rather than a direct commonMain dependency).
+            implementation(libs.activity.compose)
 
             // NOTE: the pre-KMP module also had `debugImplementation(libs.compose.ui.tooling)`
             // (the interactive Layout Inspector / live-preview tooling, as opposed to the
