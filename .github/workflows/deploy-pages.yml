@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+# TODO(kmp migration): this currently deploys on every push to `kmp` so the Pages pipeline itself
+# (permissions, artifact upload, actions/deploy-pages) is proven working ahead of the real Web
+# build. Once `kmp` replaces `main` (see the migration plan's rollout gate), point this at `main`
+# instead - and once feature/webApp (KMP migration step 9) lands a real wasmJs target, replace the
+# "Build site" step below with `./gradlew :webApp:wasmJsBrowserDistribution` and point
+# actions/upload-pages-artifact's `path` at its output directory instead of the static `web/`
+# placeholder.
+on:
+  push:
+    branches: [ kmp ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; a newer push supersedes an in-flight older one rather than
+# queuing behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Placeholder site (see the TODO above) - no build step needed yet, just the checked-in
+      # web/index.html.
+      - name: Build site
+        run: |
+          mkdir -p site
+          cp -r web/. site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
