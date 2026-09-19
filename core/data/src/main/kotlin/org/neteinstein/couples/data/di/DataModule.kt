@@ -3,6 +3,11 @@ package org.neteinstein.couples.data.di
 import android.content.Context
 import androidx.room.Room
 import com.russhwolf.settings.SharedPreferencesSettings
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -87,7 +92,17 @@ val dataModule =
         factory { IsQuestionsForParentsEnabledUseCase(get()) }
         factory { SetQuestionsForParentsEnabledUseCase(get()) }
 
-        single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext()) }
+        // KMP migration groundwork (step 4, sub-step 2 of 3): shared Ktor client for
+        // GitHubUpdateRepositoryImpl (see its doc comment) - ignoreUnknownKeys is required since
+        // GitHub's real release response has many more fields than GitHubReleaseResponse declares.
+        single {
+            HttpClient(OkHttp) {
+                install(ContentNegotiation) {
+                    json(Json { ignoreUnknownKeys = true })
+                }
+            }
+        }
+        single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext(), httpClient = get()) }
         single<AppUpdateInstaller> { AppUpdateInstallerImpl(context = androidContext()) }
         factory { CheckForUpdateUseCase(get()) }
         factory { DownloadAppUpdateUseCase(get()) }

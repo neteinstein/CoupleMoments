@@ -58,15 +58,20 @@ dependencies {
     // This module itself is still Android-only (`com.android.library`) - only the Android actual
     // (`SharedPreferencesSettings`, wired in DataModule.kt) is used for now.
     implementation(libs.multiplatform.settings)
+    // KMP migration groundwork (step 4, sub-step 2 of 3): GitHubUpdateRepositoryImpl now talks to
+    // the GitHub Releases API through Ktor + kotlinx.serialization instead of HttpURLConnection +
+    // org.json, so the eventual `core:data` -> `kmp-library` conversion needs no networking-layer
+    // rewrite. This module itself is still Android-only (`com.android.library`) - only the OkHttp
+    // engine (matching loopgain's `androidMain` wiring) is used for now.
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit4)
-    // android.jar's org.json classes are compile-only stubs (real bodies throw/return defaults
-    // under unitTests.isReturnDefaultValues) - GitHubUpdateRepositoryImplTest exercises real
-    // JSONObject/JSONArray parsing, so it needs a real desktop implementation of the same org.json
-    // package on the unit test runtime classpath.
-    testImplementation(libs.json)
 }
