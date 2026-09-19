@@ -16,8 +16,10 @@ class SeedMetadataDaoImpl(
             queries.selectVersion().executeAsOneOrNull()?.toInt()
         }
 
-    override suspend fun setVersion(metadata: SeedMetadataEntity) =
+    // Block body, not expression body - see CardDaoImpl's doc comment for why.
+    override suspend fun setVersion(metadata: SeedMetadataEntity) {
         withContext(Dispatchers.IO) {
             queries.setVersion(id = metadata.id.toLong(), version = metadata.version.toLong())
         }
+    }
 }

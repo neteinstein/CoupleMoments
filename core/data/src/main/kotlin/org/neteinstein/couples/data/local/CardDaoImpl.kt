@@ -8,10 +8,21 @@ import kotlinx.coroutines.withContext
  * previous Room `@Dao`. Every query is dispatched onto [Dispatchers.IO] here, the same way Room's
  * suspend DAO methods did internally - SQLDelight's Android driver calls are synchronous/blocking.
  *
+ * `isHidden` is plain `INTEGER`/`Long` in the schema (see `Card.sq`'s header comment) - converted
+ * to/from [Boolean] here at the DAO boundary so [CardEntity] keeps its existing shape.
+ *
  * `selectForLanguage` maps rows directly into [CardEntity] via SQLDelight's per-query mapper
  * lambda overload rather than going through the generated row type (which SQLDelight would name
  * `Cards`, after the table) - this keeps that generated type as a pure implementation detail
  * nothing outside this file needs to know about.
+ *
+ * The four single-statement methods below (`deleteAll`/`markHidden`/`resetAllHidden`, and
+ * [SeedMetadataDaoImpl.setVersion]) use a block body (`{ }`) rather than an expression body (`=`)
+ * even though each is one line: SQLDelight's generated execute-style query functions return
+ * `QueryResult<Long>` (affected-row count), and an expression body's return type is inferred from
+ * its last expression - which would then conflict with [CardDao]'s `Unit`-returning signature. A
+ * block body's implicit `Unit` return doesn't do that inference, so the query result is simply
+ * discarded.
  */
 class CardDaoImpl(
     private val queries: CardQueries,
@@ -25,30 +36,33 @@ class CardDaoImpl(
                         text = card.text,
                         languageCode = card.languageCode,
                         category = card.category,
-                        isHidden = card.isHidden,
+                        isHidden = if (card.isHidden) 1L else 0L,
                         audience = card.audience,
                     )
                 }
             }
         }
 
-    override suspend fun deleteAll() =
+    override suspend fun deleteAll() {
         withContext(Dispatchers.IO) {
             queries.deleteAll()
         }
+    }
 
     override suspend fun getCardsForLanguage(languageCode: String): List<CardEntity> =
         withContext(Dispatchers.IO) {
-            queries.selectForLanguage(languageCode) { id, text, cardLanguageCode, category, isHidden, audience ->
-                CardEntity(
-                    id = id.toInt(),
-                    text = text,
-                    languageCode = cardLanguageCode,
-                    category = category,
-                    isHidden = isHidden,
-                    audience = audience,
-                )
-            }.executeAsList()
+            val query =
+                queries.selectForLanguage(languageCode) { id, text, cardLanguageCode, category, isHidden, audience ->
+                    CardEntity(
+                        id = id.toInt(),
+                        text = text,
+                        languageCode = cardLanguageCode,
+                        category = category,
+                        isHidden = isHidden != 0L,
+                        audience = audience,
+                    )
+                }
+            query.executeAsList()
         }
 
     override suspend fun getHiddenIds(): List<Int> =
@@ -56,13 +70,15 @@ class CardDaoImpl(
             queries.selectHiddenIds().executeAsList().map { it.toInt() }
         }
 
-    override suspend fun markHidden(cardId: Int) =
+    override suspend fun markHidden(cardId: Int) {
         withContext(Dispatchers.IO) {
             queries.markHidden(cardId.toLong())
         }
+    }
 
-    override suspend fun resetAllHidden() =
+    override suspend fun resetAllHidden() {
         withContext(Dispatchers.IO) {
             queries.resetAllHidden()
         }
+    }
 }
