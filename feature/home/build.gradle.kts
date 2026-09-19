@@ -42,3 +42,16 @@ kotlin {
         }
     }
 }
+
+// `com.android.kotlin.multiplatform.library`'s android {} DSL has no testOptions.unitTests
+// equivalent the pre-KMP com.android.library modules used for this - configuring the
+// testAndroidHostTest Test task directly instead, to get full exception detail (message + cause
+// chain) in CI logs rather than Gradle's default one-line "<ExceptionType> at <location>".
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStackTraces = true
+        showCauses = true
+    }
+}
