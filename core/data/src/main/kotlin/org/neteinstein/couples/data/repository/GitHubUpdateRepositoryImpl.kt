@@ -1,34 +1,41 @@
 package org.neteinstein.couples.data.repository
 
 import android.content.Context
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.neteinstein.couples.domain.model.AppUpdate
 import org.neteinstein.couples.domain.model.UpdateCheckResult
 import org.neteinstein.couples.domain.repository.UpdateRepository
 import org.neteinstein.couples.domain.util.isNewerVersion
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * [UpdateRepository] backed by the public GitHub Releases REST API for this project's own repo
  * (`neteinstein/CoupleMoments`) - see `.github/workflows/release.yml` for how each release and its
- * APK asset are produced. Uses a plain [HttpURLConnection] + Android's built-in [org.json] - no
- * additional networking dependency.
+ * APK asset are produced. Uses Ktor's [HttpClient] (with the kotlinx.serialization JSON content
+ * negotiation plugin installed - see `DataModule.kt`) for both the release-metadata request and
+ * the APK download.
  *
  * The endpoint is unauthenticated (no API key needed to read public release metadata), but GitHub
- * 403s any request with no `User-Agent` header, so [fetchLatestReleaseJson] always sets one.
+ * 403s any request with no `User-Agent` header, so [fetchLatestRelease] always sets one.
  */
 class GitHubUpdateRepositoryImpl(
     private val context: Context,
+    private val httpClient: HttpClient,
 ) : UpdateRepository {
     override suspend fun checkForUpdate(): Result<UpdateCheckResult> =
         withContext(Dispatchers.IO) {
             runCatching {
-                val update = parseGitHubReleaseResponse(fetchLatestReleaseJson())
+                val update = toAppUpdate(fetchLatestRelease())
                 val currentVersionName = currentVersionName()
                 if (isNewerVersion(current = currentVersionName, candidate = update.versionName)) {
                     UpdateCheckResult.UpdateAvailable(update)
@@ -64,39 +71,27 @@ class GitHubUpdateRepositoryImpl(
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
             ?: error("Installed package has no versionName")
 
-    private fun fetchLatestReleaseJson(): String {
-        val connection = URL(LATEST_RELEASE_URL).openConnection() as HttpURLConnection
-        try {
-            connection.setRequestProperty("Accept", "application/vnd.github+json")
-            connection.setRequestProperty("User-Agent", "CoupleMoments-Android")
-
-            val responseCode = connection.responseCode
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                val errorBody =
-                    connection.errorStream
-                        ?.bufferedReader(Charsets.UTF_8)
-                        ?.readText()
-                        .orEmpty()
-                error("GitHub API error $responseCode: $errorBody")
+    private suspend fun fetchLatestRelease(): GitHubReleaseResponse {
+        val response =
+            httpClient.get(LATEST_RELEASE_URL) {
+                header(HttpHeaders.Accept, "application/vnd.github+json")
+                header(HttpHeaders.UserAgent, "CoupleMoments-Android")
             }
 
-            return connection.inputStream.bufferedReader(Charsets.UTF_8).readText()
-        } finally {
-            connection.disconnect()
+        if (response.status != HttpStatusCode.OK) {
+            val errorBody = response.bodyAsText()
+            error("GitHub API error ${response.status.value}: $errorBody")
         }
+
+        return response.body()
     }
 
-    private fun downloadBytes(url: String): ByteArray {
-        val connection = URL(url).openConnection() as HttpURLConnection
-        try {
-            val responseCode = connection.responseCode
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                error("APK download failed with HTTP $responseCode")
-            }
-            return connection.inputStream.use { it.readBytes() }
-        } finally {
-            connection.disconnect()
+    private suspend fun downloadBytes(url: String): ByteArray {
+        val response = httpClient.get(url)
+        if (response.status != HttpStatusCode.OK) {
+            error("APK download failed with HTTP ${response.status.value}")
         }
+        return response.body()
     }
 
     private companion object {
@@ -106,10 +101,28 @@ class GitHubUpdateRepositoryImpl(
 }
 
 /**
- * Parses a GitHub "get the latest release" API response
- * (https://docs.github.com/en/rest/releases/releases#get-the-latest-release) into an [AppUpdate].
- * Kept as a standalone top-level function (rather than a private method) so it's directly
- * unit-testable without a fake HTTP layer.
+ * Partial mirror of a GitHub "get the latest release" API response
+ * (https://docs.github.com/en/rest/releases/releases#get-the-latest-release) - only the fields
+ * this app actually reads are declared. The real response has many more fields, so the [Json][
+ * kotlinx.serialization.json.Json] instance installed via `ContentNegotiation` in `DataModule.kt`
+ * must set `ignoreUnknownKeys = true`.
+ */
+@Serializable
+internal data class GitHubReleaseResponse(
+    @SerialName("tag_name") val tagName: String,
+    val assets: List<GitHubReleaseAsset> = emptyList(),
+)
+
+@Serializable
+internal data class GitHubReleaseAsset(
+    val name: String,
+    @SerialName("browser_download_url") val browserDownloadUrl: String,
+)
+
+/**
+ * Maps a parsed [GitHubReleaseResponse] into an [AppUpdate]. Kept as a standalone top-level
+ * function (rather than a private method) so it's directly unit-testable without a fake HTTP
+ * layer.
  *
  * [AppUpdate.versionName] strips the tag's leading "v" (this repo's release tags are always
  * "v<versionName>" - see `.github/workflows/release.yml`) to match `PackageManager`'s own
@@ -117,15 +130,12 @@ class GitHubUpdateRepositoryImpl(
  * identified by filename suffix (`.apk`) rather than by position, since the release's `assets`
  * array could in principle list other files first.
  */
-internal fun parseGitHubReleaseResponse(json: String): AppUpdate {
-    val root = JSONObject(json)
-    val versionName = root.getString("tag_name").removePrefix("v")
-    val assets = root.optJSONArray("assets") ?: JSONArray()
+internal fun toAppUpdate(release: GitHubReleaseResponse): AppUpdate {
+    val versionName = release.tagName.removePrefix("v")
     val apkAsset =
-        (0 until assets.length())
-            .map { index -> assets.getJSONObject(index) }
-            .firstOrNull { asset -> asset.optString("name").endsWith(".apk", ignoreCase = true) }
+        release.assets
+            .firstOrNull { asset -> asset.name.endsWith(".apk", ignoreCase = true) }
             ?: error("Latest release ($versionName) has no APK attached")
 
-    return AppUpdate(versionName = versionName, apkDownloadUrl = apkAsset.getString("browser_download_url"))
+    return AppUpdate(versionName = versionName, apkDownloadUrl = apkAsset.browserDownloadUrl)
 }

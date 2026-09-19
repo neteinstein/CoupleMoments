@@ -2,6 +2,10 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktlint)
+    // KMP migration groundwork (step 4, sub-step 2 of 3): needed for the @Serializable DTOs in
+    // GitHubUpdateRepositoryImpl - the kotlinx.serialization runtime library alone isn't enough,
+    // the compiler plugin generates the serializers.
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {

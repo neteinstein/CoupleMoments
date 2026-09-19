@@ -91,6 +91,7 @@ ktlint {
     // doesn't own and can't fix. Exclude anything under a module's build/ directory; this had no
     // effect on the modules that don't generate anything there.
     filter {
-        exclude { it.file.path.contains("${layout.buildDirectory.get().asFile.path}${java.io.File.separator}") }
+        val buildDir = layout.buildDirectory.get().asFile
+        exclude { it.file.startsWith(buildDir) }
     }
 }
