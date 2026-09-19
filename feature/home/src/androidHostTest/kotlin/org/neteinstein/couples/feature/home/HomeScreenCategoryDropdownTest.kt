@@ -17,7 +17,6 @@ import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
-import org.neteinstein.couples.ui.theme.CoupleMomentsTheme
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -67,7 +66,7 @@ class HomeScreenCategoryDropdownTest {
     @Test
     fun `pressing the category filter opens the dropdown without crashing and lists every category`() {
         composeTestRule.setContent {
-            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
+            HomeScreenTestHost {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
@@ -86,7 +85,7 @@ class HomeScreenCategoryDropdownTest {
     @Test
     fun `selecting a category from the dropdown closes the menu and updates the selection`() {
         composeTestRule.setContent {
-            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
+            HomeScreenTestHost {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }

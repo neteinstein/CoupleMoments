@@ -18,7 +18,6 @@ import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
-import org.neteinstein.couples.ui.theme.CoupleMomentsTheme
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -64,7 +63,7 @@ class HomeScreenGridViewTest {
     @Test
     fun `switching to grid view shows every question as a card`() {
         composeTestRule.setContent {
-            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
+            HomeScreenTestHost {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
@@ -81,7 +80,7 @@ class HomeScreenGridViewTest {
     @Test
     fun `tapping a grid card opens it full screen`() {
         composeTestRule.setContent {
-            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
+            HomeScreenTestHost {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
@@ -98,7 +97,7 @@ class HomeScreenGridViewTest {
     @Test
     fun `switching back to card view restores the swipe hints`() {
         composeTestRule.setContent {
-            CoupleMomentsTheme(darkTheme = false, dynamicColor = false) {
+            HomeScreenTestHost {
                 HomeScreen(onSettingsClick = {}, viewModel = buildViewModel())
             }
         }
