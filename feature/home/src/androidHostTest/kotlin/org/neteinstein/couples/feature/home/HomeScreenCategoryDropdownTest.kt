@@ -29,7 +29,7 @@ import org.robolectric.annotation.Config
  * ViewModel) so a regression there fails here, not just in manual testing.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w411dp-h891dp")
+@Config(sdk = [34], qualifiers = "w411dp-h891dp", manifest = "src/androidMain/AndroidManifest.xml")
 class HomeScreenCategoryDropdownTest {
     @get:Rule
     val composeTestRule = createComposeRule()
