@@ -1,15 +1,12 @@
 package org.neteinstein.couples.data.local
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-
-@Dao
+/**
+ * Persistence-framework-agnostic contract for [SeedMetadataEntity] storage - see [CardDao]'s doc
+ * comment for why this stays a separate interface from its SQLDelight-backed implementation,
+ * [SeedMetadataDaoImpl].
+ */
 interface SeedMetadataDao {
-    @Query("SELECT version FROM seed_metadata LIMIT 1")
     suspend fun getVersion(): Int?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setVersion(metadata: SeedMetadataEntity)
 }

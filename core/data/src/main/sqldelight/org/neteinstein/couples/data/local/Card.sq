@@ -1,0 +1,37 @@
+-- Mirrors the final shape of Room's `cards` table (CardEntity.kt, v3 after MIGRATION_1_2 +
+-- MIGRATION_2_3) as a fresh schema rather than replaying Room's migration history - this database
+-- is opened under a new file name (see DriverFactory) precisely so there is no existing on-disk
+-- schema/user_version to reconcile with Room's. `isHidden` uses SQLDelight's built-in
+-- `INTEGER AS BOOLEAN` affinity so CardDaoImpl reads/writes a real Kotlin Boolean, matching what
+-- CardEntity already expects, with no separate column adapter needed.
+CREATE TABLE cards (
+    id INTEGER NOT NULL PRIMARY KEY,
+    text TEXT NOT NULL,
+    languageCode TEXT NOT NULL,
+    category TEXT NOT NULL,
+    isHidden INTEGER AS Boolean NOT NULL DEFAULT 0,
+    audience TEXT NOT NULL DEFAULT 'both'
+);
+
+-- OnConflictStrategy.IGNORE's equivalent - CardDaoImpl.insertAll wraps repeated calls to this in
+-- a single transaction, mirroring Room's batch @Insert.
+insertOrIgnore:
+INSERT OR IGNORE INTO cards(id, text, languageCode, category, isHidden, audience)
+VALUES (?, ?, ?, ?, ?, ?);
+
+deleteAll:
+DELETE FROM cards;
+
+selectForLanguage:
+SELECT id, text, languageCode, category, isHidden, audience
+FROM cards
+WHERE languageCode = ?;
+
+selectHiddenIds:
+SELECT id FROM cards WHERE isHidden = 1;
+
+markHidden:
+UPDATE cards SET isHidden = 1 WHERE id = ?;
+
+resetAllHidden:
+UPDATE cards SET isHidden = 0;

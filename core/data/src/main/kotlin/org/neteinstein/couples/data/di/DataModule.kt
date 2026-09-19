@@ -1,7 +1,6 @@
 package org.neteinstein.couples.data.di
 
 import android.content.Context
-import androidx.room.Room
 import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -12,7 +11,12 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.neteinstein.couples.data.installer.AppUpdateInstallerImpl
+import org.neteinstein.couples.data.local.CardDao
+import org.neteinstein.couples.data.local.CardDaoImpl
 import org.neteinstein.couples.data.local.CoupleMomentsDatabase
+import org.neteinstein.couples.data.local.DriverFactory
+import org.neteinstein.couples.data.local.SeedMetadataDao
+import org.neteinstein.couples.data.local.SeedMetadataDaoImpl
 import org.neteinstein.couples.data.locale.LocaleProviderImpl
 import org.neteinstein.couples.data.repository.GitHubUpdateRepositoryImpl
 import org.neteinstein.couples.data.repository.IntimacyGateRepositoryImpl
@@ -45,14 +49,14 @@ import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 
 val dataModule =
     module {
-        single {
-            Room
-                .databaseBuilder(androidContext(), CoupleMomentsDatabase::class.java, "couple_moments.db")
-                .addMigrations(CoupleMomentsDatabase.MIGRATION_1_2, CoupleMomentsDatabase.MIGRATION_2_3)
-                .build()
-        }
-        single { get<CoupleMomentsDatabase>().cardDao() }
-        single { get<CoupleMomentsDatabase>().seedMetadataDao() }
+        // KMP migration groundwork (step 4, sub-step 3 of 3): CoupleMomentsDatabase is now
+        // SQLDelight-generated (see build.gradle.kts's `sqldelight { }` block and
+        // DriverFactory.kt), replacing Room. CardDao/SeedMetadataDao stay the same
+        // persistence-agnostic interfaces QuestionRepositoryImpl/UsedQuestionsRepositoryImpl
+        // already depended on, so neither repository (nor their tests) needed any change.
+        single { CoupleMomentsDatabase(DriverFactory(androidContext()).createDriver()) }
+        single<CardDao> { CardDaoImpl(get<CoupleMomentsDatabase>().cardQueries) }
+        single<SeedMetadataDao> { SeedMetadataDaoImpl(get<CoupleMomentsDatabase>().seedMetadataQueries) }
         single<QuestionRepository> { QuestionRepositoryImpl(get(), get()) }
         single<LocaleProvider> { LocaleProviderImpl() }
         single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }

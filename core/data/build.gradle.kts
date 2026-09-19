@@ -1,11 +1,24 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.ktlint)
     // KMP migration groundwork (step 4, sub-step 2 of 3): needed for the @Serializable DTOs in
     // GitHubUpdateRepositoryImpl - the kotlinx.serialization runtime library alone isn't enough,
     // the compiler plugin generates the serializers.
     alias(libs.plugins.kotlin.serialization)
+    // KMP migration groundwork (step 4, sub-step 3 of 3): replaces Room (and KSP, which had no
+    // other consumer in this module) - see the local/ package doc comment for why.
+    alias(libs.plugins.sqldelight)
+}
+
+sqldelight {
+    databases {
+        // Generates a `CoupleMomentsDatabase` class in this package, replacing the hand-written
+        // Room `@Database`-annotated one of the same name - CardDaoImpl/SeedMetadataDaoImpl are
+        // the only things that touch it directly (see their doc comments).
+        create("CoupleMomentsDatabase") {
+            packageName.set("org.neteinstein.couples.data.local")
+        }
+    }
 }
 
 android {
@@ -48,9 +61,7 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.core.ktx)
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    implementation(libs.sqldelight.android.driver)
     // KMP migration groundwork (step 4, sub-step 1 of 3): ThemeModeRepositoryImpl,
     // IntimacyGateRepositoryImpl and QuestionsForParentsRepositoryImpl now depend on the
     // multiplatform `Settings` interface instead of raw `Context.getSharedPreferences(...)`, so
