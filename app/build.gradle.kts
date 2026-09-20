@@ -16,9 +16,15 @@ android {
         // Overridable by .github/workflows/release.yml (APP_VERSION_CODE/APP_VERSION_NAME env
         // vars, derived from the GitHub Actions run number) so a release build gets a unique,
         // monotonically increasing versionCode without editing this file on every release. Local/
-        // debug builds fall back to these defaults.
+        // debug builds fall back to versionCode 1 and to gradle.properties' `couples.versionName`
+        // - the single place the marketing version is declared, which the workflow also reads to
+        // derive the released version name, so a local build and Settings' "About" section show a
+        // real version rather than a placeholder that drifts from what's published.
         versionCode = System.getenv("APP_VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = System.getenv("APP_VERSION_NAME") ?: "1.0.0"
+        versionName =
+            System.getenv("APP_VERSION_NAME")
+                ?: providers.gradleProperty("couples.versionName").orNull
+                ?: error("couples.versionName is missing from gradle.properties")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

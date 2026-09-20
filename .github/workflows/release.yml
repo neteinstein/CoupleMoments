@@ -38,6 +38,23 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # The release line lives in exactly one place - gradle.properties' `couples.versionName`,
+      # which is also what local/debug builds and Settings' "About" section show. This keeps its
+      # major.minor and swaps the run number in as the patch segment, so every push to main
+      # publishes a unique, monotonically increasing version (matching versionCode, which is the
+      # run number outright) while bumping 1.1 -> 1.2 stays a one-line edit in gradle.properties.
+      - name: Resolve version name
+        id: version
+        run: |
+          BASE=$(sed -n 's/^couples\.versionName=//p' gradle.properties | tr -d '[:space:]')
+          if ! printf '%s' "$BASE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::gradle.properties must declare couples.versionName as major.minor.patch (got: '${BASE}')"
+            exit 1
+          fi
+          VERSION_NAME="${BASE%.*}.${{ github.run_number }}"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "::notice::Releasing v${VERSION_NAME}"
+
       # Fail fast before spending CI time on lint/test/build if the release secrets aren't set up.
       - name: Validate required secrets
         env:
@@ -88,7 +105,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           APP_VERSION_CODE: ${{ github.run_number }}
-          APP_VERSION_NAME: "1.0.${{ github.run_number }}"
+          APP_VERSION_NAME: ${{ steps.version.outputs.version_name }}
         run: ./gradlew assembleRelease bundlePlaystoreRelease --no-daemon --stacktrace
 
       # Both release APKs are minified and obfuscated (app/build.gradle.kts + app/proguard-rules.pro).
@@ -104,7 +121,7 @@ jobs:
       - name: Prepare release artifacts
         id: artifact
         env:
-          VERSION_NAME: "1.0.${{ github.run_number }}"
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
         run: |
           VERSION_UNDERSCORE="${VERSION_NAME//./_}"
 
@@ -146,7 +163,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION_NAME: "1.0.${{ github.run_number }}"
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
           GITHUB_APK_PATH: ${{ steps.artifact.outputs.github_apk_path }}
           GITHUB_SHA1: ${{ steps.artifact.outputs.github_sha1 }}
           PLAYSTORE_APK_PATH: ${{ steps.artifact.outputs.playstore_apk_path }}
@@ -196,7 +213,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           APP_VERSION_CODE: ${{ github.run_number }}
-          APP_VERSION_NAME: "1.0.${{ github.run_number }}"
+          APP_VERSION_NAME: ${{ steps.version.outputs.version_name }}
         run: ./gradlew publishPlaystoreReleaseBundle --no-daemon --stacktrace
 
       # A 403 here is almost always the Play Console service account's standing (not invited to

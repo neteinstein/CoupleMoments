@@ -96,8 +96,10 @@ coverage report uploaded to Codecov.
 
 Every push to `main` triggers `.github/workflows/release.yml`: it re-validates the commit
 (`ktlintCheck`, `testDebugUnitTest`), builds a signed release APK, and publishes it as a GitHub
-Release tagged `v1.0.<run number>` — which is also what powers the in-app "Update to latest" check
-in Settings, since it reads this repo's own Releases. The workflow needs these repository secrets
+Release tagged `v<major>.<minor>.<run number>`, where `major.minor` comes from
+`couples.versionName` in `gradle.properties` (the one place the version is declared — local builds
+and Settings' "About" section use it verbatim) — which is also what powers the in-app
+"Update to latest" check in Settings, since it reads this repo's own Releases. The workflow needs these repository secrets
 configured under **Settings → Secrets and variables → Actions** before it can run (not included
 in this checkout):
 
