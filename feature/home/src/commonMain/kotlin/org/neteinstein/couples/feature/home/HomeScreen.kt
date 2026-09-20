@@ -41,12 +41,24 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ViewCarousel
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,10 +86,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -124,6 +138,7 @@ import org.neteinstein.couples.domain.model.QuestionCategory
 import org.neteinstein.couples.ui.animation.OriginReveal
 import org.neteinstein.couples.ui.component.PagerIndicator
 import org.neteinstein.couples.ui.component.PlatformBackHandler
+import org.neteinstein.couples.ui.input.arrowKeyNavigation
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -162,7 +177,38 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        // The same four actions the card's swipe gestures trigger, also reachable from the arrow keys -
+        // there is no swipe gesture in a desktop browser, so without this the web build's deck can
+        // only be moved by dragging with a mouse. Suppressed while a full-screen card is open so
+        // the keys don't keep flipping the deck underneath it.
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .arrowKeyNavigation(
+                        onPrevious = {
+                            if (fullScreenQuestion == null) {
+                                swipeDirection = 1
+                                viewModel.previousQuestion()
+                            }
+                        },
+                        onNext = {
+                            if (fullScreenQuestion == null) {
+                                swipeDirection = -1
+                                viewModel.nextQuestion()
+                            }
+                        },
+                        onUp = {
+                            if (fullScreenQuestion == null) {
+                                revealOrigin = deckCardBounds
+                                fullScreenQuestion = uiState.currentQuestion
+                            }
+                        },
+                        onDown = {
+                            if (fullScreenQuestion == null) showHideConfirmDialog = true
+                        },
+                    ),
+        ) {
             // Decorative background gradient
             Box(
                 modifier =
@@ -203,17 +249,15 @@ fun HomeScreen(
 
                 // Subtitle
                 if (!isGridView) {
-                    Text(
+                    SwipeHint(
                         text = stringResource(Res.string.home_swipe_hint),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
+                        trailingIcons = listOf(Icons.AutoMirrored.Filled.ArrowBack, Icons.AutoMirrored.Filled.ArrowForward),
                     )
-                    Text(
+                    SwipeHint(
                         text = stringResource(Res.string.home_vertical_swipe_hint),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
+                        trailingIcons = listOf(Icons.Default.KeyboardArrowUp, Icons.Default.KeyboardArrowDown),
                     )
                 }
 
@@ -450,9 +494,11 @@ private fun FullScreenQuestion(
                     CategoryPill(category = category)
                     Spacer(modifier = Modifier.height(24.dp))
                 }
-                Text(
-                    text = "💬",
-                    style = MaterialTheme.typography.displayLarge,
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(72.dp),
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
@@ -649,9 +695,11 @@ private fun QuestionCard(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                         ) {
-                            Text(
-                                text = "🗂️",
-                                style = MaterialTheme.typography.displaySmall,
+                            Icon(
+                                imageVector = Icons.Default.Inbox,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(48.dp),
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
@@ -712,9 +760,11 @@ private fun QuestionGrid(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text(
-                    text = "🗂️",
-                    style = MaterialTheme.typography.displaySmall,
+                Icon(
+                    imageVector = Icons.Default.Inbox,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(48.dp),
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
@@ -785,12 +835,13 @@ private fun GridQuestionCard(
                     ).padding(10.dp),
             contentAlignment = Alignment.Center,
         ) {
-            // The full CategoryPill label (emoji + name) is too wide for a 3-column card and
-            // would get clipped by the card's rounded corners, so just show the emoji here.
-            Text(
-                text = question.category.emoji,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.align(Alignment.TopEnd),
+            // The full CategoryPill label (icon + name) is too wide for a 3-column card and
+            // would get clipped by the card's rounded corners, so just show the icon here.
+            Icon(
+                imageVector = question.category.icon(),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.TopEnd).size(14.dp),
             )
             Text(
                 text = question.text,
@@ -816,8 +867,22 @@ private fun categoryLabelRes(category: QuestionCategory): StringResource =
         else -> Res.string.category_ice_breakers
     }
 
+// A plain function (not @Composable) mapping each category to its icon - see QuestionCategory's
+// kdoc for why the icon is chosen here in the UI layer rather than carried on the model, and why
+// these are vector icons rather than the emoji glyphs this screen used before.
+private fun QuestionCategory.icon(): ImageVector =
+    when (this) {
+        is QuestionCategory.IceBreakers -> Icons.Default.Celebration
+        is QuestionCategory.Memories -> Icons.Default.PhotoCamera
+        is QuestionCategory.Values -> Icons.Default.Favorite
+        is QuestionCategory.FutureDreams -> Icons.Default.AutoAwesome
+        is QuestionCategory.DailyLife -> Icons.Default.WbSunny
+        is QuestionCategory.Intimacy -> Icons.Default.Nightlight
+        else -> Icons.Default.Celebration
+    }
+
 @Composable
-private fun categoryDisplayLabel(category: QuestionCategory): String = category.emoji + " " + stringResource(categoryLabelRes(category))
+private fun categoryDisplayLabel(category: QuestionCategory): String = stringResource(categoryLabelRes(category))
 
 @Composable
 private fun CategoryPill(
@@ -831,12 +896,23 @@ private fun CategoryPill(
                 .background(MaterialTheme.colorScheme.secondaryContainer)
                 .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
-        Text(
-            text = categoryDisplayLabel(category),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            maxLines = 1,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = category.icon(),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = categoryDisplayLabel(category),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -905,6 +981,9 @@ private fun CategoryDropdown(
             for ((category, label) in categoryLabels) {
                 DropdownMenuItem(
                     text = { Text(label) },
+                    leadingIcon = {
+                        Icon(imageVector = category.icon(), contentDescription = null, modifier = Modifier.size(20.dp))
+                    },
                     onClick = {
                         expanded = false
                         onCategorySelected(category)
@@ -955,4 +1034,36 @@ private fun ProgressDots(
                 scaleY = pulseScale.value
             },
     )
+}
+
+/**
+ * A hint line followed by a couple of small trailing direction icons. Those arrows used to be
+ * literal "←"/"→"/"↑"/"↓" characters inside the hint strings themselves, which render as "tofu"
+ * boxes on the Wasm/Skia web build - see QuestionCategory's kdoc for the same problem and fix.
+ */
+@Composable
+private fun SwipeHint(
+    text: String,
+    style: TextStyle,
+    trailingIcons: List<ImageVector>,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = style,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        trailingIcons.forEach { icon ->
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+    }
 }

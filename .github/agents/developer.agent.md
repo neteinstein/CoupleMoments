@@ -9,4 +9,4 @@ Start by reading `docs/agents/developer.md` in this repository and following it 
 Copilot specifics:
 
 - You don't have the `agent` tool — you're a leaf in this repo's agent orchestration (see `docs/agents/README.md`). If a task needs an architectural decision or a security review, say so instead of deciding it yourself.
-- Report back concretely: which files changed, which module boundaries were touched, and whether `./gradlew assembleDebug` / the relevant `testDebugUnitTest` target passed.
+- Report back concretely: which files changed, which module boundaries were touched, and whether `./gradlew :androidApp:assembleDebug` / the relevant `testAndroidHostTest` target passed.

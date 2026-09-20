@@ -10,4 +10,4 @@ Copilot specifics:
 
 - You don't have the `agent` tool — you're a leaf in this repo's agent orchestration (see `docs/agents/README.md`). If tests reveal a design problem rather than a simple bug, report it clearly instead of working around it.
 - Never finish a task that fixed or verified a bug without a regression test for it, and never finish a task that touched a feature without checking every layer it touches (not just the ViewModel/use case/repository already covered elsewhere) has a test.
-- Report back concretely: which tests you added/changed, and the actual `./gradlew testDebugUnitTest` (or `createDebugUnitTestCoverageReport`) output for any failures, not just a pass/fail count.
+- Report back concretely: which tests you added/changed, and the actual `./gradlew testAndroidHostTest` (or `koverXmlReport`) output for any failures, not just a pass/fail count.

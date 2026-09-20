@@ -26,6 +26,7 @@ dependencies {
     implementation(pluginMarker(libs.plugins.compose.multiplatform))
     implementation(pluginMarker(libs.plugins.kotlin.compose))
     implementation(pluginMarker(libs.plugins.ktlint))
+    implementation(pluginMarker(libs.plugins.kover))
 }
 
 // NOTE: there is intentionally no `gradlePlugin { plugins { register(...) } }` block here.

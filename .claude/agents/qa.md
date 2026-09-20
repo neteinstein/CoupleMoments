@@ -11,4 +11,4 @@ Claude Code specifics:
 
 - You don't have the `Agent` tool — you're a leaf in this repo's agent orchestration (see `docs/agents/README.md`). If tests reveal a design problem rather than a simple bug, report it clearly instead of working around it; you can't hand it back to `developer` mid-task.
 - Never end a session that fixed or verified a bug without a regression test for it, and never end a session that touched a feature without checking every layer it touches (not just the ViewModel/use case/repository already covered elsewhere) has a test.
-- Report back concretely: which tests you added/changed, the actual `./gradlew testDebugUnitTest` (or `createDebugUnitTestCoverageReport`) output for failures, not just a pass/fail count.
+- Report back concretely: which tests you added/changed, the actual `./gradlew testAndroidHostTest` (or `koverXmlReport`) output for failures, not just a pass/fail count.

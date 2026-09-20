@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 /**
  * Convention plugin for a Kotlin Multiplatform *library* module with no Compose UI
@@ -21,6 +22,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.kotlin.multiplatform.library")
     id("org.jlleitschuh.gradle.ktlint")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 kotlin {
@@ -43,7 +45,15 @@ kotlin {
         // still-plain-Android modules' `testDebugUnitTest`, or a KMP-converted module's tests
         // silently never run (Gradle skips a requested task name a project doesn't have, with no
         // error) - see the commit that discovered this the hard way.
-        withHostTestBuilder {}.configure {}
+        // isIncludeAndroidResources also merges the host-test manifest, which is what supplies
+        // androidx.compose.ui:ui-test-manifest's ComponentActivity to createComposeRule() under
+        // Robolectric (feature:home's Compose UI tests). Without it those tests fail at
+        // "Unable to resolve activity for Intent ... androidx.activity.ComponentActivity". This is
+        // the KMP android-library equivalent of the classic android-library's
+        // `testOptions.unitTests.isIncludeAndroidResources`.
+        withHostTestBuilder {}.configure {
+            isIncludeAndroidResources = true
+        }
         withDeviceTestBuilder {
             sourceSetTreeName = "test"
         }
@@ -55,24 +65,19 @@ kotlin {
         }
     }
 
-    // ---------------------------------------------------------------------------------------
-    // Additional targets are added here in later rollout steps, deliberately NOT yet - the
-    // migration keeps the branch Android-only until every module has been converted.
+    // Steps 7 and 8 of the rollout: every module now targets iOS and Web alongside Android.
     //
-    // Step 7 (iOS):
-    //     listOf(
-    //         iosArm64(),
-    //         iosSimulatorArm64()
-    //     ).forEach { iosTarget ->
-    //         iosTarget.binaries.framework {
-    //             baseName = <per-module framework name>
-    //             isStatic = true
-    //         }
-    //     }
-    //
-    // Step 8 (Web):
-    //     wasmJs { browser() }
-    // ---------------------------------------------------------------------------------------
+    // Only the `app` module declares `binaries.framework { }` on top of these (see its own
+    // build.gradle.kts) - it is the single framework iosApp links against, and re-invoking an
+    // already-declared target there is how a consumer adds target-specific config on top of this
+    // shared shape. A library module has no framework of its own; it is compiled into app's.
+    iosArm64()
+    iosSimulatorArm64()
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
 }
 
 // Copied verbatim from the per-module build.gradle.kts files this plugin replaces, so ktlint's

@@ -1,0 +1,12 @@
+<resources>
+    <string name="game_title">Tempo de Jogo a Dois</string>
+    <string name="game_top_bar_subtitle">Pequenos detalhes que podem fazer a diferença</string>
+    <string name="game_subtitle">Conhecemo-nos bem?</string>
+    <string name="game_swipe_hint">Desliza para uma nova pergunta</string>
+    <string name="game_take_turns">Revezem-se para compartilhar as respostas</string>
+    <string name="cd_settings">Configurações</string>
+    <string name="cd_shuffle_card">Mostrar uma carta aleatória</string>
+    <string name="cd_close">Fechar</string>
+    <string name="cd_switch_to_grid_view">Mudar para visualização em grade</string>
+    <string name="cd_switch_to_swipe_view">Mudar para visualização em cartas</string>
+</resources>

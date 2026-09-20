@@ -29,7 +29,7 @@ import org.robolectric.annotation.Config
  * ViewModel) so a regression there fails here, not just in manual testing.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w411dp-h891dp", manifest = "src/androidMain/AndroidManifest.xml")
+@Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class HomeScreenCategoryDropdownTest {
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -81,12 +81,12 @@ class HomeScreenCategoryDropdownTest {
         composeTestRule.onNodeWithContentDescription("Filter by category").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("🎉 Ice Breakers").assertExists()
-        composeTestRule.onNodeWithText("📸 Memories").assertExists()
-        composeTestRule.onNodeWithText("❤️ Values").assertExists()
-        composeTestRule.onNodeWithText("🔮 Future Dreams").assertExists()
-        composeTestRule.onNodeWithText("🌻 Daily Life").assertExists()
-        composeTestRule.onNodeWithText("💕 Intimacy").assertExists()
+        composeTestRule.onNodeWithText("Ice Breakers").assertExists()
+        composeTestRule.onNodeWithText("Memories").assertExists()
+        composeTestRule.onNodeWithText("Values").assertExists()
+        composeTestRule.onNodeWithText("Future Dreams").assertExists()
+        composeTestRule.onNodeWithText("Daily Life").assertExists()
+        composeTestRule.onNodeWithText("Intimacy").assertExists()
     }
 
     @Test
@@ -99,10 +99,10 @@ class HomeScreenCategoryDropdownTest {
 
         composeTestRule.onNodeWithContentDescription("Filter by category").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("❤️ Values").performClick()
+        composeTestRule.onNodeWithText("Values").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("❤️ Values").assertExists()
-        composeTestRule.onNodeWithText("🎉 Ice Breakers").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Values").assertExists()
+        composeTestRule.onNodeWithText("Ice Breakers").assertDoesNotExist()
     }
 }
