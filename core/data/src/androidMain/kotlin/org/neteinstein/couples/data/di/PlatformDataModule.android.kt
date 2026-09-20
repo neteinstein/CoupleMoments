@@ -1,6 +1,7 @@
 package org.neteinstein.couples.data.di
 
 import android.content.Context
+import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -38,20 +39,20 @@ actual val platformDataModule: Module =
         single<SeedMetadataDao> { SeedMetadataDaoImpl(get<CoupleMomentsDatabase>().seedMetadataQueries) }
         single<LocaleProvider> { LocaleProviderImpl() }
 
-        single(themeModeSettings) {
+        single<Settings>(themeModeSettings) {
             SharedPreferencesSettings(androidContext().getSharedPreferences("theme_mode", Context.MODE_PRIVATE))
         }
-        single(intimacyGateSettings) {
+        single<Settings>(intimacyGateSettings) {
             SharedPreferencesSettings(androidContext().getSharedPreferences("intimacy_gate", Context.MODE_PRIVATE))
         }
-        single(questionsForParentsSettings) {
+        single<Settings>(questionsForParentsSettings) {
             SharedPreferencesSettings(
                 androidContext().getSharedPreferences("questions_for_parents", Context.MODE_PRIVATE),
             )
         }
         // New in the multiplatform build - Android has no pre-existing file to stay compatible
         // with here, since the language was always an OS-level per-app setting on this platform.
-        single(languageSettings) {
+        single<Settings>(languageSettings) {
             SharedPreferencesSettings(androidContext().getSharedPreferences("app_language", Context.MODE_PRIVATE))
         }
 

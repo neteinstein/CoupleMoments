@@ -1,6 +1,7 @@
 package org.neteinstein.couples.data.di
 
 import com.russhwolf.settings.NSUserDefaultsSettings
+import com.russhwolf.settings.Settings
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.neteinstein.couples.data.installer.NoOpAppUpdateInstaller
@@ -35,12 +36,12 @@ actual val platformDataModule: Module =
 
         // One NSUserDefaults suite per preference, mirroring Android's one-file-per-preference
         // split (see SettingsQualifiers.kt).
-        single(themeModeSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "theme_mode")) }
-        single(intimacyGateSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "intimacy_gate")) }
-        single(questionsForParentsSettings) {
+        single<Settings>(themeModeSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "theme_mode")) }
+        single<Settings>(intimacyGateSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "intimacy_gate")) }
+        single<Settings>(questionsForParentsSettings) {
             NSUserDefaultsSettings(NSUserDefaults(suiteName = "questions_for_parents"))
         }
-        single(languageSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "app_language")) }
+        single<Settings>(languageSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "app_language")) }
 
         single<UpdateRepository> { NoOpUpdateRepository() }
         single<AppUpdateInstaller> { NoOpAppUpdateInstaller() }
