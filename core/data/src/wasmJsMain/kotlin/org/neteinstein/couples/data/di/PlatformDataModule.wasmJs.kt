@@ -1,5 +1,6 @@
 package org.neteinstein.couples.data.di
 
+import com.russhwolf.settings.Settings
 import com.russhwolf.settings.StorageSettings
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -30,10 +31,10 @@ actual val platformDataModule: Module =
         single<SeedMetadataDao> { WebSeedMetadataDao() }
         single<LocaleProvider> { LocaleProviderImpl() }
 
-        single(themeModeSettings) { StorageSettings() }
-        single(intimacyGateSettings) { StorageSettings() }
-        single(questionsForParentsSettings) { StorageSettings() }
-        single(languageSettings) { StorageSettings() }
+        single<Settings>(themeModeSettings) { StorageSettings() }
+        single<Settings>(intimacyGateSettings) { StorageSettings() }
+        single<Settings>(questionsForParentsSettings) { StorageSettings() }
+        single<Settings>(languageSettings) { StorageSettings() }
 
         single<UpdateRepository> { NoOpUpdateRepository() }
         single<AppUpdateInstaller> { NoOpAppUpdateInstaller() }
