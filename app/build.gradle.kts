@@ -66,6 +66,10 @@ kotlin {
             implementation(libs.multiplatform.settings)
         }
 
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+
         androidHostTest.dependencies {
             implementation(libs.junit)
             implementation(libs.mockk)

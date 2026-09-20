@@ -1,7 +1,7 @@
 <resources>
     <string name="tab_questions">Preguntas</string>
     <string name="tab_game">Juego</string>
-    <string name="install_banner_message">Lleva Couple Moments en tu móvil</string>
+    <string name="install_banner_message">Consigue la app de Couple Moments</string>
     <string name="install_banner_action">Instalar</string>
     <string name="install_banner_dismiss">Descartar</string>
 </resources>
