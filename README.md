@@ -25,10 +25,10 @@ codebase, three thin platform shells. Try it in a browser at
 - **Grid view** — toggle between the one-at-a-time swipe deck and a scrollable grid of every
   question in the current filter, tapping any card to open it full screen.
 - **Multi-language content** — question text ships in English, Portuguese, Spanish, French, and
-  German (`en`/`pt` are currently exposed as selectable app languages via Android's per-app
-  language picker; see `androidApp/src/main/res/xml/locale_config.xml`). iOS and the web, which
-  have no such OS setting, get an in-app language picker in Settings that defaults to the
-  device/browser language.
+  German. Android exposes them through the OS per-app language picker (see
+  `androidApp/src/main/res/xml/locale_config.xml`); iOS and the web, which have no such OS
+  setting, get an in-app language picker in Settings that defaults to the device/browser
+  language.
 - **Keyboard support on the web** — the arrow keys drive the deck (left/right for previous/next,
   up to focus a card, down to hide it), since there's no swipe gesture in a desktop browser.
 - **Reset cards** — Settings has a one-tap reset that brings every hidden card back into rotation.
@@ -101,7 +101,9 @@ feature/settings    # settings screen (language, reset cards, update)
 ```
 
 See [`AGENTS.md`](AGENTS.md) for the full module dependency rules, data flow, DI/navigation
-conventions, and testing standards.
+conventions, and testing standards, and
+[`docs/kmp-cmp-migration-plan.md`](docs/kmp-cmp-migration-plan.md) for how the multiplatform
+migration went and what's still open.
 
 ## Testing & CI
 
