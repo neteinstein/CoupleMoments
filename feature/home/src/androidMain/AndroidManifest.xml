@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application>
         <!-- Host activity createComposeRule() launches to run Compose content under Robolectric.
              Normally supplied by androidx.compose.ui:ui-test-manifest's own manifest, merged in via
@@ -8,9 +9,16 @@
              manifest into (see feature/home/build.gradle.kts's androidHostTest.dependencies), so
              androidHostTest-scoped dependencies never get their manifests merged at all here.
              Declared directly instead. Harmless in the shipped app: unexported, never launched
-             outside tests. -->
+             outside tests.
+
+             tools:replace is required because androidApp's own debug variant *does* pull in
+             ui-test-manifest (for its instrumented tests), which declares this same activity with
+             android:exported="true" - without an explicit winner the merger fails the debug build
+             outright. This module's android:exported="false" is the value that should win: it is
+             the safer one, and nothing ever launches this activity from outside the process. -->
         <activity
             android:name="androidx.activity.ComponentActivity"
-            android:exported="false" />
+            android:exported="false"
+            tools:replace="android:exported" />
     </application>
 </manifest>

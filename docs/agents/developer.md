@@ -15,7 +15,7 @@ Implements features, bug fixes, and refactors in the Couple Moments codebase.
 - When adding a screen, add a route to the `Screen` sealed class and a `composable(...)` entry in `AppNavigation.kt`.
 - Never hardcode colors in Composables — always reference `MaterialTheme.colorScheme.*`. All user-facing strings go in `res/values/strings.xml`.
 - Write or update unit tests for any ViewModel/use case/repository you touch, or explicitly hand the test work to QA — don't leave changed logic untested.
-- Before reporting a change done, run `./gradlew assembleDebug` and the relevant `testDebugUnitTest` target(s) for the module(s) you touched.
+- Before reporting a change done, run `./gradlew :androidApp:assembleDebug` and the relevant `testAndroidHostTest` target(s) for the module(s) you touched.
 
 ## Boundaries
 

@@ -64,7 +64,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Compile debug
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew :androidApp:assembleDebug --no-daemon --stacktrace
 
   # ─── Minified Release ───────────────────────────────────────────────────────
   # `assembleDebug` above never runs R8, so a broken keep rule in app/proguard-rules.pro is
@@ -98,7 +98,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build minified release APKs
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew :androidApp:assembleRelease --no-daemon --stacktrace
 
       - name: Verify obfuscation
         run: ./scripts/verify-obfuscation.sh
@@ -110,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: r8-mapping-files
-          path: app/build/outputs/mapping/*Release/
+          path: androidApp/build/outputs/mapping/*Release/
           # Not "error": this step runs with always(), so a build that failed before R8 ran has
           # nothing to upload and should report the build failure, not an artifact one.
           if-no-files-found: warn
@@ -140,14 +140,15 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # testAndroidHostTest runs KMP-converted modules' host-side unit tests (the
-      # com.android.kotlin.multiplatform.library plugin's withHostTestBuilder registers this task
-      # name, not testDebugUnitTest - see build-logic's kmp-library.gradle.kts). Requesting both
-      # task names lets this single invocation cover the plain-Android modules and the
-      # KMP-converted ones during the migration; Gradle silently skips a requested task name a
-      # given module doesn't have, so neither name being absent from some modules is an error.
+      # Every core:*/feature:*/app module is a KMP android-library now, whose host-side unit tests
+      # run under testAndroidHostTest (the com.android.kotlin.multiplatform.library plugin's
+      # withHostTestBuilder registers that name, not testDebugUnitTest - see build-logic's
+      # kmp-library.gradle.kts); that task also covers everything in commonTest. androidApp is the
+      # one classic com.android.application module left and it is flavored, so its unit-test task
+      # has to be named per flavor - the unflavored testDebugUnitTest is ambiguous there and no
+      # longer exists anywhere else in the build.
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest testAndroidHostTest --no-daemon --stacktrace
+        run: ./gradlew testAndroidHostTest :androidApp:testGithubDebugUnitTest :androidApp:testPlaystoreDebugUnitTest --no-daemon --stacktrace
 
       - name: Upload test results
         if: always()
@@ -155,7 +156,7 @@ jobs:
         with:
           name: unit-test-results
           path: |
-            **/build/test-results/testDebugUnitTest/**.xml
+            **/build/test-results/**/*.xml
             **/build/test-results/testAndroidHostTest/**.xml
 
       - name: Publish unit test results
@@ -163,7 +164,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: |
-            **/build/test-results/testDebugUnitTest/**.xml
+            **/build/test-results/**/*.xml
             **/build/test-results/testAndroidHostTest/**.xml
           comment_title: '🧪 Unit Test Results'
 
@@ -190,18 +191,89 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # AGP's built-in coverage only instruments Android variants, and since the KMP migration
+      # essentially all of this project's code lives in commonMain source sets it cannot see.
+      # Kover aggregates every module into one report at the root project - see the root
+      # build.gradle.kts's kover {} block and its kover(project(...)) dependencies.
       - name: Run tests with coverage
-        run: ./gradlew createDebugUnitTestCoverageReport --no-daemon --stacktrace
+        run: ./gradlew koverXmlReport --no-daemon --stacktrace
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v7
         with:
           name: coverage-reports
-          path: '**/build/reports/coverage/'
+          path: build/reports/kover/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
-          files: '**/build/reports/coverage/test/debug/report.xml'
+          files: build/reports/kover/report.xml
           fail_ci_if_error: false
           verbose: true
+
+  # ─── iOS ────────────────────────────────────────────────────────────────────
+  # Compiles the shared KMP code for both iOS targets and builds the Xcode wrapper against the
+  # simulator SDK. No Apple Developer signing is configured (CODE_SIGNING_ALLOWED=NO), so this
+  # proves the iOS build works without any Apple credentials as repo secrets - shipping to
+  # TestFlight/the App Store is a separate, later decision.
+  ios:
+    name: iOS (simulator)
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Compile shared KMP code for iOS
+        run: ./gradlew :app:compileKotlinIosArm64 :app:compileKotlinIosSimulatorArm64 --no-daemon --stacktrace
+
+      - name: Build iosApp for the simulator
+        run: |
+          xcodebuild build \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
+
+  # ─── Web ────────────────────────────────────────────────────────────────────
+  # Builds the same wasmJs production distribution .github/workflows/deploy-pages.yml publishes to
+  # couples.loopgain.org, so a change that breaks the web build fails the PR rather than the deploy.
+  web:
+    name: Web (wasmJs)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build wasmJs production distribution
+        run: ./gradlew :webApp:wasmJsBrowserDistribution --no-daemon --stacktrace

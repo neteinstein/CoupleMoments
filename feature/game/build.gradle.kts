@@ -1,76 +1,40 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ktlint)
+    id("kmp-compose-library")
 }
 
-android {
-    namespace = "org.neteinstein.couples.feature.game"
-    compileSdk = 37
+compose.resources {
+    packageOfResClass = "org.neteinstein.couples.feature.game.resources"
+}
 
-    defaultConfig {
-        minSdk = 32
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+kotlin {
+    android {
+        namespace = "org.neteinstein.couples.feature.game"
     }
 
-    buildTypes {
-        debug {
-            enableUnitTestCoverage = true
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":core:domain"))
+            implementation(project(":core:ui"))
+            implementation(libs.coroutines.core)
+            // koinViewModel() in the screen + the viewModel { } module builder - both multiplatform.
+            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.lifecycle.viewmodel)
+            // Deliberately NOT lifecycle-viewmodel-compose: as of 2.10.0 it publishes Android/JVM
+            // artifacts only, with no iOS or wasmJs variant, so it cannot sit in commonMain. The
+            // screens get their ViewModels from Koin's koinViewModel() instead, which is
+            // KMP-native.
+            implementation(libs.lifecycle.runtime.compose)
+        }
+
+        androidMain.dependencies {
+            // Main dispatcher runtime for viewModelScope.launch - Android target only.
+            implementation(libs.coroutines.android)
+        }
+
+        androidHostTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.coroutines.test)
         }
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
-
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.testLogging {
-                    events("failed")
-                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-                    showStackTraces = true
-                    showCauses = true
-                }
-            }
-        }
-    }
-}
-
-ktlint {
-    android.set(true)
-    ignoreFailures.set(false)
-    reporters {
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
-    }
-}
-
-dependencies {
-    implementation(project(":core:domain"))
-    implementation(project(":core:ui"))
-    implementation(libs.koin.androidx.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.lifecycle.runtime.compose)
-    implementation(libs.coroutines.android)
-    implementation(libs.activity.compose)
-    implementation(libs.pager.indicator)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    testImplementation(libs.coroutines.test)
-    testImplementation(libs.koin.test)
-    testImplementation(libs.koin.test.junit4)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.junit.ext)
-    testImplementation(platform(libs.compose.bom))
-    testImplementation(libs.compose.ui.test.junit4)
-
-    debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -2,12 +2,16 @@
 
 Spark deeper conversations with the person you love.
 
-Couple Moments is an Android app — a couple-focused fork of
+Couple Moments is a Kotlin Multiplatform app — a couple-focused fork of
 [FamilyMoments](https://github.com/neteinstein/FamilyMoments) — that hands you one thoughtful
 question at a time — swipe through a deck of conversation starters across six categories (Ice
 Breakers, Memories, Values, Future Dreams, Daily Life, Intimacy), pick a card at random, or browse
 the whole deck as a grid. Everything runs entirely on-device: there's no account, no backend, and
 no network access beyond an optional version check against this repo's own GitHub Releases.
+
+It runs on **Android**, **iOS** (simulator) and the **web** — one shared Compose Multiplatform
+codebase, three thin platform shells. Try it in a browser at
+[couples.loopgain.org](https://couples.loopgain.org).
 
 ## Features
 
@@ -22,14 +26,22 @@ no network access beyond an optional version check against this repo's own GitHu
   question in the current filter, tapping any card to open it full screen.
 - **Multi-language content** — question text ships in English, Portuguese, Spanish, French, and
   German (`en`/`pt` are currently exposed as selectable app languages via Android's per-app
-  language picker; see `app/src/main/res/xml/locale_config.xml`).
+  language picker; see `androidApp/src/main/res/xml/locale_config.xml`). iOS and the web, which
+  have no such OS setting, get an in-app language picker in Settings that defaults to the
+  device/browser language.
+- **Keyboard support on the web** — the arrow keys drive the deck (left/right for previous/next,
+  up to focus a card, down to hide it), since there's no swipe gesture in a desktop browser.
 - **Reset cards** — Settings has a one-tap reset that brings every hidden card back into rotation.
 - **Self-updating** — Settings' "Update to latest" button checks this repo's GitHub Releases and
   installs a newer APK directly, no Play Store required.
 
 ## Requirements
 
-- Android 12+ (API 32) device or emulator.
+- **Android:** 12+ (API 32) device or emulator.
+- **iOS:** Xcode with an iOS simulator. No Apple Developer signing is configured, so the iOS build
+  is simulator-only for now.
+- **Web:** any current browser with WebAssembly GC support (Chrome/Edge 119+, Firefox 120+,
+  Safari 18.2+).
 - No accounts or API keys to build and run locally — a clean checkout compiles and runs as-is.
   Cutting a signed release build requires the signing/publishing secrets described under
   [Releases](#releases) below.
@@ -39,8 +51,14 @@ no network access beyond an optional version check against this repo's own GitHu
 ```bash
 git clone https://github.com/neteinstein/CoupleMoments.git
 cd CoupleMoments
-./gradlew assembleDebug
-./gradlew installDebug   # with a device/emulator connected
+# Android
+./gradlew :androidApp:assembleDebug
+./gradlew :androidApp:installDebug   # with a device/emulator connected
+
+# Web — serves on http://localhost:8080
+./gradlew :webApp:wasmJsBrowserRun
+
+# iOS — open iosApp/iosApp.xcodeproj in Xcode and run the `iosApp` scheme on a simulator
 ```
 
 Or open the project directly in Android Studio and run it from there.
@@ -64,10 +82,16 @@ Couple Moments collects no data and has no backend — everything stays on your 
 
 ## Architecture
 
-Kotlin, Jetpack Compose + Material3, MVVM, Koin DI, one Gradle module per layer/feature:
+Kotlin Multiplatform, Compose Multiplatform + Material3, MVVM, Koin DI, one Gradle module per
+layer/feature. Every `core:*`/`feature:*`/`app` module targets Android + iOS + wasmJs; the three
+platform modules are thin shells around `app`'s shared `App()` composable:
 
 ```
-app                 # entry point: MainActivity, Application class, Koin DI wiring, navigation graph
+build-logic         # convention plugins shared by every module
+app                 # shared KMP aggregator: App(), Koin wiring, navigation graph
+androidApp          # Android shell: MainActivity, Application, manifest, res/, flavors, R8
+iosApp              # Xcode project wrapper (Swift only)
+webApp              # wasmJs entry point: main(), index.html
 core/domain         # pure Kotlin: models, repository interfaces, use cases
 core/data           # repository implementations + local (Room) data source
 core/ui             # shared Compose theme, exposes Compose libs via `api`
@@ -82,20 +106,23 @@ conventions, and testing standards.
 ## Testing & CI
 
 ```bash
-./gradlew testDebugUnitTest                   # all unit tests
-./gradlew :feature:home:testDebugUnitTest     # a single module
+./gradlew testAndroidHostTest                 # all unit tests across the KMP modules
+./gradlew :feature:home:testAndroidHostTest   # a single module
 ./gradlew ktlintCheck                         # style/formatting gate (ktlintFormat to auto-fix)
-./gradlew createDebugUnitTestCoverageReport   # tests + coverage report
+./gradlew koverXmlReport                      # tests + aggregated coverage report
 ```
 
-Every PR into `main`/`develop` runs four independent GitHub Actions jobs
-(`.github/workflows/pr.yml`): `ktlint`, `assembleDebug`, `testDebugUnitTest`, and a
-coverage report uploaded to Codecov.
+Every PR into `main`/`develop` runs seven independent GitHub Actions jobs
+(`.github/workflows/pr.yml`): `ktlint`, Android debug compile, a minified release build plus
+`scripts/verify-obfuscation.sh`, unit tests, Kover coverage uploaded to Codecov, an iOS simulator
+build, and the web (wasmJs) build.
 
+Pushes to `main` also deploy the web build to GitHub Pages
+(`.github/workflows/deploy-pages.yml`).
 ## Releases
 
 Every push to `main` triggers `.github/workflows/release.yml`: it re-validates the commit
-(`ktlintCheck`, `testDebugUnitTest`), builds a signed release APK, and publishes it as a GitHub
+(`ktlintCheck`, unit tests), builds a signed release APK, and publishes it as a GitHub
 Release tagged `v<major>.<minor>.<run number>`, where `major.minor` comes from
 `couples.versionName` in `gradle.properties` (the one place the version is declared — local builds
 and Settings' "About" section use it verbatim) — which is also what powers the in-app

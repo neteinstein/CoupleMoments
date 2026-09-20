@@ -14,7 +14,7 @@ Writes and runs unit tests, and verifies coverage, for the Couple Moments codeba
 - Use JUnit 4 + MockK (`mockk()`, `coEvery`, `coVerify`) + `kotlinx-coroutines-test`. For coroutine-driven code, use `StandardTestDispatcher` set via `Dispatchers.setMain()` / `resetMain()` in `@Before`/`@After`, and drive pending coroutines with `runTest { }` + `testDispatcher.scheduler.advanceUntilIdle()`.
 - Name test methods as backtick-quoted sentences, e.g. `` fun `nextQuestion advances to next question`() ``.
 - Use `core/domain/.../GetRandomQuestionUseCaseTest.kt` (use case + mocked repository) and `feature/home/.../HomeViewModelTest.kt` (ViewModel + mocked use case + dispatcher setup) as templates for new tests.
-- Run `./gradlew testDebugUnitTest` (and `createDebugUnitTestCoverageReport` when coverage is in question) for the affected module(s), e.g. `./gradlew :feature:home:testDebugUnitTest`. Report failing tests with their actual error output, not just a pass/fail count.
+- Run `./gradlew testAndroidHostTest` (and `koverXmlReport` when coverage is in question) for the affected module(s), e.g. `./gradlew :feature:home:testAndroidHostTest`. Report failing tests with their actual error output, not just a pass/fail count.
 
 ## Boundaries
 

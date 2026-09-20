@@ -23,6 +23,7 @@ koinTest = "4.2.2"
 splashscreen = "1.2.0"
 ktlintGradle = "14.2.0"
 robolectric = "4.17"
+kover = "0.9.9"
 pagerIndicator = "0.0.9"
 playPublisher = "4.1.1"
 
@@ -96,6 +97,9 @@ coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koinTest" }
 koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koinTest" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+# kotlin.test, used in commonTest across the KMP modules - MockK has no Kotlin/Native or wasmJs
+# support, so any test that has to run on every target uses hand-written fakes plus this instead.
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 
 # Pager Indicator
 pager-indicator = { group = "mx.platacard", name = "compose-pager-indicator", version.ref = "pagerIndicator" }
@@ -111,6 +115,10 @@ pager-indicator = { group = "mx.platacard", name = "compose-pager-indicator", ve
 # --------------------------------------------------------------------------------------------
 
 # SQLDelight
+# The driver-agnostic SQLDelight runtime the generated database/queries compile against, needed by
+# commonMain now that core:data is multiplatform (each target adds its own driver, except wasmJs,
+# which has none - see WebCardDao).
+sqldelight-runtime = { group = "app.cash.sqldelight", name = "runtime", version.ref = "sqldelight" }
 sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
 sqldelight-native-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
@@ -144,6 +152,9 @@ android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 # sqldelight/kotlin-serialization: applied by core:data (KMP migration step 4).
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+# Coverage across every KMP module - AGP's own instrumentation only sees Android variants, and
+# almost all of this project's code lives in commonMain now.
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }

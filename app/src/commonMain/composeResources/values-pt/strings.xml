@@ -1,0 +1,7 @@
+<resources>
+    <string name="tab_questions">Perguntas</string>
+    <string name="tab_game">Jogo</string>
+    <string name="install_banner_message">Tenha o Couple Moments no seu telemóvel</string>
+    <string name="install_banner_action">Instalar</string>
+    <string name="install_banner_dismiss">Dispensar</string>
+</resources>

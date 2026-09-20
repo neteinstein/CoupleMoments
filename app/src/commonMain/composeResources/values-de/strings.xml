@@ -1,0 +1,7 @@
+<resources>
+    <string name="tab_questions">Fragen</string>
+    <string name="tab_game">Spiel</string>
+    <string name="install_banner_message">Hol dir Couple Moments aufs Handy</string>
+    <string name="install_banner_action">Installieren</string>
+    <string name="install_banner_dismiss">Schließen</string>
+</resources>
