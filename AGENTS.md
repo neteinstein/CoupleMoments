@@ -104,6 +104,8 @@ feature/settings    # settings screen (theme, language, card reset, updates, abo
 - `app` depends on every module and is the only place they're wired together (Koin modules, `NavHost`).
 - `androidApp`/`iosApp`/`webApp` depend **only** on `app` — no platform entry point reaches into a `core:*`/`feature:*` module directly.
 
+The migration that produced this shape, what diverged from its original plan, and what is still open are recorded in [`docs/kmp-cmp-migration-plan.md`](docs/kmp-cmp-migration-plan.md).
+
 ### Source sets and expect/actual
 
 Put code in `commonMain` by default. A platform source set is only for something that genuinely has no common form; the current list is short and worth knowing:
@@ -131,7 +133,7 @@ Put code in `commonMain` by default. A platform source set is only for something
 
 (On the `kmp` branch: `CoupleMomentsDatabase`/`CardDao`/`SeedMetadataDao` are now SQLDelight-backed — see `core/data/src/main/sqldelight/.../local/*.sq` for schema and `CardDaoImpl`/`SeedMetadataDaoImpl`/`DriverFactory` for the implementation — not the Room setup this paragraph originally described. Bump the version by editing the `.sq` files' `CREATE TABLE` and adding a numbered `.sqm` migration, never by hand-editing a generated class.)
 
-Note: `androidApp/src/main/res/xml/locale_config.xml` only declares `en` and `pt` as app locales, even though the data source has content for `es`/`fr`/`de` too — check both places when changing supported languages.
+Note: the set of supported languages is declared in three places that must be kept in step — `androidApp/src/main/res/xml/locale_config.xml` (Android's OS-level per-app language picker), `AppLanguage` in `core:domain` (the in-app picker iOS/Web use), and `QuestionSeedData`'s per-language content. All three currently cover `en`/`pt`/`es`/`fr`/`de`.
 
 ### DI wiring (Koin)
 
@@ -159,7 +161,7 @@ Navigation comes from `org.jetbrains.androidx.navigation:navigation-compose` —
 
 ### Theming
 
-`CoupleMomentsTheme` (in `core/ui`) picks between Material3 dynamic color (Android 12+/API 31+, via `dynamicLightColorScheme`/`dynamicDarkColorScheme`) and a static `lightColorScheme`/`darkColorScheme` fallback for older devices, based on `isSystemInDarkTheme()`. Never hardcode colors in Composables — always reference `MaterialTheme.colorScheme.*`. All user-facing strings belong in a module's `src/commonMain/composeResources/values*/strings.xml` and are read with `org.jetbrains.compose.resources.stringResource(Res.string.foo)` — **not** Android's `R.string`. Each module generates its own `Res` class (`compose.resources { packageOfResClass = ... }`); `core:ui` sets `publicResClass = true` so `feature:splash` can reach its logo drawable. `androidApp/src/main/res/` keeps only what the Android platform itself needs: launcher icons, themes, `locale_config.xml`, `app_name`.
+`CoupleMomentsTheme` (in `core/ui`) asks `platformColorScheme(darkTheme)` for a Material3 dynamic-color scheme and falls back to the static `lightColorScheme`/`darkColorScheme` when it returns null — which is always the case off Android, and on Android below API 31. `PlatformStatusBarEffect` adjusts the Android status bar and no-ops elsewhere. Never hardcode colors in Composables — always reference `MaterialTheme.colorScheme.*`. All user-facing strings belong in a module's `src/commonMain/composeResources/values*/strings.xml` and are read with `org.jetbrains.compose.resources.stringResource(Res.string.foo)` — **not** Android's `R.string`. Each module generates its own `Res` class (`compose.resources { packageOfResClass = ... }`); `core:ui` sets `publicResClass = true` so `feature:splash` can reach its logo drawable. `androidApp/src/main/res/` keeps only what the Android platform itself needs: launcher icons, themes, `locale_config.xml`, `app_name`.
 
 ## Adding a new feature module
 
