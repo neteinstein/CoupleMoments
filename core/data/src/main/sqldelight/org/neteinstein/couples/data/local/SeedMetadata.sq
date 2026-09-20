@@ -1,0 +1,14 @@
+-- Mirrors Room's `seed_metadata` table (SeedMetadataEntity.kt) - see Card.sq's header comment for
+-- why this is a fresh schema rather than a replayed migration history.
+CREATE TABLE seed_metadata (
+    id INTEGER NOT NULL PRIMARY KEY,
+    version INTEGER NOT NULL
+);
+
+selectVersion:
+SELECT version FROM seed_metadata LIMIT 1;
+
+-- OnConflictStrategy.REPLACE's equivalent - there is only ever one row (SeedMetadataEntity.SINGLETON_ID).
+setVersion:
+INSERT OR REPLACE INTO seed_metadata(id, version)
+VALUES (?, ?);

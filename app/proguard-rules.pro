@@ -22,23 +22,16 @@
 
 # ── Obfuscation strength / size ──────────────────────────────────────────────
 # Flatten every renamed class into the root package. Nothing in this app resolves a class from a
-# package name (the single name-based lookup is Room's, and it is pinned by the -keep below), so
-# the package hierarchy carries no runtime meaning in the release build.
+# package name or by reflective Class.forName any more (Room, the one prior exception, was
+# replaced by SQLDelight in core:data - see that module's local/ package; SQLDelight's generated
+# database/query classes are constructed directly by normal Kotlin calls, so they need no keep
+# rule and rename like any other class), so the package hierarchy carries no runtime meaning in
+# the release build.
 -repackageclasses ''
 # Lets R8 widen member/class visibility so it can inline and merge across package boundaries -
 # safe here because the whole program is processed in one R8 invocation and nothing depends on
 # reflective access checks.
 -allowaccessmodification
-
-# ── Room ─────────────────────────────────────────────────────────────────────
-# Room resolves the KSP-generated `CoupleMomentsDatabase_Impl` reflectively, by appending "_Impl"
-# to the runtime name of the class handed to `Room.databaseBuilder(...)` (see
-# core/data/.../data/di/DataModule.kt). Renaming either half independently breaks that lookup, so
-# both the abstract database class and its generated subclass - which also matches this rule,
-# since it extends RoomDatabase transitively - keep their original names and no-arg constructor.
-# room-runtime ships this same rule as a consumer rule; it is repeated here so the app's own
-# `Class.forName` contract stays visible next to the config that enables obfuscation.
--keep class * extends androidx.room.RoomDatabase { <init>(); }
 
 # ── Koin ─────────────────────────────────────────────────────────────────────
 # Koin's DSL (`single { }`, `factory { }`, `get()`, `by inject()`) resolves definitions from

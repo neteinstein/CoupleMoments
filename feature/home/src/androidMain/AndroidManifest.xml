@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Host activity createComposeRule() launches to run Compose content under Robolectric.
+             Normally supplied by androidx.compose.ui:ui-test-manifest's own manifest, merged in via
+             a debug build type's variant - but com.android.kotlin.multiplatform.library's Android
+             target has no debug/release build-type split to scope that test-only dependency's
+             manifest into (see feature/home/build.gradle.kts's androidHostTest.dependencies), so
+             androidHostTest-scoped dependencies never get their manifests merged at all here.
+             Declared directly instead. Harmless in the shipped app: unexported, never launched
+             outside tests. -->
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:exported="false" />
+    </application>
+</manifest>

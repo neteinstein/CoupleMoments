@@ -1,19 +1,22 @@
 package org.neteinstein.couples.data.repository
 
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Exercises [parseGitHubReleaseResponse] against real GitHub "get the latest release" API
- * response shapes - needs a real desktop [org.json] implementation on the test classpath
- * (`testImplementation(libs.json)` in this module's build.gradle.kts), since android.jar's
- * org.json classes are non-functional stubs under `unitTests.isReturnDefaultValues`.
+ * Exercises [toAppUpdate] against real GitHub "get the latest release" API response shapes,
+ * decoded via kotlinx.serialization the same way [GitHubUpdateRepositoryImpl] does (with
+ * `ignoreUnknownKeys = true`, since GitHub's real response has many more fields than
+ * [GitHubReleaseResponse] declares).
  */
 class GitHubUpdateRepositoryImplTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
     @Test
     fun `parses a valid release with an apk asset`() {
-        val json =
+        val body =
             """
             {
               "tag_name": "v1.0.16",
@@ -28,7 +31,7 @@ class GitHubUpdateRepositoryImplTest {
             }
             """.trimIndent()
 
-        val update = parseGitHubReleaseResponse(json)
+        val update = toAppUpdate(json.decodeFromString(body))
 
         assertEquals("1.0.16", update.versionName)
         assertEquals(
@@ -39,16 +42,16 @@ class GitHubUpdateRepositoryImplTest {
 
     @Test
     fun `strips the leading v from the tag name`() {
-        val json = releaseJson(tagName = "v2.3.4", assetName = "app.apk")
+        val body = releaseJson(tagName = "v2.3.4", assetName = "app.apk")
 
-        val update = parseGitHubReleaseResponse(json)
+        val update = toAppUpdate(json.decodeFromString(body))
 
         assertEquals("2.3.4", update.versionName)
     }
 
     @Test
     fun `picks the apk asset even when other assets are listed first`() {
-        val json =
+        val body =
             """
             {
               "tag_name": "v1.0.16",
@@ -59,25 +62,25 @@ class GitHubUpdateRepositoryImplTest {
             }
             """.trimIndent()
 
-        val update = parseGitHubReleaseResponse(json)
+        val update = toAppUpdate(json.decodeFromString(body))
 
         assertEquals("https://example.com/app.apk", update.apkDownloadUrl)
     }
 
     @Test
     fun `throws when there are no assets at all`() {
-        val json = """{ "tag_name": "v1.0.16" }"""
+        val body = """{ "tag_name": "v1.0.16" }"""
 
-        val exception = runCatching { parseGitHubReleaseResponse(json) }.exceptionOrNull()
+        val exception = runCatching { toAppUpdate(json.decodeFromString(body)) }.exceptionOrNull()
 
         assertTrue(exception is IllegalStateException)
     }
 
     @Test
     fun `throws when no asset ends with apk`() {
-        val json = releaseJson(tagName = "v1.0.16", assetName = "release-notes.txt")
+        val body = releaseJson(tagName = "v1.0.16", assetName = "release-notes.txt")
 
-        val exception = runCatching { parseGitHubReleaseResponse(json) }.exceptionOrNull()
+        val exception = runCatching { toAppUpdate(json.decodeFromString(body)) }.exceptionOrNull()
 
         assertTrue(exception is IllegalStateException)
     }

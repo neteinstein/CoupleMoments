@@ -19,7 +19,9 @@ languages (`docs/playstore/play/listings/`).
 not generated. The same artwork (minus its opaque background) also backs the Android launcher icon
 at `app/src/main/res/drawable-*/ic_launcher_foreground.png` (plus the monochrome/themed variant and
 `ic_splash_logo.png`) and the shared in-app mark at
-`core/ui/src/main/res/drawable-*/ic_couple_moments_mark.png`; update all of those together when the
+`core/ui/src/commonMain/composeResources/drawable-*/ic_couple_moments_mark.png` (moved from
+`androidMain/res` to Compose Multiplatform's composeResources on the `kmp` branch, since
+`feature:splash` now references it from commonMain); update all of those together when the
 mark changes.
 
 `feature-graphic-1024x500.png` is generated — `generate.py` renders it as SVG (matching the real

@@ -1,10 +1,22 @@
 package org.neteinstein.couples.data.di
 
-import androidx.room.Room
+import android.content.Context
+import com.russhwolf.settings.SharedPreferencesSettings
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.neteinstein.couples.data.installer.AppUpdateInstallerImpl
+import org.neteinstein.couples.data.local.CardDao
+import org.neteinstein.couples.data.local.CardDaoImpl
 import org.neteinstein.couples.data.local.CoupleMomentsDatabase
+import org.neteinstein.couples.data.local.DriverFactory
+import org.neteinstein.couples.data.local.SeedMetadataDao
+import org.neteinstein.couples.data.local.SeedMetadataDaoImpl
 import org.neteinstein.couples.data.locale.LocaleProviderImpl
 import org.neteinstein.couples.data.repository.GitHubUpdateRepositoryImpl
 import org.neteinstein.couples.data.repository.IntimacyGateRepositoryImpl
@@ -37,20 +49,41 @@ import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
 
 val dataModule =
     module {
-        single {
-            Room
-                .databaseBuilder(androidContext(), CoupleMomentsDatabase::class.java, "couple_moments.db")
-                .addMigrations(CoupleMomentsDatabase.MIGRATION_1_2, CoupleMomentsDatabase.MIGRATION_2_3)
-                .build()
-        }
-        single { get<CoupleMomentsDatabase>().cardDao() }
-        single { get<CoupleMomentsDatabase>().seedMetadataDao() }
+        // KMP migration groundwork (step 4, sub-step 3 of 3): CoupleMomentsDatabase is now
+        // SQLDelight-generated (see build.gradle.kts's `sqldelight { }` block and
+        // DriverFactory.kt), replacing Room. CardDao/SeedMetadataDao stay the same
+        // persistence-agnostic interfaces QuestionRepositoryImpl/UsedQuestionsRepositoryImpl
+        // already depended on, so neither repository (nor their tests) needed any change.
+        single { CoupleMomentsDatabase(DriverFactory(androidContext()).createDriver()) }
+        single<CardDao> { CardDaoImpl(get<CoupleMomentsDatabase>().cardQueries) }
+        single<SeedMetadataDao> { SeedMetadataDaoImpl(get<CoupleMomentsDatabase>().seedMetadataQueries) }
         single<QuestionRepository> { QuestionRepositoryImpl(get(), get()) }
         single<LocaleProvider> { LocaleProviderImpl() }
         single<UsedQuestionsRepository> { UsedQuestionsRepositoryImpl(get()) }
-        single<IntimacyGateRepository> { IntimacyGateRepositoryImpl(androidContext()) }
-        single<ThemeModeRepository> { ThemeModeRepositoryImpl(androidContext()) }
-        single<QuestionsForParentsRepository> { QuestionsForParentsRepositoryImpl(androidContext()) }
+
+        // KMP migration groundwork (step 4, sub-step 1 of 3): each repo below now depends on the
+        // multiplatform `Settings` interface rather than a raw `Context`. `SharedPreferencesSettings`
+        // is the Android actual - it's just a thin wrapper around the exact same
+        // `SharedPreferences` file name/keys these repos always used, so existing installs keep
+        // their saved values. Each gets its own named `Settings` singleton (bound to its own
+        // preexisting prefs file) rather than one shared instance, to preserve on-disk
+        // compatibility - these were three separate files before and must stay that way.
+        single(named("themeModeSettings")) {
+            SharedPreferencesSettings(androidContext().getSharedPreferences("theme_mode", Context.MODE_PRIVATE))
+        }
+        single(named("intimacyGateSettings")) {
+            SharedPreferencesSettings(androidContext().getSharedPreferences("intimacy_gate", Context.MODE_PRIVATE))
+        }
+        single(named("questionsForParentsSettings")) {
+            SharedPreferencesSettings(
+                androidContext().getSharedPreferences("questions_for_parents", Context.MODE_PRIVATE),
+            )
+        }
+        single<IntimacyGateRepository> { IntimacyGateRepositoryImpl(get(named("intimacyGateSettings"))) }
+        single<ThemeModeRepository> { ThemeModeRepositoryImpl(get(named("themeModeSettings"))) }
+        single<QuestionsForParentsRepository> {
+            QuestionsForParentsRepositoryImpl(get(named("questionsForParentsSettings")))
+        }
         factory { GetRandomQuestionUseCase(get()) }
         factory { GetQuestionsUseCase(get()) }
         factory { GetUsedQuestionIdsUseCase(get()) }
@@ -63,7 +96,17 @@ val dataModule =
         factory { IsQuestionsForParentsEnabledUseCase(get()) }
         factory { SetQuestionsForParentsEnabledUseCase(get()) }
 
-        single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext()) }
+        // KMP migration groundwork (step 4, sub-step 2 of 3): shared Ktor client for
+        // GitHubUpdateRepositoryImpl (see its doc comment) - ignoreUnknownKeys is required since
+        // GitHub's real release response has many more fields than GitHubReleaseResponse declares.
+        single {
+            HttpClient(OkHttp) {
+                install(ContentNegotiation) {
+                    json(Json { ignoreUnknownKeys = true })
+                }
+            }
+        }
+        single<UpdateRepository> { GitHubUpdateRepositoryImpl(context = androidContext(), httpClient = get()) }
         single<AppUpdateInstaller> { AppUpdateInstallerImpl(context = androidContext()) }
         factory { CheckForUpdateUseCase(get()) }
         factory { DownloadAppUpdateUseCase(get()) }

@@ -1,76 +1,57 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ktlint)
+    id("kmp-compose-library")
 }
 
-android {
-    namespace = "org.neteinstein.couples.feature.home"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 32
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+kotlin {
+    android {
+        namespace = "org.neteinstein.couples.feature.home"
     }
 
-    buildTypes {
-        debug {
-            enableUnitTestCoverage = true
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":core:domain"))
+            implementation(project(":core:ui"))
+            implementation(libs.coroutines.core)
+            // koinViewModel() (HomeScreen.kt) + the module-definition-side viewModel { } builder
+            // (HomeModule.kt, via its transitive koin-core-viewmodel dependency) - both multiplatform.
+            implementation(libs.koin.compose.viewmodel)
+            // HomeViewModel extends androidx.lifecycle.ViewModel / uses viewModelScope - both
+            // resolvable from commonMain since Lifecycle 2.8.0 (see gradle/libs.versions.toml).
+            implementation(libs.lifecycle.viewmodel)
+            implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.lifecycle.runtime.compose)
+        }
+
+        androidMain.dependencies {
+            // Provides the Main dispatcher's runtime implementation for viewModelScope.launch - not
+            // needed at compile time by commonMain source, only for the Android target at runtime.
+            implementation(libs.coroutines.android)
+        }
+
+        androidHostTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.coroutines.test)
+            implementation(libs.koin.test)
+            implementation(libs.koin.test.junit4)
+            implementation(libs.robolectric)
+            implementation(libs.junit.ext)
+            implementation(project.dependencies.platform(libs.compose.bom))
+            implementation(libs.compose.ui.test.junit4)
+            implementation(libs.compose.ui.test.manifest)
         }
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
-
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            all {
-                it.testLogging {
-                    events("failed")
-                    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-                    showStackTraces = true
-                    showCauses = true
-                }
-            }
-        }
-    }
 }
 
-ktlint {
-    android.set(true)
-    ignoreFailures.set(false)
-    reporters {
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
+// `com.android.kotlin.multiplatform.library`'s android {} DSL has no testOptions.unitTests
+// equivalent the pre-KMP com.android.library modules used for this - configuring the
+// testAndroidHostTest Test task directly instead, to get full exception detail (message + cause
+// chain) in CI logs rather than Gradle's default one-line "<ExceptionType> at <location>".
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStackTraces = true
+        showCauses = true
     }
-}
-
-dependencies {
-    implementation(project(":core:domain"))
-    implementation(project(":core:ui"))
-    implementation(libs.koin.androidx.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.lifecycle.runtime.compose)
-    implementation(libs.coroutines.android)
-    implementation(libs.activity.compose)
-    implementation(libs.pager.indicator)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    testImplementation(libs.coroutines.test)
-    testImplementation(libs.koin.test)
-    testImplementation(libs.koin.test.junit4)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.junit.ext)
-    testImplementation(platform(libs.compose.bom))
-    testImplementation(libs.compose.ui.test.junit4)
-
-    debugImplementation(libs.compose.ui.test.manifest)
 }
