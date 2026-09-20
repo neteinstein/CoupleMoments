@@ -8,6 +8,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -66,14 +67,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -104,6 +103,11 @@ import kotlin.math.roundToInt
 private const val SWIPE_THRESHOLD = 100f
 private const val VERTICAL_SWIPE_THRESHOLD = 120f
 private const val MAX_VERTICAL_NUDGE = 140f
+
+// How far behind the outgoing card the next one starts before growing into place.
+private const val CARD_BEHIND_SCALE = 0.9f
+private const val CARD_TRANSITION_MS = 350
+private const val CARD_FADE_MS = 250
 private const val MAX_VISIBLE_DOTS = 7
 
 @Composable
@@ -493,21 +497,6 @@ private fun GameQuestionCard(
     onSwipeRight: () -> Unit,
     onSwipeUp: () -> Unit,
 ) {
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
-    // A bouncy damping ratio (instead of the critically-damped default) makes a released drag
-    // that didn't cross the swipe threshold settle back to center with a little overshoot wobble.
-    val cardRotation by animateFloatAsState(
-        targetValue = offsetX * 0.04f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "cardRotation",
-    )
-    val cardOffsetY by animateFloatAsState(
-        targetValue = offsetY,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "cardOffsetY",
-    )
-
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
@@ -515,49 +504,76 @@ private fun GameQuestionCard(
         AnimatedContent(
             targetState = uiState.currentQuestion,
             transitionSpec = {
-                // The new card scales in from behind (lower z-index) while the old one
-                // slides out on top, so the next card reads as revealed rather than
-                // arriving from off-screen.
+                // The next card grows into place from behind (lower z-index) while the outgoing one
+                // keeps travelling sideways in the direction it was flung, so it reads as a card
+                // being pulled off the top of a deck rather than two cards crossing over.
                 val exitTargetOffsetX = if (swipeDirection <= 0) { width: Int -> -width } else { width: Int -> width }
-                (scaleIn(initialScale = 0.85f, animationSpec = tween(400)) + fadeIn(tween(300)))
+                (scaleIn(initialScale = CARD_BEHIND_SCALE, animationSpec = tween(CARD_TRANSITION_MS)) + fadeIn(tween(CARD_FADE_MS)))
                     .togetherWith(
-                        slideOutHorizontally(tween(400), targetOffsetX = exitTargetOffsetX) + fadeOut(tween(300)),
+                        slideOutHorizontally(tween(CARD_TRANSITION_MS), targetOffsetX = exitTargetOffsetX) +
+                            fadeOut(tween(CARD_FADE_MS)),
                     ).apply { targetContentZIndex = -1f }
             },
             label = "gameQuestionCard",
         ) { question ->
-            // Flips the newly-entering card face-up (independent of the slide transition above),
-            // so each new question is revealed rather than just appearing already flat.
-            val flipRotationY = remember(question) { Animatable(90f) }
-            val density = LocalDensity.current
-            LaunchedEffect(question) {
-                flipRotationY.animateTo(0f, animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing))
-            }
+            // Drag state lives per card instance, so the card that was just flung keeps the offset it
+            // was released at and flies out from there instead of snapping back to center first.
+            var offsetX by remember { mutableFloatStateOf(0f) }
+            var offsetY by remember { mutableFloatStateOf(0f) }
+            var isDragging by remember { mutableStateOf(false) }
+            // The card follows the finger 1:1 while dragging; a release that didn't cross the swipe
+            // threshold settles back to center with a little overshoot wobble.
+            val settleSpec = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+            val cardOffsetX by animateFloatAsState(
+                targetValue = offsetX,
+                animationSpec = if (isDragging) snap() else settleSpec,
+                label = "cardOffsetX",
+            )
+            val cardOffsetY by animateFloatAsState(
+                targetValue = offsetY,
+                animationSpec = if (isDragging) snap() else settleSpec,
+                label = "cardOffsetY",
+            )
             Card(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
                         .onGloballyPositioned { onCardPositioned(it.boundsInRoot()) }
-                        .graphicsLayer {
-                            rotationY = flipRotationY.value
-                            cameraDistance = 12 * density.density
-                            alpha = 1f - (flipRotationY.value / 90f) * 0.4f
-                        }.offset { IntOffset(0, cardOffsetY.roundToInt()) }
-                        .rotate(cardRotation)
+                        .offset { IntOffset(cardOffsetX.roundToInt(), cardOffsetY.roundToInt()) }
                         .pointerInput(Unit) {
                             detectDragGestures(
+                                onDragStart = { isDragging = true },
                                 onDragEnd = {
+                                    isDragging = false
                                     val isVerticalSwipe = abs(offsetY) > abs(offsetX)
-                                    when {
-                                        isVerticalSwipe && offsetY < -VERTICAL_SWIPE_THRESHOLD -> onSwipeUp()
-                                        !isVerticalSwipe && offsetX < -SWIPE_THRESHOLD -> onSwipeLeft()
-                                        !isVerticalSwipe && offsetX > SWIPE_THRESHOLD -> onSwipeRight()
+                                    // Only a horizontal swipe on a deck with something else to show
+                                    // actually replaces this card; every other outcome leaves it on
+                                    // screen, so it has to travel back to center.
+                                    val deckAdvances = uiState.questions.size > 1
+                                    val flungAway =
+                                        when {
+                                            isVerticalSwipe && offsetY < -VERTICAL_SWIPE_THRESHOLD -> {
+                                                onSwipeUp()
+                                                false
+                                            }
+                                            !isVerticalSwipe && offsetX < -SWIPE_THRESHOLD -> {
+                                                onSwipeLeft()
+                                                deckAdvances
+                                            }
+                                            !isVerticalSwipe && offsetX > SWIPE_THRESHOLD -> {
+                                                onSwipeRight()
+                                                deckAdvances
+                                            }
+                                            else -> false
+                                        }
+                                    if (!flungAway) {
+                                        offsetX = 0f
+                                        offsetY = 0f
                                     }
-                                    offsetX = 0f
-                                    offsetY = 0f
                                 },
                                 onDragCancel = {
+                                    isDragging = false
                                     offsetX = 0f
                                     offsetY = 0f
                                 },
