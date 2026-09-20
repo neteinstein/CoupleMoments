@@ -5,7 +5,9 @@ Colors and layout are taken from the real app: core/ui/.../theme/Color.kt (Mater
 and feature/home + feature/settings Compose screens (structure/copy). The mark itself
 (icon-512.png) is a static designer-sourced asset, not generated here - this script only embeds
 it into the feature graphic's card. Regenerate icon-512.png (and the matching Android
-drawable-*/ic_launcher_foreground.png etc.) by hand when the mark changes.
+drawable-*/ic_launcher_foreground.png etc.) by hand when the mark changes. The two places the mark
+is drawn at an arbitrary size - the system splash icon and the in-app splash screen - hold a vector
+traced from that artwork instead; regenerate those two with trace_mark.py in this directory.
 """
 import base64
 import subprocess
