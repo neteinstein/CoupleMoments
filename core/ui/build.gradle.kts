@@ -2,7 +2,7 @@ plugins {
     id("kmp-compose-library")
 }
 
-// `ic_couple_moments_mark` (commonMain/composeResources/drawable-*) is consumed cross-module by
+// `ic_couple_moments_mark` (commonMain/composeResources/drawable) is consumed cross-module by
 // feature:splash's CoupleMomentsLogo.kt - Compose Multiplatform's generated `Res` class is
 // internal to its own module by default, so publicResClass is required for another module to
 // reference it at all.
