@@ -1,7 +1,7 @@
 <resources>
     <string name="tab_questions">Questions</string>
     <string name="tab_game">Game</string>
-    <string name="install_banner_message">Get Couple Moments on your phone</string>
+    <string name="install_banner_message">Get the Couple Moments app</string>
     <string name="install_banner_action">Install</string>
     <string name="install_banner_dismiss">Dismiss</string>
 </resources>

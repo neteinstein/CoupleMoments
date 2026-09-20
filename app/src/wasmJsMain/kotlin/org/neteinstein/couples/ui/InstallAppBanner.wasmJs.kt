@@ -34,12 +34,21 @@ private const val DISMISSED_KEY = "install_banner_dismissed"
 private const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=org.neteinstein.couples"
 
 /**
+ * Shown only to Android browsers, phones and tablets alike (see [isAndroidUserAgent]) - they're the
+ * only visitors who can act on it. On a desktop or an iPhone the banner would just be an ad for an
+ * app that can't be installed on the device reading it, taking up space above the first card.
+ *
  * Dismissal is persisted through `StorageSettings` - multiplatform-settings' `localStorage`
  * implementation, the same store every other web preference uses - so closing the banner sticks
  * across page reloads rather than reappearing on every visit.
  */
 @Composable
 actual fun PlatformInstallAppBanner() {
+    // The user agent can't change without a page load, so this is read once per composition tree
+    // rather than observed.
+    val isAndroid = remember { isAndroidUserAgent(browserUserAgent()) }
+    if (!isAndroid) return
+
     val settings = remember { StorageSettings() }
     var dismissed by remember { mutableStateOf(settings.getBoolean(DISMISSED_KEY, false)) }
     if (dismissed) return
@@ -94,3 +103,5 @@ actual fun PlatformInstallAppBanner() {
 // from. "noopener" is the standard hardening for a target=_blank link - it stops the opened page
 // reaching back through window.opener.
 private fun openUrl(url: String): Unit = js("window.open(url, '_blank', 'noopener')")
+
+private fun browserUserAgent(): String = js("navigator.userAgent")
