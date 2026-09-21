@@ -26,6 +26,9 @@ import androidx.compose.ui.input.key.type
  * with a keyboard case, or an iPad's Magic Keyboard.
  *
  * Grabs focus once on first composition so the keys work without the user clicking the deck first.
+ * Pass [refocusOn] (any value that changes when an overlay opens or closes) to grab it again then:
+ * clicking a control inside the overlay, or the one that just got removed, can otherwise leave
+ * focus nowhere and the keys silently dead.
  */
 @Composable
 fun Modifier.arrowKeyNavigation(
@@ -33,6 +36,7 @@ fun Modifier.arrowKeyNavigation(
     onNext: () -> Unit,
     onUp: (() -> Unit)? = null,
     onDown: (() -> Unit)? = null,
+    refocusOn: Any? = null,
 ): Modifier {
     val focusRequester = remember { FocusRequester() }
     // rememberUpdatedState so the handler below always calls the latest lambdas without being
@@ -42,7 +46,7 @@ fun Modifier.arrowKeyNavigation(
     val currentOnUp by rememberUpdatedState(onUp)
     val currentOnDown by rememberUpdatedState(onDown)
 
-    LaunchedEffect(focusRequester) {
+    LaunchedEffect(focusRequester, refocusOn) {
         // Throws if the node isn't attached/focusable yet (an overlay covering the deck, say) -
         // keyboard navigation is an enhancement, never a reason to crash the screen.
         runCatching { focusRequester.requestFocus() }

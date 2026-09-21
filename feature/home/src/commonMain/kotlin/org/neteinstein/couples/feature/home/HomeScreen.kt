@@ -185,7 +185,8 @@ fun HomeScreen(
         // The same four actions the card's swipe gestures trigger, also reachable from the arrow keys -
         // there is no swipe gesture in a desktop browser, so without this the web build's deck can
         // only be moved by dragging with a mouse. Suppressed while a full-screen card is open so
-        // the keys don't keep flipping the deck underneath it.
+        // the keys don't keep flipping the deck underneath it - there, Down closes the card instead
+        // (the keyboard twin of swiping it down, and the reverse of the Up that opened it).
         Box(
             modifier =
                 Modifier
@@ -210,8 +211,13 @@ fun HomeScreen(
                             }
                         },
                         onDown = {
-                            if (fullScreenQuestion == null) showHideConfirmDialog = true
+                            if (fullScreenQuestion == null) {
+                                showHideConfirmDialog = true
+                            } else {
+                                fullScreenQuestion = null
+                            }
                         },
+                        refocusOn = fullScreenQuestion != null,
                     ),
         ) {
             // Decorative background gradient
