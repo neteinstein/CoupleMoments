@@ -11,8 +11,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
@@ -41,13 +41,13 @@ class HomeScreenCategoryDropdownTest {
 
     private fun buildViewModel(): HomeViewModel {
         val getQuestionsUseCase: GetQuestionsUseCase = mockk()
-        val localeProvider: LocaleProvider = mockk()
+        val getContentLanguageUseCase: GetContentLanguageUseCase = mockk()
         val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase = mockk()
         val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
         val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
         val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase = mockk()
         val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
-        every { localeProvider.currentLanguageCode() } returns "en"
+        every { getContentLanguageUseCase() } returns "en"
         // No fake questions: with a current question on screen, its own CategoryPill would show
         // the same "<emoji> <name>" text as a dropdown item of the same category, and
         // onNodeWithText requires exactly one match across the whole semantics tree (the popup
@@ -61,7 +61,7 @@ class HomeScreenCategoryDropdownTest {
         coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         return HomeViewModel(
             getQuestionsUseCase,
-            localeProvider,
+            getContentLanguageUseCase,
             getUsedQuestionIdsUseCase,
             markQuestionUsedUseCase,
             hasAcknowledgedIntimacyGateUseCase,

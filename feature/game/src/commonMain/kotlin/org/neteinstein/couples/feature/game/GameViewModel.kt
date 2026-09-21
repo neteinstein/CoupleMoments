@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.neteinstein.couples.domain.repository.LocaleProvider
+import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 
 data class GameUiState(
     val currentQuestion: GameQuestion? = null,
@@ -15,7 +15,7 @@ data class GameUiState(
 )
 
 class GameViewModel(
-    private val localeProvider: LocaleProvider,
+    private val getContentLanguageUseCase: GetContentLanguageUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -28,19 +28,20 @@ class GameViewModel(
     }
 
     /**
-     * Re-checks the OS-applied app language and reshuffles from that language's question set if
-     * it changed since the last load - the user can change it via Settings > App Language without
-     * this ViewModel (scoped to the Home back stack entry) being recreated, so [init] alone isn't
-     * enough to pick that up. Mirrors [org.neteinstein.couples.feature.home.HomeViewModel.onScreenEntered].
+     * Re-checks the active app language ([GetContentLanguageUseCase]) and reshuffles from that
+     * language's question set if it changed since the last load - the user can change it via
+     * Settings > App Language without this ViewModel (scoped to the Home back stack entry) being
+     * recreated, so [init] alone isn't enough to pick that up. Mirrors
+     * [org.neteinstein.couples.feature.home.HomeViewModel.onScreenEntered].
      */
     fun onScreenEntered() {
-        val languageCode = localeProvider.currentLanguageCode()
+        val languageCode = getContentLanguageUseCase()
         if (languageCode != loadedLanguageCode) {
             loadQuestions(languageCode)
         }
     }
 
-    private fun loadQuestions(languageCode: String = localeProvider.currentLanguageCode()) {
+    private fun loadQuestions(languageCode: String = getContentLanguageUseCase()) {
         loadedLanguageCode = languageCode
         questions = GameQuestions.forLanguage(languageCode).shuffled()
         _uiState.update {

@@ -7,16 +7,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.neteinstein.couples.domain.repository.LocaleProvider
+import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 
 class GameViewModelTest {
-    private val localeProvider: LocaleProvider = mockk()
+    private val getContentLanguageUseCase: GetContentLanguageUseCase = mockk()
     private lateinit var viewModel: GameViewModel
 
     @Before
     fun setUp() {
-        every { localeProvider.currentLanguageCode() } returns "en"
-        viewModel = GameViewModel(localeProvider)
+        every { getContentLanguageUseCase() } returns "en"
+        viewModel = GameViewModel(getContentLanguageUseCase)
     }
 
     @Test
@@ -60,7 +60,7 @@ class GameViewModelTest {
 
     @Test
     fun `onScreenEntered reloads questions when the app language changed since the last load`() {
-        every { localeProvider.currentLanguageCode() } returns "pt"
+        every { getContentLanguageUseCase() } returns "pt"
 
         viewModel.onScreenEntered()
 
@@ -71,6 +71,6 @@ class GameViewModelTest {
     fun `onScreenEntered does nothing when the app language is unchanged`() {
         viewModel.onScreenEntered()
 
-        verify(exactly = 2) { localeProvider.currentLanguageCode() }
+        verify(exactly = 2) { getContentLanguageUseCase() }
     }
 }

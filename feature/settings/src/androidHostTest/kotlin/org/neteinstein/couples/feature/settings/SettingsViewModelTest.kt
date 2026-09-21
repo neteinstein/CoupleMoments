@@ -17,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.neteinstein.couples.domain.model.AppLanguage
 import org.neteinstein.couples.domain.model.AppUpdate
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.model.QuestionAudience
@@ -51,6 +52,7 @@ class SettingsViewModelTest {
     private val getQuestionsUseCase: GetQuestionsUseCase = mockk()
     private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase = mockk()
     private val getContentLanguageUseCase: GetContentLanguageUseCase = mockk()
+    private val languageOverrideState = MutableStateFlow<AppLanguage?>(null)
     private val getLanguageOverrideUseCase: GetLanguageOverrideUseCase = mockk()
     private val setLanguageOverrideUseCase: SetLanguageOverrideUseCase = mockk(relaxUnitFun = true)
 
@@ -65,7 +67,7 @@ class SettingsViewModelTest {
         coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         coEvery { setQuestionsForParentsEnabledUseCase(any()) } returns Unit
         every { getContentLanguageUseCase() } returns "en"
-        every { getLanguageOverrideUseCase() } returns null
+        every { getLanguageOverrideUseCase() } returns languageOverrideState
         coEvery { getQuestionsUseCase("en") } returns emptyList()
         coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
         viewModel =
