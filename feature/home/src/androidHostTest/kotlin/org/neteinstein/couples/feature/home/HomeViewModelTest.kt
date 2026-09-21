@@ -19,8 +19,8 @@ import org.junit.Test
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.QuestionCategory
-import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
@@ -31,7 +31,7 @@ import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 class HomeViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val getQuestionsUseCase: GetQuestionsUseCase = mockk()
-    private val localeProvider: LocaleProvider = mockk()
+    private val getContentLanguageUseCase: GetContentLanguageUseCase = mockk()
     private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase = mockk()
     private val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
     private val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
@@ -50,7 +50,7 @@ class HomeViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        every { localeProvider.currentLanguageCode() } returns "en"
+        every { getContentLanguageUseCase() } returns "en"
         coEvery { getQuestionsUseCase(any()) } returns fakeQuestions
         coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
         coEvery { markQuestionUsedUseCase(any()) } returns Unit
@@ -60,7 +60,7 @@ class HomeViewModelTest {
         viewModel =
             HomeViewModel(
                 getQuestionsUseCase,
-                localeProvider,
+                getContentLanguageUseCase,
                 getUsedQuestionIdsUseCase,
                 markQuestionUsedUseCase,
                 hasAcknowledgedIntimacyGateUseCase,
@@ -151,16 +151,16 @@ class HomeViewModelTest {
     fun `init loads questions in the app's currently applied language, not a hardcoded default`() =
         runTest {
             // Regression test: the ViewModel used to always default to "en" on startup regardless of
-            // the language configured for the app (see LocaleProvider), silently ignoring whatever the
+            // the language configured for the app (see GetContentLanguageUseCase), silently ignoring whatever the
             // user picked via Settings > App Language.
-            every { localeProvider.currentLanguageCode() } returns "pt"
+            every { getContentLanguageUseCase() } returns "pt"
             val ptQuestions = listOf(Question(id = 101, text = "Pergunta 1?", languageCode = "pt"))
             coEvery { getQuestionsUseCase("pt") } returns ptQuestions
 
             val ptViewModel =
                 HomeViewModel(
                     getQuestionsUseCase,
-                    localeProvider,
+                    getContentLanguageUseCase,
                     getUsedQuestionIdsUseCase,
                     markQuestionUsedUseCase,
                     hasAcknowledgedIntimacyGateUseCase,
@@ -185,7 +185,7 @@ class HomeViewModelTest {
             coEvery { getQuestionsUseCase("es") } returns esQuestions
 
             // Simulates the user changing the per-app language in system Settings and returning to Home.
-            every { localeProvider.currentLanguageCode() } returns "es"
+            every { getContentLanguageUseCase() } returns "es"
             viewModel.onScreenEntered()
             testDispatcher.scheduler.advanceUntilIdle()
 

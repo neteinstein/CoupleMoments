@@ -16,7 +16,7 @@ class GetContentLanguageUseCase(
     private val languagePreferenceRepository: LanguagePreferenceRepository,
 ) {
     operator fun invoke(): String =
-        languagePreferenceRepository.getLanguageOverride()?.code
+        languagePreferenceRepository.languageOverride.value?.code
             ?: AppLanguage.fromCode(localeProvider.currentLanguageCode())?.code
             ?: AppLanguage.Default.code
 }

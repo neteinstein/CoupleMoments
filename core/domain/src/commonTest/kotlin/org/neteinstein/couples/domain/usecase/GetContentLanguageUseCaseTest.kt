@@ -1,5 +1,7 @@
 package org.neteinstein.couples.domain.usecase
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.neteinstein.couples.domain.model.AppLanguage
 import org.neteinstein.couples.domain.repository.LanguagePreferenceRepository
 import org.neteinstein.couples.domain.repository.LocaleProvider
@@ -13,12 +15,14 @@ private class FakeLocaleProvider(
 }
 
 private class FakeLanguagePreferenceRepository(
-    private var override: AppLanguage? = null,
+    override: AppLanguage? = null,
 ) : LanguagePreferenceRepository {
-    override fun getLanguageOverride(): AppLanguage? = override
+    private val state = MutableStateFlow(override)
+
+    override val languageOverride: StateFlow<AppLanguage?> = state
 
     override suspend fun setLanguageOverride(language: AppLanguage?) {
-        override = language
+        state.value = language
     }
 }
 

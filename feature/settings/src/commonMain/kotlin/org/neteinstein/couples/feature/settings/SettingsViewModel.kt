@@ -54,7 +54,7 @@ class SettingsViewModel(
             SettingsUiState(
                 updatesEnabled = updatesEnabled,
                 themeMode = getThemeModeUseCase().value,
-                languageOverride = getLanguageOverrideUseCase(),
+                languageOverride = getLanguageOverrideUseCase().value,
             ),
         )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -63,18 +63,22 @@ class SettingsViewModel(
         viewModelScope.launch {
             getThemeModeUseCase().collect { mode -> _uiState.update { it.copy(themeMode = mode) } }
         }
+        viewModelScope.launch {
+            getLanguageOverrideUseCase().collect { language -> _uiState.update { it.copy(languageOverride = language) } }
+        }
     }
 
     /**
      * Persists the chosen in-app language override (`null` = follow the OS/browser language) and
-     * refreshes the card counts, which are language-specific. Only ever called from iOS/Web - on
+     * refreshes the card counts, which are language-specific. The picker's own selection comes
+     * back through [getLanguageOverrideUseCase]'s flow, collected in [init], which is also what
+     * re-localizes the rest of the app. Only ever called from iOS/Web - on
      * Android the language row deep-links into the OS's own per-app language settings instead (see
      * `rememberOpenLanguageSettingsAction`).
      */
     fun onLanguageSelected(language: AppLanguage?) {
         viewModelScope.launch {
             setLanguageOverrideUseCase(language)
-            _uiState.update { it.copy(languageOverride = language) }
             refreshCardCounts(_uiState.value.questionsForParentsEnabled)
         }
     }

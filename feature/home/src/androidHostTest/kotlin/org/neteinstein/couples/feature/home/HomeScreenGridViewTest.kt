@@ -12,8 +12,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.neteinstein.couples.domain.model.Question
-import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
@@ -43,13 +43,13 @@ class HomeScreenGridViewTest {
 
     private fun buildViewModel(): HomeViewModel {
         val getQuestionsUseCase: GetQuestionsUseCase = mockk()
-        val localeProvider: LocaleProvider = mockk()
+        val getContentLanguageUseCase: GetContentLanguageUseCase = mockk()
         val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase = mockk()
         val markQuestionUsedUseCase: MarkQuestionUsedUseCase = mockk()
         val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
         val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase = mockk()
         val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
-        every { localeProvider.currentLanguageCode() } returns "en"
+        every { getContentLanguageUseCase() } returns "en"
         coEvery { getQuestionsUseCase(any()) } returns fakeQuestions
         coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
         coEvery { markQuestionUsedUseCase(any()) } returns Unit
@@ -58,7 +58,7 @@ class HomeScreenGridViewTest {
         coEvery { isQuestionsForParentsEnabledUseCase() } returns false
         return HomeViewModel(
             getQuestionsUseCase,
-            localeProvider,
+            getContentLanguageUseCase,
             getUsedQuestionIdsUseCase,
             markQuestionUsedUseCase,
             hasAcknowledgedIntimacyGateUseCase,

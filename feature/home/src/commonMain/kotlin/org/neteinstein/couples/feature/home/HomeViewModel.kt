@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.QuestionCategory
-import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
@@ -31,7 +31,7 @@ data class HomeUiState(
 
 class HomeViewModel(
     private val getQuestionsUseCase: GetQuestionsUseCase,
-    private val localeProvider: LocaleProvider,
+    private val getContentLanguageUseCase: GetContentLanguageUseCase,
     private val getUsedQuestionIdsUseCase: GetUsedQuestionIdsUseCase,
     private val markQuestionUsedUseCase: MarkQuestionUsedUseCase,
     private val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase,
@@ -52,15 +52,16 @@ class HomeViewModel(
     }
 
     /**
-     * Re-checks the OS-applied app language and reloads questions if it changed since the last
-     * load - the user can change it via Settings > App Language without this ViewModel (scoped to
-     * the Home back stack entry) being recreated, so [init] alone isn't enough to pick that up.
+     * Re-checks the active app language ([GetContentLanguageUseCase] - the in-app override on
+     * iOS/Web, the OS-applied locale on Android) and reloads questions if it changed since the
+     * last load - the user can change it via Settings > App Language without this ViewModel
+     * (scoped to the Home back stack entry) being recreated, so [init] alone isn't enough.
      * Otherwise, just refreshes which cards are hidden and the "Couple Questions For Parents"
      * toggle, so returning from Settings after a "Reset Cards" or a toggle flip is reflected
      * without needing a full reload.
      */
     fun onScreenEntered() {
-        val languageCode = localeProvider.currentLanguageCode()
+        val languageCode = getContentLanguageUseCase()
         if (languageCode != loadedLanguageCode) {
             loadQuestions(languageCode)
         } else {
@@ -76,7 +77,7 @@ class HomeViewModel(
         }
     }
 
-    fun loadQuestions(languageCode: String = localeProvider.currentLanguageCode()) {
+    fun loadQuestions(languageCode: String = getContentLanguageUseCase()) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             loadedLanguageCode = languageCode
