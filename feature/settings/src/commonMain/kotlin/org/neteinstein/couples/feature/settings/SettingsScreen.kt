@@ -51,6 +51,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -82,6 +83,8 @@ import org.neteinstein.couples.domain.model.ThemeMode
 import org.neteinstein.couples.feature.settings.platform.rememberCurrentVersionName
 import org.neteinstein.couples.feature.settings.platform.rememberOpenLanguageSettingsAction
 import org.neteinstein.couples.feature.settings.resources.Res
+import org.neteinstein.couples.feature.settings.resources.analytics_subtitle
+import org.neteinstein.couples.feature.settings.resources.analytics_title
 import org.neteinstein.couples.feature.settings.resources.app_name
 import org.neteinstein.couples.feature.settings.resources.cancel_button
 import org.neteinstein.couples.feature.settings.resources.cd_back
@@ -105,6 +108,7 @@ import org.neteinstein.couples.feature.settings.resources.resetting_cards
 import org.neteinstein.couples.feature.settings.resources.section_about
 import org.neteinstein.couples.feature.settings.resources.section_app_preferences
 import org.neteinstein.couples.feature.settings.resources.section_card_management
+import org.neteinstein.couples.feature.settings.resources.section_privacy
 import org.neteinstein.couples.feature.settings.resources.section_updates
 import org.neteinstein.couples.feature.settings.resources.settings_about_description
 import org.neteinstein.couples.feature.settings.resources.settings_app_title_format
@@ -279,6 +283,30 @@ fun SettingsScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = stringResource(Res.string.section_privacy),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                        ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    AnalyticsToggle(
+                        enabled = uiState.analyticsEnabled,
+                        onToggled = viewModel::onAnalyticsEnabledToggled,
+                    )
+                }
+
                 if (uiState.updatesEnabled) {
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -443,6 +471,41 @@ private fun QuestionsForParentsSelector(
                 }
             }
         }
+    }
+}
+
+/**
+ * Opt-out for anonymous usage analytics (see [SettingsViewModel.onAnalyticsEnabledToggled]).
+ *
+ * A plain switch rather than the segmented buttons the two selectors above use: those pick between
+ * two equally normal content choices, whereas this is on-by-default behaviour the user turns off -
+ * the affordance every platform uses for that is a switch. Shown on every platform, including iOS
+ * where nothing is reported today, so the disclosure and the control stay consistent with what
+ * PRIVACY.md says the app does.
+ */
+@Composable
+private fun AnalyticsToggle(
+    enabled: Boolean,
+    onToggled: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+            Text(
+                text = stringResource(Res.string.analytics_title),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(Res.string.analytics_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = enabled, onCheckedChange = onToggled)
     }
 }
 

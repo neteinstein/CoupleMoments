@@ -77,8 +77,10 @@ Or open the project directly in Android Studio and run it from there.
 
 ## Privacy
 
-Couple Moments collects no data and has no backend — everything stays on your device. See
-[`PRIVACY.md`](PRIVACY.md) for the full policy.
+Couple Moments has no backend and no account — your cards, language and preferences never leave
+your device. The Android and Web builds do report anonymous usage analytics (which screens and
+features get used, never your questions or answers), which you can turn off in
+Settings → Privacy. See [`PRIVACY.md`](PRIVACY.md) for the full policy.
 
 ## Architecture
 

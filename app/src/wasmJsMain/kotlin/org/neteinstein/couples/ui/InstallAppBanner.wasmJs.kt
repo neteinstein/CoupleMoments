@@ -25,6 +25,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.russhwolf.settings.StorageSettings
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import org.neteinstein.couples.domain.analytics.AnalyticsEvent
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.resources.Res
 import org.neteinstein.couples.resources.install_banner_action
 import org.neteinstein.couples.resources.install_banner_dismiss
@@ -49,6 +52,7 @@ actual fun PlatformInstallAppBanner() {
     val isAndroid = remember { isAndroidUserAgent(browserUserAgent()) }
     if (!isAndroid) return
 
+    val analyticsTracker: AnalyticsTracker = koinInject()
     val settings = remember { StorageSettings() }
     var dismissed by remember { mutableStateOf(settings.getBoolean(DISMISSED_KEY, false)) }
     if (dismissed) return
@@ -76,7 +80,14 @@ actual fun PlatformInstallAppBanner() {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = { openUrl(PLAY_STORE_URL) }) {
+        TextButton(
+            onClick = {
+                // The one web-only conversion metric: how many Android browser visitors this
+                // banner actually sends to the Play Store listing.
+                analyticsTracker.logEvent(AnalyticsEvent.InstallBannerClicked)
+                openUrl(PLAY_STORE_URL)
+            },
+        ) {
             Text(
                 text = stringResource(Res.string.install_banner_action),
                 style = MaterialTheme.typography.labelLarge,

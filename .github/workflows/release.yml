@@ -84,6 +84,25 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testAndroidHostTest :androidApp:testGithubDebugUnitTest :androidApp:testPlaystoreDebugUnitTest --no-daemon --stacktrace
 
+      # Firebase Analytics is configured from androidApp/google-services.json, which is gitignored
+      # (it carries this Firebase project's Android API keys). androidApp applies the
+      # com.google.gms.google-services plugin only when the file is present, so a missing secret
+      # produces a working release that simply reports nothing - it binds NoOpAnalyticsTracker
+      # instead of Firebase. Warned about rather than fatal, deliberately: a clone or fork without
+      # Firebase access must still be able to cut a release, and shipping without analytics is a
+      # degraded release, not a broken one. If you expect analytics in production and see this
+      # warning, the secret is missing - see AGENTS.md > Analytics.
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::warning::GOOGLE_SERVICES_JSON_BASE64 is not set - this release will ship WITHOUT Firebase Analytics."
+            exit 0
+          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > androidApp/google-services.json
+          echo "::notice::Wrote androidApp/google-services.json from GOOGLE_SERVICES_JSON_BASE64."
+
       - name: Decode signing keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}

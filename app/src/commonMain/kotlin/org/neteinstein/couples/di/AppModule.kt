@@ -22,7 +22,7 @@ fun appModule(updatesEnabled: Boolean): Module =
     module {
         single(named("updatesEnabled")) { updatesEnabled }
 
-        viewModel { MainViewModel(get(), get()) }
+        viewModel { MainViewModel(get(), get(), get()) }
 
         includes(dataModule, homeModule, gameModule, settingsModule)
     }

@@ -341,7 +341,10 @@ fun HomeScreen(
 
             // View toggle (bottom right corner), hidden while a card is shown full screen.
             IconButton(
-                onClick = { isGridView = !isGridView },
+                onClick = {
+                    isGridView = !isGridView
+                    viewModel.onViewModeChanged(isGridView)
+                },
                 modifier =
                     Modifier
                         .align(Alignment.BottomEnd)

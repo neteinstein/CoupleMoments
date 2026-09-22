@@ -6,5 +6,5 @@ import org.neteinstein.couples.feature.game.GameViewModel
 
 val gameModule =
     module {
-        viewModel { GameViewModel(get()) }
+        viewModel { GameViewModel(get(), get()) }
     }

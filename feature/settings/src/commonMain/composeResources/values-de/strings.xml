@@ -37,4 +37,7 @@
     <string name="enable_installing_updates">Installation von Updates erlauben</string>
     <string name="settings_loopgain_footer">Couple Moments ist Teil der %1$s-Toolfamilie von %2$s</string>
     <string name="settings_language_automatic">Automatisch</string>
+    <string name="section_privacy">Datenschutz</string>
+    <string name="analytics_title">Anonyme Nutzungsdaten teilen</string>
+    <string name="analytics_subtitle">Hilft, die App zu verbessern. Niemals deine Fragen oder Antworten – nur welche Bildschirme und Funktionen genutzt werden.</string>
 </resources>

@@ -1,6 +1,8 @@
 package org.neteinstein.couples.data.di
 
 import android.content.Context
+import com.google.firebase.FirebaseApp
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.HttpClient
@@ -11,6 +13,8 @@ import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import org.neteinstein.couples.data.analytics.FirebaseAnalyticsTracker
+import org.neteinstein.couples.data.analytics.NoOpAnalyticsTracker
 import org.neteinstein.couples.data.installer.AppUpdateInstallerImpl
 import org.neteinstein.couples.data.local.CardDao
 import org.neteinstein.couples.data.local.CardDaoImpl
@@ -20,6 +24,7 @@ import org.neteinstein.couples.data.local.SeedMetadataDao
 import org.neteinstein.couples.data.local.SeedMetadataDaoImpl
 import org.neteinstein.couples.data.locale.LocaleProviderImpl
 import org.neteinstein.couples.data.repository.GitHubUpdateRepositoryImpl
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.repository.UpdateRepository
@@ -54,6 +59,25 @@ actual val platformDataModule: Module =
         // with here, since the language was always an OS-level per-app setting on this platform.
         single<Settings>(languageSettings) {
             SharedPreferencesSettings(androidContext().getSharedPreferences("app_language", Context.MODE_PRIVATE))
+        }
+        single<Settings>(analyticsSettings) {
+            SharedPreferencesSettings(androidContext().getSharedPreferences("analytics", Context.MODE_PRIVATE))
+        }
+
+        // Firebase initializes itself from the string resources the com.google.gms.google-services
+        // plugin generates out of androidApp/google-services.json - and androidApp only applies
+        // that plugin when the file is actually there (it is gitignored, and CI writes it from the
+        // GOOGLE_SERVICES_JSON_BASE64 secret). So on a contributor's machine without it, or on a
+        // fork building without the secret, there is no FirebaseApp at all and
+        // FirebaseAnalytics.getInstance() would throw. Checking here, once, is what lets every
+        // call site treat the tracker as always available.
+        single<AnalyticsTracker> {
+            val context = androidContext()
+            if (FirebaseApp.getApps(context).isEmpty()) {
+                NoOpAnalyticsTracker(FirebaseAnalyticsTracker.PLATFORM_ANDROID)
+            } else {
+                FirebaseAnalyticsTracker(FirebaseAnalytics.getInstance(context))
+            }
         }
 
         // ignoreUnknownKeys is required since GitHub's real release response has many more fields

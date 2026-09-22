@@ -2,12 +2,16 @@ package org.neteinstein.couples.data.di
 
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import org.neteinstein.couples.data.repository.AnalyticsConsentRepositoryImpl
+import org.neteinstein.couples.data.repository.AnalyticsUserIdRepositoryImpl
 import org.neteinstein.couples.data.repository.IntimacyGateRepositoryImpl
 import org.neteinstein.couples.data.repository.LanguagePreferenceRepositoryImpl
 import org.neteinstein.couples.data.repository.QuestionRepositoryImpl
 import org.neteinstein.couples.data.repository.QuestionsForParentsRepositoryImpl
 import org.neteinstein.couples.data.repository.ThemeModeRepositoryImpl
 import org.neteinstein.couples.data.repository.UsedQuestionsRepositoryImpl
+import org.neteinstein.couples.domain.repository.AnalyticsConsentRepository
+import org.neteinstein.couples.domain.repository.AnalyticsUserIdRepository
 import org.neteinstein.couples.domain.repository.IntimacyGateRepository
 import org.neteinstein.couples.domain.repository.LanguagePreferenceRepository
 import org.neteinstein.couples.domain.repository.QuestionRepository
@@ -25,9 +29,12 @@ import org.neteinstein.couples.domain.usecase.GetRandomQuestionUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
 import org.neteinstein.couples.domain.usecase.HasAcknowledgedIntimacyGateUseCase
+import org.neteinstein.couples.domain.usecase.InitializeAnalyticsUseCase
+import org.neteinstein.couples.domain.usecase.IsAnalyticsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.MarkQuestionUsedUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetAnalyticsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetLanguageOverrideUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
@@ -39,8 +46,9 @@ import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
  *
  * What each platform actually binds those interfaces to - the SQLDelight driver (or, on Web, a
  * `Settings`-backed DAO), the `Settings` implementation, the `LocaleProvider`, the Ktor engine,
- * and whether self-update exists at all - lives in [platformDataModule]. See each target's actual
- * for the details and the reasoning.
+ * the `AnalyticsTracker` (Firebase on Android/Web, a no-op on iOS), and whether self-update
+ * exists at all - lives in [platformDataModule]. See each target's actual for the details and
+ * the reasoning.
  */
 val dataModule =
     module {
@@ -50,6 +58,8 @@ val dataModule =
         single<ThemeModeRepository> { ThemeModeRepositoryImpl(get(themeModeSettings)) }
         single<QuestionsForParentsRepository> { QuestionsForParentsRepositoryImpl(get(questionsForParentsSettings)) }
         single<LanguagePreferenceRepository> { LanguagePreferenceRepositoryImpl(get(languageSettings)) }
+        single<AnalyticsConsentRepository> { AnalyticsConsentRepositoryImpl(get(analyticsSettings)) }
+        single<AnalyticsUserIdRepository> { AnalyticsUserIdRepositoryImpl(get(analyticsSettings)) }
         factory { GetRandomQuestionUseCase(get()) }
         factory { GetQuestionsUseCase(get()) }
         factory { GetUsedQuestionIdsUseCase(get()) }
@@ -67,13 +77,16 @@ val dataModule =
         factory { CheckForUpdateUseCase(get()) }
         factory { DownloadAppUpdateUseCase(get()) }
         factory { ClearDownloadedUpdateUseCase(get()) }
+        factory { InitializeAnalyticsUseCase(get(), get(), get(), get(), get(), get()) }
+        factory { IsAnalyticsEnabledUseCase(get()) }
+        factory { SetAnalyticsEnabledUseCase(get(), get(), get()) }
 
         includes(platformDataModule)
     }
 
 /**
  * Platform bindings for everything [dataModule] resolves but cannot construct itself: `CardDao`/
- * `SeedMetadataDao`, the four named `Settings` stores, `LocaleProvider`, `UpdateRepository` and
- * `AppUpdateInstaller`.
+ * `SeedMetadataDao`, the five named `Settings` stores, `LocaleProvider`, `AnalyticsTracker`,
+ * `UpdateRepository` and `AppUpdateInstaller`.
  */
 expect val platformDataModule: Module

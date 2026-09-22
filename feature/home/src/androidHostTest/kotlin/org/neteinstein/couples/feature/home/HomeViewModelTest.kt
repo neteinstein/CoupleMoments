@@ -37,6 +37,7 @@ class HomeViewModelTest {
     private val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase = mockk()
     private val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase = mockk()
     private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase = mockk()
+    private val analyticsTracker = RecordingAnalyticsTracker()
 
     private lateinit var viewModel: HomeViewModel
 
@@ -66,6 +67,7 @@ class HomeViewModelTest {
                 hasAcknowledgedIntimacyGateUseCase,
                 acknowledgeIntimacyGateUseCase,
                 isQuestionsForParentsEnabledUseCase,
+                analyticsTracker,
             )
     }
 
@@ -166,6 +168,7 @@ class HomeViewModelTest {
                     hasAcknowledgedIntimacyGateUseCase,
                     acknowledgeIntimacyGateUseCase,
                     isQuestionsForParentsEnabledUseCase,
+                    analyticsTracker,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -395,4 +398,80 @@ class HomeViewModelTest {
             val state = viewModel.uiState.value
             assertEquals(mixedAudienceQuestions.size, state.totalQuestions)
         }
+
+    @Test
+    fun `advancing the deck reports the newly visible card`() =
+        runTest {
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.nextQuestion()
+
+            val viewed = analyticsTracker.eventsNamed("question_viewed").last()
+            assertEquals("ice_breakers", viewed.params["category"])
+            assertEquals("both", viewed.params["audience"])
+            assertEquals("en", viewed.params["language"])
+        }
+
+    @Test
+    fun `hiding a card reports it before it leaves the deck`() =
+        runTest {
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.markCurrentQuestionAsUsed()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(1, analyticsTracker.eventsNamed("question_hidden").size)
+        }
+
+    @Test
+    fun `selecting a category reports the category it switched to`() {
+        // Deliberately not advanced first: onCategorySelected reports before any suspend work.
+        viewModel.onCategorySelected(QuestionCategory.Memories)
+
+        assertEquals(
+            "memories",
+            analyticsTracker.eventsNamed("category_selected").single().params["category"],
+        )
+    }
+
+    /**
+     * The 18+ notice is the one flow where the interesting number is the drop-off, so both
+     * outcomes have to be distinguishable in the console - not just the accepted one.
+     */
+    @Test
+    fun `dismissing the intimacy gate reports it as not accepted`() {
+        viewModel.onIntimacyGateDismissed()
+
+        assertEquals(
+            "false",
+            analyticsTracker.eventsNamed("intimacy_gate_resolved").single().params["accepted"],
+        )
+    }
+
+    /**
+     * applyFilter re-runs on every screen re-entry, hide and toggle change, and each run would
+     * otherwise re-report the card that was already on screen - see
+     * HomeViewModel.reportQuestionViewed. Driven with a single-card deck so applyFilter's shuffle
+     * can't legitimately surface a different card and make the assertion about something else.
+     */
+    @Test
+    fun `re-entering the screen does not re-report the card already showing`() =
+        runTest {
+            coEvery { getQuestionsUseCase("en") } returns fakeQuestions.take(1)
+            viewModel.loadQuestions("en")
+            testDispatcher.scheduler.advanceUntilIdle()
+            val viewedBefore = analyticsTracker.eventsNamed("question_viewed").size
+
+            viewModel.onScreenEntered()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(viewedBefore, analyticsTracker.eventsNamed("question_viewed").size)
+        }
+
+    @Test
+    fun `toggling the grid view reports the mode it switched to`() {
+        viewModel.onViewModeChanged(gridView = true)
+
+        assertEquals("grid", analyticsTracker.eventsNamed("view_mode_changed").single().params["mode"])
+    }
 }

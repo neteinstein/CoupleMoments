@@ -19,6 +19,39 @@
     </style>
 </head>
 <body>
+    <!-- Analytics buffer, installed synchronously so it exists before anything can report.
+         firebase-init.js below has to be type="module" (the Firebase Web SDK is ESM-only), which
+         makes it deferred - it runs after this document is parsed, whereas the wasm bundle can
+         finish loading and call into Kotlin at any point. Without this queue, whichever of the two
+         loses that race drops the first events of the session: the splash screen_view and the
+         user properties MainViewModel sets on startup.
+
+         firebase-init.js replaces this object with the real bridge and drains the queue into it,
+         or deletes it outright when analytics is unconfigured or the user has opted out - which is
+         also what makes core:data's FirebaseWebAnalyticsTracker no-op, since every one of its
+         calls is guarded on this global existing. The queue is capped so a page left open with no
+         bridge ever arriving can't grow it without bound. -->
+    <script>
+        (function () {
+            var queue = [];
+            var record = function (call) {
+                if (queue.length < 200) {
+                    queue.push(call);
+                }
+            };
+            globalThis.__coupleMomentsAnalytics = {
+                pendingCalls: queue,
+                logEvent: function (name, paramsJson) { record(['logEvent', name, paramsJson]); },
+                setUserId: function (id) { record(['setUserId', id]); },
+                setUserProperty: function (name, value) { record(['setUserProperty', name, value]); },
+                setCollectionEnabled: function (enabled) { record(['setCollectionEnabled', enabled]); },
+            };
+        })();
+    </script>
+    <!-- Generated at build time by :webApp:generateFirebaseWebInit from the FIREBASE_WEB_*
+         environment variables - never checked in, and written as a no-op stub when no Firebase
+         configuration is supplied. -->
+    <script type="module" src="firebase-init.js"></script>
     <script src="couplemoments.js"></script>
 </body>
 </html>

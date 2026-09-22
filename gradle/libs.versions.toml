@@ -27,6 +27,16 @@ kover = "0.9.9"
 pagerIndicator = "0.0.9"
 playPublisher = "4.1.1"
 
+# Firebase Analytics. `firebaseBom` pins every com.google.firebase artifact as a set (the
+# analytics artifact below is deliberately version-less), `googleServices` is the Gradle plugin
+# that turns androidApp/google-services.json into the string resources the SDK reads at startup.
+# `firebaseJsSdk` is the Web SDK, which is NOT a Gradle dependency at all - it is loaded from
+# gstatic.com as an ES module by the firebase-init.js that :webApp:generateFirebaseWebInit emits,
+# so it is pinned here purely so all three Firebase versions are reviewed in one place.
+firebaseBom = "34.19.0"
+googleServices = "4.5.0"
+firebaseJsSdk = "12.19.0"
+
 # --- KMP migration: not wired into any module yet (see the rollout steps in the migration plan) --
 sqldelight = "2.4.0"
 multiplatformSettings = "1.3.0"
@@ -101,6 +111,13 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 # support, so any test that has to run on every target uses hand-written fakes plus this instead.
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 
+# Firebase
+# Version-less by design: the BOM above resolves it, so bumping firebaseBom moves every Firebase
+# artifact together. Consumed by core:data's androidMain only - Web talks to the JS SDK through a
+# generated script, and iOS has no Firebase SDK in this build (see NoOpAnalyticsTracker).
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+
 # Pager Indicator
 pager-indicator = { group = "mx.platacard", name = "compose-pager-indicator", version.ref = "pagerIndicator" }
 
@@ -159,3 +176,6 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
 play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }
+# Applied conditionally by androidApp - only when androidApp/google-services.json exists, since
+# the plugin fails the build outright when it doesn't. See androidApp/build.gradle.kts.
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

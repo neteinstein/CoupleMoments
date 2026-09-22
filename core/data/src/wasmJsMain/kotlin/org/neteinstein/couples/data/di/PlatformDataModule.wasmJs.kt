@@ -4,6 +4,7 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.StorageSettings
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import org.neteinstein.couples.data.analytics.FirebaseWebAnalyticsTracker
 import org.neteinstein.couples.data.installer.NoOpAppUpdateInstaller
 import org.neteinstein.couples.data.local.CardDao
 import org.neteinstein.couples.data.local.SeedMetadataDao
@@ -11,6 +12,7 @@ import org.neteinstein.couples.data.local.WebCardDao
 import org.neteinstein.couples.data.local.WebSeedMetadataDao
 import org.neteinstein.couples.data.locale.LocaleProviderImpl
 import org.neteinstein.couples.data.repository.NoOpUpdateRepository
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.repository.UpdateRepository
@@ -21,9 +23,10 @@ import org.neteinstein.couples.domain.repository.UpdateRepository
  * no-op implementations respectively.
  *
  * `StorageSettings` is multiplatform-settings' `localStorage` implementation. Unlike Android and
- * iOS there is only one underlying store available, so the four qualifiers all resolve to it -
+ * iOS there is only one underlying store available, so the five qualifiers all resolve to it -
  * they stay distinct singletons purely so the common wiring reads the same on every platform. The
- * keys the four repositories use don't collide, so sharing the store is safe.
+ * keys the five repositories use don't collide, so sharing the store is safe - which is exactly
+ * why `AnalyticsConsentRepositoryImpl`'s key is "analytics_enabled" and not a bare "enabled".
  */
 actual val platformDataModule: Module =
     module {
@@ -35,6 +38,13 @@ actual val platformDataModule: Module =
         single<Settings>(intimacyGateSettings) { StorageSettings() }
         single<Settings>(questionsForParentsSettings) { StorageSettings() }
         single<Settings>(languageSettings) { StorageSettings() }
+        single<Settings>(analyticsSettings) { StorageSettings() }
+
+        // Unconditional, unlike Android's: the tracker talks to a `globalThis` bridge that simply
+        // isn't defined when firebase-init.js was generated without a configuration, so an
+        // unconfigured build is already a no-op at the call boundary - see
+        // FirebaseWebAnalyticsTracker.
+        single<AnalyticsTracker> { FirebaseWebAnalyticsTracker() }
 
         single<UpdateRepository> { NoOpUpdateRepository() }
         single<AppUpdateInstaller> { NoOpAppUpdateInstaller() }

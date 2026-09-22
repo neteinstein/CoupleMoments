@@ -46,7 +46,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # :webApp:generateFirebaseWebInit bakes these into the firebase-init.js that ships in the
+      # distribution - they are the browser-side Firebase config, kept out of the repo rather than
+      # hardcoded in index.html. With none set the task emits its no-op stub and the deployed site
+      # simply reports nothing; it never fails the deploy. Note that whatever is set here IS
+      # readable by anyone who opens devtools on the deployed page - that is inherent to a Firebase
+      # Web config, which is why access is controlled by API key restrictions in the Google Cloud
+      # console, not by keeping these values secret.
       - name: Build wasmJs production distribution
+        env:
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_WEB_AUTH_DOMAIN: ${{ secrets.FIREBASE_WEB_AUTH_DOMAIN }}
+          FIREBASE_WEB_PROJECT_ID: ${{ secrets.FIREBASE_WEB_PROJECT_ID }}
+          FIREBASE_WEB_STORAGE_BUCKET: ${{ secrets.FIREBASE_WEB_STORAGE_BUCKET }}
+          FIREBASE_WEB_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_WEB_MESSAGING_SENDER_ID }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+          FIREBASE_WEB_MEASUREMENT_ID: ${{ secrets.FIREBASE_WEB_MEASUREMENT_ID }}
         run: ./gradlew :webApp:wasmJsBrowserDistribution --no-daemon --stacktrace
 
       - name: Setup Pages

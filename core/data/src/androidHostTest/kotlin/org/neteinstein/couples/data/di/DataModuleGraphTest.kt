@@ -7,6 +7,9 @@ import org.junit.runner.RunWith
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
+import org.neteinstein.couples.domain.repository.AnalyticsConsentRepository
+import org.neteinstein.couples.domain.repository.AnalyticsUserIdRepository
 import org.neteinstein.couples.domain.repository.IntimacyGateRepository
 import org.neteinstein.couples.domain.repository.LanguagePreferenceRepository
 import org.neteinstein.couples.domain.repository.LocaleProvider
@@ -16,6 +19,7 @@ import org.neteinstein.couples.domain.repository.ThemeModeRepository
 import org.neteinstein.couples.domain.repository.UsedQuestionsRepository
 import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
+import org.neteinstein.couples.domain.usecase.InitializeAnalyticsUseCase
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.test.assertNotNull
@@ -49,11 +53,13 @@ class DataModuleGraphTest {
                 modules(dataModule)
             }.koin
 
-        // The four Settings-backed repositories - the ones the shipped bug broke.
+        // The five Settings-backed repositories - the four the shipped bug broke, plus analytics.
         assertNotNull(koin.get<ThemeModeRepository>())
         assertNotNull(koin.get<IntimacyGateRepository>())
         assertNotNull(koin.get<QuestionsForParentsRepository>())
         assertNotNull(koin.get<LanguagePreferenceRepository>())
+        assertNotNull(koin.get<AnalyticsConsentRepository>())
+        assertNotNull(koin.get<AnalyticsUserIdRepository>())
 
         // The rest of the graph, so a regression anywhere in it surfaces here too.
         assertNotNull(koin.get<QuestionRepository>())
@@ -61,5 +67,10 @@ class DataModuleGraphTest {
         assertNotNull(koin.get<LocaleProvider>())
         assertNotNull(koin.get<GetThemeModeUseCase>())
         assertNotNull(koin.get<GetContentLanguageUseCase>())
+        // Analytics resolves through the same graph: the tracker is a platformDataModule binding
+        // (NoOpAnalyticsTracker here, since Robolectric has no google-services.json behind it) and
+        // InitializeAnalyticsUseCase pulls five other definitions in behind it.
+        assertNotNull(koin.get<AnalyticsTracker>())
+        assertNotNull(koin.get<InitializeAnalyticsUseCase>())
     }
 }

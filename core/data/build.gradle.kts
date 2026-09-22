@@ -45,10 +45,25 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
+            // Firebase Analytics (FirebaseAnalyticsTracker). The BOM pins the artifact version;
+            // what actually configures the SDK at runtime is the string resources the
+            // com.google.gms.google-services plugin generates in androidApp from
+            // google-services.json - applied there, conditionally, since that file is gitignored.
+            // `project.dependencies.platform(...)`, not a bare `platform(...)`: the KMP source-set
+            // dependency DSL has no platform() of its own, unlike the Android/JVM `dependencies {}`
+            // block androidApp uses.
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.analytics)
         }
 
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
+        }
+
+        wasmJsMain.dependencies {
+            // FirebaseWebAnalyticsTracker serializes each event's parameter map to a JSON string
+            // for the JS bridge to JSON.parse - one crossing instead of one js() helper per arity.
+            implementation(libs.kotlinx.serialization.json)
         }
 
         commonTest.dependencies {

@@ -6,5 +6,5 @@ import org.neteinstein.couples.feature.home.HomeViewModel
 
 val homeModule =
     module {
-        viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get()) }
+        viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     }
