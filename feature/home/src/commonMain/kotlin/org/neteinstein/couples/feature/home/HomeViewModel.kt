@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.neteinstein.couples.domain.analytics.AnalyticsEvent
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.model.QuestionAudience
 import org.neteinstein.couples.domain.model.QuestionCategory
@@ -37,6 +39,7 @@ class HomeViewModel(
     private val hasAcknowledgedIntimacyGateUseCase: HasAcknowledgedIntimacyGateUseCase,
     private val acknowledgeIntimacyGateUseCase: AcknowledgeIntimacyGateUseCase,
     private val isQuestionsForParentsEnabledUseCase: IsQuestionsForParentsEnabledUseCase,
+    private val analyticsTracker: AnalyticsTracker,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -46,6 +49,13 @@ class HomeViewModel(
     private var usedQuestionIds: Set<Int> = emptySet()
     private var loadedLanguageCode: String? = null
     private var questionsForParentsEnabled: Boolean = false
+
+    /**
+     * Last card reported as viewed, so re-running [applyFilter] (which happens on every screen
+     * re-entry, hide and toggle change) doesn't report the same visible card again. Only an
+     * immediate repeat is suppressed - going next and then back to a card is a real second view.
+     */
+    private var lastReportedQuestionId: Int? = null
 
     init {
         loadQuestions()
@@ -98,12 +108,15 @@ class HomeViewModel(
         if (category == QuestionCategory.Intimacy) {
             viewModelScope.launch {
                 if (hasAcknowledgedIntimacyGateUseCase()) {
+                    analyticsTracker.logEvent(AnalyticsEvent.CategorySelected(category))
                     applyFilter(category)
                 } else {
+                    analyticsTracker.logEvent(AnalyticsEvent.IntimacyGateShown)
                     _uiState.update { it.copy(showIntimacyGate = true) }
                 }
             }
         } else {
+            analyticsTracker.logEvent(AnalyticsEvent.CategorySelected(category))
             applyFilter(category)
         }
     }
@@ -111,6 +124,8 @@ class HomeViewModel(
     /** User confirmed the 18+ notice: persist it so it never shows again, then switch category. */
     fun onIntimacyGateConfirmed() {
         viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.IntimacyGateResolved(accepted = true))
+            analyticsTracker.logEvent(AnalyticsEvent.CategorySelected(QuestionCategory.Intimacy))
             acknowledgeIntimacyGateUseCase()
             _uiState.update { it.copy(showIntimacyGate = false) }
             applyFilter(QuestionCategory.Intimacy)
@@ -119,12 +134,22 @@ class HomeViewModel(
 
     /** User backed out of the 18+ notice: close it without changing the selected category. */
     fun onIntimacyGateDismissed() {
+        analyticsTracker.logEvent(AnalyticsEvent.IntimacyGateResolved(accepted = false))
         _uiState.update { it.copy(showIntimacyGate = false) }
+    }
+
+    /**
+     * Home's deck/grid toggle lives in the screen as local UI state (it survives nothing and
+     * belongs to no use case), so the screen calls this purely to report the change.
+     */
+    fun onViewModeChanged(gridView: Boolean) {
+        analyticsTracker.logEvent(AnalyticsEvent.ViewModeChanged(gridView))
     }
 
     fun markCurrentQuestionAsUsed() {
         val question = _uiState.value.currentQuestion ?: return
         viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.QuestionHidden(question.category))
             markQuestionUsedUseCase(question.id)
             usedQuestionIds = usedQuestionIds + question.id
             applyFilter(_uiState.value.selectedCategory)
@@ -140,6 +165,7 @@ class HomeViewModel(
                         (questionsForParentsEnabled || it.audience != QuestionAudience.WithKids)
                 }.shuffled()
         val firstQuestion = questions.firstOrNull()
+        reportQuestionViewed(firstQuestion)
         _uiState.update {
             it.copy(
                 isLoading = false,
@@ -155,6 +181,7 @@ class HomeViewModel(
     fun nextQuestion() {
         if (questions.isEmpty()) return
         val nextIndex = (_uiState.value.currentIndex + 1) % questions.size
+        reportQuestionViewed(questions[nextIndex])
         _uiState.update {
             it.copy(
                 currentQuestion = questions[nextIndex],
@@ -166,11 +193,29 @@ class HomeViewModel(
     fun previousQuestion() {
         if (questions.isEmpty()) return
         val prevIndex = (_uiState.value.currentIndex - 1 + questions.size) % questions.size
+        reportQuestionViewed(questions[prevIndex])
         _uiState.update {
             it.copy(
                 currentQuestion = questions[prevIndex],
                 currentIndex = prevIndex,
             )
         }
+    }
+
+    /**
+     * Reports [question] as viewed unless it is the card already showing - see
+     * [lastReportedQuestionId]. The language comes from [loadedLanguageCode] rather than a fresh
+     * [getContentLanguageUseCase] call so it always matches the content actually on screen.
+     */
+    private fun reportQuestionViewed(question: Question?) {
+        if (question == null || question.id == lastReportedQuestionId) return
+        lastReportedQuestionId = question.id
+        analyticsTracker.logEvent(
+            AnalyticsEvent.QuestionViewed(
+                category = question.category,
+                audience = question.audience,
+                languageCode = loadedLanguageCode ?: question.languageCode,
+            ),
+        )
     }
 }

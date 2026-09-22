@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Both distribution flavors need these now that Firebase Analytics ships in both: the SDK
+         batches events on device and uploads them over the network, and checks connectivity
+         before trying. The "github" flavor separately declares INTERNET for the self-update flow
+         (see src/github/AndroidManifest.xml); the merger collapses the duplicate. Declared here
+         explicitly rather than being inherited from the firebase-analytics AAR's own manifest, so
+         that what this app can do on the network is readable in this file. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- The three advertising/attribution permissions firebase-analytics pulls in through
+         play-services-measurement: AD_ID lets Google Analytics tie events to the advertising id,
+         and the two ACCESS_ADSERVICES_* ones are the Privacy Sandbox equivalents. This app has no
+         ads and no cross-app attribution to do, and carrying them would force an "Advertising ID"
+         declaration in the Play Console's Data Safety form for a capability nothing uses - so all
+         three are removed from the merged manifest. Analytics itself is unaffected: an install is
+         identified by the Firebase app-instance id and by our own anonymous user id
+         (AnalyticsUserIdRepository), neither of which is an advertising identifier. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
+        tools:node="remove" />
 
     <application
         android:name=".CoupleMomentsApp"

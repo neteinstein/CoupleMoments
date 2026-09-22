@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.neteinstein.couples.domain.analytics.AnalyticsEvent
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 
 data class GameUiState(
@@ -16,12 +18,16 @@ data class GameUiState(
 
 class GameViewModel(
     private val getContentLanguageUseCase: GetContentLanguageUseCase,
+    private val analyticsTracker: AnalyticsTracker,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     private var questions: List<GameQuestion> = emptyList()
     private var loadedLanguageCode: String? = null
+
+    /** Suppresses an immediate repeat only - mirrors HomeViewModel's lastReportedQuestionId. */
+    private var lastReportedIndex: Int? = null
 
     init {
         loadQuestions()
@@ -44,6 +50,8 @@ class GameViewModel(
     private fun loadQuestions(languageCode: String = getContentLanguageUseCase()) {
         loadedLanguageCode = languageCode
         questions = GameQuestions.forLanguage(languageCode).shuffled()
+        lastReportedIndex = null
+        reportQuestionViewed(0)
         _uiState.update {
             it.copy(
                 currentQuestion = questions.firstOrNull(),
@@ -57,6 +65,7 @@ class GameViewModel(
     fun nextQuestion() {
         if (questions.isEmpty()) return
         val nextIndex = (_uiState.value.currentIndex + 1) % questions.size
+        reportQuestionViewed(nextIndex)
         _uiState.update {
             it.copy(
                 currentQuestion = questions[nextIndex],
@@ -68,11 +77,25 @@ class GameViewModel(
     fun previousQuestion() {
         if (questions.isEmpty()) return
         val prevIndex = (_uiState.value.currentIndex - 1 + questions.size) % questions.size
+        reportQuestionViewed(prevIndex)
         _uiState.update {
             it.copy(
                 currentQuestion = questions[prevIndex],
                 currentIndex = prevIndex,
             )
         }
+    }
+
+    /**
+     * Game cards are positional rather than identified (see [GameQuestions]), so the deck index is
+     * what identifies "the card on screen" here. Nothing about the card itself is reported - only
+     * that one was viewed, and in which language.
+     */
+    private fun reportQuestionViewed(index: Int) {
+        if (questions.isEmpty() || index == lastReportedIndex) return
+        lastReportedIndex = index
+        analyticsTracker.logEvent(
+            AnalyticsEvent.GameQuestionViewed(languageCode = loadedLanguageCode ?: getContentLanguageUseCase()),
+        )
     }
 }

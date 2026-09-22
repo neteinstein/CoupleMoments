@@ -7,16 +7,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
 
 class GameViewModelTest {
     private val getContentLanguageUseCase: GetContentLanguageUseCase = mockk()
+    private val analyticsTracker: AnalyticsTracker = mockk(relaxed = true)
     private lateinit var viewModel: GameViewModel
 
     @Before
     fun setUp() {
         every { getContentLanguageUseCase() } returns "en"
-        viewModel = GameViewModel(getContentLanguageUseCase)
+        viewModel = GameViewModel(getContentLanguageUseCase, analyticsTracker)
     }
 
     @Test
@@ -72,5 +74,16 @@ class GameViewModelTest {
         viewModel.onScreenEntered()
 
         verify(exactly = 2) { getContentLanguageUseCase() }
+    }
+
+    @Test
+    fun `advancing the deck reports the card in the language it is being read in`() {
+        viewModel.nextQuestion()
+
+        verify {
+            analyticsTracker.logEvent(
+                match { it.name == "game_question_viewed" && it.params["language"] == "en" },
+            )
+        }
     }
 }

@@ -116,6 +116,7 @@ Put code in `commonMain` by default. A platform source set is only for something
 | Blocking-IO dispatcher | `core:data` `ioDispatcher` | `Dispatchers.IO` | `Dispatchers.Default` (`IO` is internal on Native) | `Dispatchers.Default` (single event loop) |
 | OS locale | `core:data` `LocaleProviderImpl` | `Locale.getDefault()` | `NSLocale.currentLocale` | `navigator.language` |
 | Self-update | `core:data` `platformDataModule` | Ktor + GitHub Releases + `FileProvider` install | no-op | no-op |
+| Analytics | `core:data` `platformDataModule` | Firebase Analytics, or no-op with no `google-services.json` | no-op (no Firebase SDK) | Firebase JS SDK via the `firebase-init.js` bridge |
 | Dynamic color / status bar | `core:ui` `platformColorScheme` / `PlatformStatusBarEffect` | Material You (API 31+), `WindowCompat` | static scheme, no-op | static scheme, no-op |
 | System back gesture | `core:ui` `PlatformBackHandler` | `androidx.activity` `BackHandler` | no-op | no-op |
 | Language settings deep link / version name | `feature:settings` `SettingsPlatformActions` | `ACTION_LOCALE_SETTINGS`, `PackageManager` | none, `CFBundleShortVersionString` | none, placeholder |
@@ -139,7 +140,7 @@ Note: the set of supported languages is declared in three places that must be ke
 
 Each module that needs DI defines its own Koin module (`dataModule`, `homeModule`, …); `app/.../di/AppModule.kt` composes them into `appModule(updatesEnabled)`. `updatesEnabled` is a parameter rather than a `BuildConfig` read because `AppModule.kt` is commonMain code with no Android build variant behind it: `CoupleMomentsApp` passes its own `BuildConfig.UPDATES_ENABLED`, iOS/Web always pass `false`.
 
-`core:data` splits the same way: everything platform-agnostic lives in its `dataModule`, and each target's `platformDataModule` actual binds the storage drivers, `Settings` stores, `LocaleProvider` and self-update implementations (see the expect/actual table above).
+`core:data` splits the same way: everything platform-agnostic lives in its `dataModule`, and each target's `platformDataModule` actual binds the storage drivers, `Settings` stores, `LocaleProvider`, `AnalyticsTracker` and self-update implementations (see the expect/actual table above).
 
 Koin is started per platform: `CoupleMomentsApp` (the Android `Application`) calls `startKoin` directly so it can register `androidContext()`/`androidLogger()`; iOS and Web call the zero-argument `doInitKoin()` in `app/.../di/InitKoin.kt`. It is named `doInitKoin`, not `initKoin`, because Kotlin/Native's Objective-C exporter treats an `init`-prefixed top-level function as an initializer and renames it unpredictably.
 
@@ -178,6 +179,81 @@ Navigation comes from `org.jetbrains.androidx.navigation:navigation-compose` —
 - Coroutine-driven tests use `StandardTestDispatcher`, set via `Dispatchers.setMain()`/`resetMain()` in `@Before`/`@After`, and `runTest { }` with `testDispatcher.scheduler.advanceUntilIdle()` to drive pending coroutines.
 - Test method names are backtick-quoted sentences: `` fun `nextQuestion advances to next question`() ``.
 - Existing tests to use as templates: `core/domain/.../GetRandomQuestionUseCaseTest.kt` (use case + mocked repository) and `feature/home/.../HomeViewModelTest.kt` (ViewModel + mocked use case + coroutine dispatcher setup).
+
+## Analytics
+
+Firebase Analytics, on **Android and Web**. iOS is bound to a no-op (its Firebase SDK ships through
+CocoaPods/SPM, which the Gradle build can't add for it). The whole thing sits behind one
+`core:domain` interface, `AnalyticsTracker`, so nothing above `core:data` knows Firebase exists.
+
+```
+core:domain  analytics/AnalyticsTracker      # the interface every caller uses
+             analytics/AnalyticsEvent        # sealed: the closed set of events + their params
+             analytics/AnalyticsScreen       # sealed: the closed set of screen names
+             analytics/AnalyticsUserProperty # the user-scoped dimensions
+             repository/AnalyticsConsentRepository, AnalyticsUserIdRepository
+             usecase/InitializeAnalyticsUseCase, Is/SetAnalyticsEnabledUseCase
+core:data    analytics/FirebaseAnalyticsTracker      (androidMain)
+             analytics/FirebaseWebAnalyticsTracker   (wasmJsMain)
+             analytics/NoOpAnalyticsTracker          (commonMain; iOS, and Android with no config)
+app          analytics/TrackScreenView               # @Composable, one call per destination
+```
+
+**Adding an event or a screen** means adding a subclass to `AnalyticsEvent` / an entry to
+`AnalyticsScreen` — never a raw string at a call site. Firebase cannot merge two differently-named
+rows after the fact, and it silently drops anything past its limits (40 chars per event name, 100
+per parameter *value*, 25 params per event, 500 distinct event names per project);
+`AnalyticsEventTest` asserts all of that once, centrally. Parameter values come from the
+hand-written `analyticsValue()` mappings at the bottom of `AnalyticsEvent.kt` rather than from
+`Enum.name`/`simpleName`, because R8 full mode may rename either and a dimension whose values
+change between releases is worse than no dimension.
+
+**Never report content.** Question text, and anything a user typed, must not reach a parameter.
+Events carry categories, languages, booleans and bucketed counts only. The `user_id` is a random
+128-bit value minted per install (`AnalyticsUserIdRepositoryImpl`) — not an account, device or
+advertising identifier.
+
+**Consent** is a Settings → Privacy switch, default on, persisted through
+`AnalyticsConsentRepository` and applied with `AnalyticsTracker.setCollectionEnabled` so the SDK
+itself stops collecting rather than this app merely stopping its own calls. `PRIVACY.md` documents
+exactly what is reported and must be updated in step with any change here; so must the Play
+Console's Data Safety form.
+
+### Configuration (secrets)
+
+Nothing Firebase-related is committed. Both platforms degrade to reporting nothing when unconfigured,
+so a fork or a contributor without access builds and runs normally.
+
+| | Android | Web |
+|---|---|---|
+| Config | `androidApp/google-services.json` (gitignored) | `FIREBASE_WEB_*` env vars / `firebaseWeb.*` Gradle properties |
+| Applied by | `com.google.gms.google-services`, applied by `androidApp/build.gradle.kts` **only if the file exists** | `:webApp:generateFirebaseWebInit`, which writes `firebase-init.js` into the build dir |
+| Unconfigured | `PlatformDataModule.android.kt` sees no `FirebaseApp` → binds `NoOpAnalyticsTracker` | the task emits a stub that defines no bridge → every `js()` call is a no-op |
+| CI secret | `GOOGLE_SERVICES_JSON_BASE64` (base64 of the file) | `FIREBASE_WEB_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID`, `_MEASUREMENT_ID` |
+
+Locally: drop `google-services.json` into `androidApp/` (download it from the Firebase console for
+the `org.neteinstein.couples` Android app), and for the web put `firebaseWeb.apiKey=…` and friends
+in `~/.gradle/gradle.properties` or export the `FIREBASE_WEB_*` variables.
+
+A Firebase *Web* config is not a credential the way a service-account key is — it ships to the
+browser and is readable in devtools, and access is controlled by API key restrictions plus security
+rules, not by secrecy. It is kept in secrets so it stays out of version control, not because that
+makes the deployed values private.
+
+The Web build talks to the Firebase JS SDK through a `globalThis.__coupleMomentsAnalytics` bridge
+that `firebase-init.js` installs, loading the SDK from `gstatic.com` as an ES module. That avoids
+npm dependency management in the Kotlin/Wasm build for four function calls, and keeps the config
+out of the compiled wasm binary. `firebase-init.js` also reads the `analytics_enabled` localStorage
+key directly, because by the time wasm has loaded and could call `setCollectionEnabled(false)`,
+`getAnalytics()` would already have fired its automatic `page_view`. That key is why
+`AnalyticsConsentRepositoryImpl` uses `"analytics_enabled"` and not a bare `"enabled"` — on Web
+every named `Settings` qualifier resolves to the same `localStorage` store.
+
+The advertising/attribution permissions `firebase-analytics` declares (`AD_ID`,
+`ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`) are removed in
+`androidApp/src/main/AndroidManifest.xml` with `tools:node="remove"`: this app has no ads, and
+carrying them would force an Advertising ID declaration in Play Data Safety for a capability
+nothing uses.
 
 ## Agent orchestration
 

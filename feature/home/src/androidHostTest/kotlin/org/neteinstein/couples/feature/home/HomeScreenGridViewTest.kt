@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.model.Question
 import org.neteinstein.couples.domain.usecase.AcknowledgeIntimacyGateUseCase
 import org.neteinstein.couples.domain.usecase.GetContentLanguageUseCase
@@ -64,6 +65,9 @@ class HomeScreenGridViewTest {
             hasAcknowledgedIntimacyGateUseCase,
             acknowledgeIntimacyGateUseCase,
             isQuestionsForParentsEnabledUseCase,
+            // Relaxed: these are UI tests, and analytics is a side effect none of them assert on.
+            // HomeViewModelTest covers what actually gets reported.
+            mockk<AnalyticsTracker>(relaxed = true),
         )
     }
 

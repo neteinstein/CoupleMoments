@@ -22,6 +22,9 @@ val settingsModule =
                 get(),
                 get(),
                 get(),
+                get(),
+                get(),
+                get(),
                 get(named("updatesEnabled")),
             )
         }

@@ -3,6 +3,38 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.play.publisher)
+    // Applied below rather than here - see the `google-services.json` block. Declared with
+    // `apply false` so the plugin still lands on this project's classpath and can be applied
+    // conditionally.
+    alias(libs.plugins.google.services) apply false
+}
+
+// Firebase Analytics is configured entirely from `androidApp/google-services.json`: the
+// com.google.gms.google-services plugin reads it at build time and generates the string resources
+// (google_app_id, google_api_key, project_id, ...) that FirebaseInitProvider looks up at startup.
+//
+// That file is gitignored - it carries this Firebase project's Android API keys, and the project
+// hosts more than this app - so CI writes it from the GOOGLE_SERVICES_JSON_BASE64 repo secret
+// (see .github/workflows/pr.yml and release.yml) and a developer drops their own copy in here.
+//
+// The plugin is therefore applied only when the file is actually present: applying it without one
+// fails the build outright ("File google-services.json is missing"), which would make the repo
+// unbuildable for any contributor or fork without Firebase access. When it is absent, the app
+// still builds and runs - core:data's PlatformDataModule.android.kt sees no initialized
+// FirebaseApp and binds NoOpAnalyticsTracker instead, so nothing is reported and nothing crashes.
+val googleServicesConfig = file("google-services.json")
+if (googleServicesConfig.exists()) {
+    apply(
+        plugin =
+            libs.plugins.google.services
+                .get()
+                .pluginId,
+    )
+} else {
+    logger.lifecycle(
+        "androidApp: google-services.json not found - building without Firebase Analytics. " +
+            "See AGENTS.md > Analytics for how to add it.",
+    )
 }
 
 android {

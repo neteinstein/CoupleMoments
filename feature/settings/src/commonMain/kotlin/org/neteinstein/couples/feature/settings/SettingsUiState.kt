@@ -22,6 +22,12 @@ data class SettingsUiState(
      * see SettingsScreen's LanguagePicker.
      */
     val languageOverride: AppLanguage? = null,
+    /**
+     * Whether anonymous usage analytics are being reported - the Settings > Privacy toggle. Starts
+     * `true` to match [org.neteinstein.couples.domain.repository.AnalyticsConsentRepository]'s own
+     * default, and is replaced with the stored value in `SettingsViewModel.onScreenEntered`.
+     */
+    val analyticsEnabled: Boolean = true,
 )
 
 /** Drives the "Reset Cards" button and its status text on the Settings screen. */

@@ -41,4 +41,7 @@
     <string name="pedro_vicente_name" translatable="false">Pedro Vicente</string>
     <string name="settings_loopgain_footer">Couple Moments is part of the %1$s family tools by %2$s</string>
     <string name="settings_language_automatic">Automatic</string>
+    <string name="section_privacy">Privacy</string>
+    <string name="analytics_title">Share anonymous usage data</string>
+    <string name="analytics_subtitle">Helps improve the app. Never your questions or answers — only which screens and features get used.</string>
 </resources>

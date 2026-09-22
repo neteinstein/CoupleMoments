@@ -17,3 +17,10 @@ val themeModeSettings = named("themeModeSettings")
 val intimacyGateSettings = named("intimacyGateSettings")
 val questionsForParentsSettings = named("questionsForParentsSettings")
 val languageSettings = named("languageSettings")
+
+/**
+ * Holds both the analytics opt-in flag and the anonymous analytics user id. Separate from the
+ * four above so that clearing it (the only store whose contents are ever reported off-device)
+ * can never take a user's theme, language or card state with it.
+ */
+val analyticsSettings = named("analyticsSettings")

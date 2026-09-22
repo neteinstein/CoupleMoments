@@ -4,6 +4,7 @@ import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.Settings
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import org.neteinstein.couples.data.analytics.NoOpAnalyticsTracker
 import org.neteinstein.couples.data.installer.NoOpAppUpdateInstaller
 import org.neteinstein.couples.data.local.CardDao
 import org.neteinstein.couples.data.local.CardDaoImpl
@@ -13,6 +14,7 @@ import org.neteinstein.couples.data.local.SeedMetadataDao
 import org.neteinstein.couples.data.local.SeedMetadataDaoImpl
 import org.neteinstein.couples.data.locale.LocaleProviderImpl
 import org.neteinstein.couples.data.repository.NoOpUpdateRepository
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
 import org.neteinstein.couples.domain.repository.AppUpdateInstaller
 import org.neteinstein.couples.domain.repository.LocaleProvider
 import org.neteinstein.couples.domain.repository.UpdateRepository
@@ -42,7 +44,16 @@ actual val platformDataModule: Module =
             NSUserDefaultsSettings(NSUserDefaults(suiteName = "questions_for_parents"))
         }
         single<Settings>(languageSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "app_language")) }
+        single<Settings>(analyticsSettings) { NSUserDefaultsSettings(NSUserDefaults(suiteName = "analytics")) }
+
+        // No Firebase on iOS yet: its SDK is distributed through CocoaPods/SPM and would have to
+        // be added to the iosApp Xcode project plus a GoogleService-Info.plist, none of which the
+        // Gradle build can do. The interface is still bound so commonMain call sites compile and
+        // run unchanged here - see NoOpAnalyticsTracker.
+        single<AnalyticsTracker> { NoOpAnalyticsTracker(PLATFORM_IOS) }
 
         single<UpdateRepository> { NoOpUpdateRepository() }
         single<AppUpdateInstaller> { NoOpAppUpdateInstaller() }
     }
+
+private const val PLATFORM_IOS = "ios"

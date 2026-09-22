@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.neteinstein.couples.domain.analytics.AnalyticsEvent
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
+import org.neteinstein.couples.domain.analytics.AnalyticsUserProperty
 import org.neteinstein.couples.domain.model.AppLanguage
 import org.neteinstein.couples.domain.model.AppUpdate
 import org.neteinstein.couples.domain.model.QuestionAudience
@@ -20,8 +23,10 @@ import org.neteinstein.couples.domain.usecase.GetLanguageOverrideUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
+import org.neteinstein.couples.domain.usecase.IsAnalyticsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetAnalyticsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetLanguageOverrideUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
@@ -47,6 +52,9 @@ class SettingsViewModel(
     private val getContentLanguageUseCase: GetContentLanguageUseCase,
     private val getLanguageOverrideUseCase: GetLanguageOverrideUseCase,
     private val setLanguageOverrideUseCase: SetLanguageOverrideUseCase,
+    private val isAnalyticsEnabledUseCase: IsAnalyticsEnabledUseCase,
+    private val setAnalyticsEnabledUseCase: SetAnalyticsEnabledUseCase,
+    private val analyticsTracker: AnalyticsTracker,
     private val updatesEnabled: Boolean = true,
 ) : ViewModel() {
     private val _uiState =
@@ -78,14 +86,39 @@ class SettingsViewModel(
      */
     fun onLanguageSelected(language: AppLanguage?) {
         viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.LanguageChanged(language))
             setLanguageOverrideUseCase(language)
+            // Kept in step with the event above: the user property is what lets every *other*
+            // event be segmented by language, and it only changes here and on cold start.
+            analyticsTracker.setUserProperty(AnalyticsUserProperty.AppLanguage, getContentLanguageUseCase())
             refreshCardCounts(_uiState.value.questionsForParentsEnabled)
         }
     }
 
     /** Persists the chosen [mode]; [getThemeModeUseCase]'s shared flow reflects it back into [uiState]. */
     fun onThemeModeSelected(mode: ThemeMode) {
-        viewModelScope.launch { setThemeModeUseCase(mode) }
+        viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.ThemeChanged(mode))
+            analyticsTracker.setUserProperty(AnalyticsUserProperty.ThemeMode, mode.name.lowercase())
+            setThemeModeUseCase(mode)
+        }
+    }
+
+    /**
+     * Persists the analytics opt-in/out and applies it to the SDK immediately
+     * ([SetAnalyticsEnabledUseCase]).
+     *
+     * The event is logged *before* the use case runs so that an opt-out is still reported - it is
+     * the last thing this install sends, and knowing the opt-out rate is the whole point of having
+     * the toggle instrumented. After that call, nothing else reaches the SDK until the user opts
+     * back in.
+     */
+    fun onAnalyticsEnabledToggled(enabled: Boolean) {
+        viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.AnalyticsToggled(enabled))
+            setAnalyticsEnabledUseCase(enabled)
+            _uiState.update { it.copy(analyticsEnabled = enabled) }
+        }
     }
 
     fun onScreenEntered() {
@@ -94,14 +127,26 @@ class SettingsViewModel(
             _uiState.update { it.copy(questionsForParentsEnabled = enabled) }
             refreshCardCounts(enabled)
         }
+        viewModelScope.launch {
+            _uiState.update { it.copy(analyticsEnabled = isAnalyticsEnabledUseCase()) }
+        }
         if (!updatesEnabled) return
         viewModelScope.launch {
             when (val result = checkForUpdateUseCase().getOrNull()) {
-                is UpdateCheckResult.UpToDate ->
+                is UpdateCheckResult.UpToDate -> {
+                    analyticsTracker.logEvent(
+                        AnalyticsEvent.UpdateCheckCompleted(AnalyticsEvent.UPDATE_RESULT_UP_TO_DATE),
+                    )
                     _uiState.update { it.copy(updateStatus = UpdateStatus.UpToDate(result.currentVersionName)) }
-                is UpdateCheckResult.UpdateAvailable ->
+                }
+                is UpdateCheckResult.UpdateAvailable -> {
+                    analyticsTracker.logEvent(
+                        AnalyticsEvent.UpdateCheckCompleted(AnalyticsEvent.UPDATE_RESULT_AVAILABLE),
+                    )
                     _uiState.update { it.copy(updateStatus = UpdateStatus.UpdateAvailable(result.update)) }
-                null -> Unit
+                }
+                null ->
+                    analyticsTracker.logEvent(AnalyticsEvent.UpdateCheckCompleted(AnalyticsEvent.UPDATE_RESULT_FAILED))
             }
         }
     }
@@ -109,6 +154,8 @@ class SettingsViewModel(
     /** Persists the "Couple Questions For Parents" toggle and reflects it immediately in the UI. */
     fun onQuestionsForParentsToggled(enabled: Boolean) {
         viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.ParentsModeToggled(enabled))
+            analyticsTracker.setUserProperty(AnalyticsUserProperty.ParentsMode, enabled.toString())
             setQuestionsForParentsEnabledUseCase(enabled)
             _uiState.update { it.copy(questionsForParentsEnabled = enabled) }
             refreshCardCounts(enabled)
@@ -123,6 +170,7 @@ class SettingsViewModel(
      */
     fun onUpdateClicked() {
         val availableUpdate = (_uiState.value.updateStatus as? UpdateStatus.UpdateAvailable)?.update
+        analyticsTracker.logEvent(AnalyticsEvent.UpdateInstallStarted)
         if (availableUpdate != null) {
             viewModelScope.launch { downloadAndInstall(availableUpdate) }
             return
@@ -145,6 +193,7 @@ class SettingsViewModel(
     /** Makes every card hidden via swipe-down on Home visible again. */
     fun onResetCardsClicked() {
         viewModelScope.launch {
+            analyticsTracker.logEvent(AnalyticsEvent.CardsReset(_uiState.value.hiddenCardsCount))
             _uiState.update { it.copy(resetCardsStatus = ResetCardsStatus.Resetting) }
             resetUsedQuestionsUseCase()
             refreshCardCounts(_uiState.value.questionsForParentsEnabled)

@@ -17,6 +17,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.neteinstein.couples.domain.analytics.AnalyticsTracker
+import org.neteinstein.couples.domain.analytics.AnalyticsUserProperty
 import org.neteinstein.couples.domain.model.AppLanguage
 import org.neteinstein.couples.domain.model.AppUpdate
 import org.neteinstein.couples.domain.model.Question
@@ -31,8 +33,10 @@ import org.neteinstein.couples.domain.usecase.GetLanguageOverrideUseCase
 import org.neteinstein.couples.domain.usecase.GetQuestionsUseCase
 import org.neteinstein.couples.domain.usecase.GetThemeModeUseCase
 import org.neteinstein.couples.domain.usecase.GetUsedQuestionIdsUseCase
+import org.neteinstein.couples.domain.usecase.IsAnalyticsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.IsQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.ResetUsedQuestionsUseCase
+import org.neteinstein.couples.domain.usecase.SetAnalyticsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetLanguageOverrideUseCase
 import org.neteinstein.couples.domain.usecase.SetQuestionsForParentsEnabledUseCase
 import org.neteinstein.couples.domain.usecase.SetThemeModeUseCase
@@ -43,6 +47,9 @@ class SettingsViewModelTest {
     private val checkForUpdateUseCase: CheckForUpdateUseCase = mockk()
     private val downloadAppUpdateUseCase: DownloadAppUpdateUseCase = mockk()
     private val appUpdateInstaller: AppUpdateInstaller = mockk(relaxUnitFun = true)
+    private val isAnalyticsEnabledUseCase: IsAnalyticsEnabledUseCase = mockk()
+    private val setAnalyticsEnabledUseCase: SetAnalyticsEnabledUseCase = mockk(relaxed = true)
+    private val analyticsTracker: AnalyticsTracker = mockk(relaxed = true)
     private val resetUsedQuestionsUseCase: ResetUsedQuestionsUseCase = mockk()
     private val themeModeState = MutableStateFlow(ThemeMode.System)
     private val getThemeModeUseCase: GetThemeModeUseCase = mockk()
@@ -70,6 +77,7 @@ class SettingsViewModelTest {
         every { getLanguageOverrideUseCase() } returns languageOverrideState
         coEvery { getQuestionsUseCase("en") } returns emptyList()
         coEvery { getUsedQuestionIdsUseCase() } returns emptySet()
+        coEvery { isAnalyticsEnabledUseCase() } returns true
         viewModel =
             SettingsViewModel(
                 checkForUpdateUseCase,
@@ -85,6 +93,9 @@ class SettingsViewModelTest {
                 getContentLanguageUseCase,
                 getLanguageOverrideUseCase,
                 setLanguageOverrideUseCase,
+                isAnalyticsEnabledUseCase,
+                setAnalyticsEnabledUseCase,
+                analyticsTracker,
             )
     }
 
@@ -233,6 +244,9 @@ class SettingsViewModelTest {
                     getContentLanguageUseCase,
                     getLanguageOverrideUseCase,
                     setLanguageOverrideUseCase,
+                    isAnalyticsEnabledUseCase,
+                    setAnalyticsEnabledUseCase,
+                    analyticsTracker,
                     updatesEnabled = false,
                 )
 
@@ -307,5 +321,51 @@ class SettingsViewModelTest {
 
             assertEquals(0, viewModel.uiState.value.hiddenCardsCount)
             assertEquals(1, viewModel.uiState.value.totalCardsCount)
+        }
+
+    @Test
+    fun `onScreenEntered loads the persisted analytics opt-in`() =
+        runTest {
+            coEvery { isAnalyticsEnabledUseCase() } returns false
+            coEvery { checkForUpdateUseCase() } returns Result.success(UpdateCheckResult.UpToDate("1.0.5"))
+
+            viewModel.onScreenEntered()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.analyticsEnabled)
+        }
+
+    /**
+     * Opting out is the last thing an install reports, so the event has to be logged before
+     * [SetAnalyticsEnabledUseCase] shuts collection off - otherwise the opt-out rate is
+     * unobservable, which is the one number this toggle exists to produce.
+     */
+    @Test
+    fun `opting out reports the toggle before collection stops`() =
+        runTest {
+            viewModel.onAnalyticsEnabledToggled(false)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify {
+                analyticsTracker.logEvent(
+                    match { it.name == "analytics_toggled" && it.params["enabled"] == "false" },
+                )
+            }
+            coVerify { setAnalyticsEnabledUseCase(false) }
+            assertEquals(false, viewModel.uiState.value.analyticsEnabled)
+        }
+
+    @Test
+    fun `changing the theme reports it as both an event and a user property`() =
+        runTest {
+            viewModel.onThemeModeSelected(ThemeMode.Dark)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify {
+                analyticsTracker.logEvent(
+                    match { it.name == "theme_changed" && it.params["theme"] == "dark" },
+                )
+            }
+            verify { analyticsTracker.setUserProperty(AnalyticsUserProperty.ThemeMode, "dark") }
         }
 }
