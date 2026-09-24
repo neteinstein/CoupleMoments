@@ -5,7 +5,7 @@
 # Kotlin move as a pair and running two parallel pins in one build is not worth the fragility.
 # Both are bumped back up as a follow-up once the `kmp` branch is green end to end.
 agp = "9.3.0"
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 composeMultiplatform = "1.11.1"
 coroutines = "1.11.0"
 lifecycle = "2.10.0"
