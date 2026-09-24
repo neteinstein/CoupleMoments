@@ -6,7 +6,7 @@
 # Both are bumped back up as a follow-up once the `kmp` branch is green end to end.
 agp = "9.3.0"
 kotlin = "2.4.10"
-composeMultiplatform = "1.11.1"
+composeMultiplatform = "1.12.0"
 coroutines = "1.11.0"
 lifecycle = "2.10.0"
 navigationCompose = "2.10.1"
