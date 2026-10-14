@@ -10,7 +10,7 @@ sqldelight {
         // implementations wrap) into commonMain from src/commonMain/sqldelight/**.sq - the
         // generated code is driver-agnostic, so only DriverFactory differs per target. wasmJs has
         // no SQLDelight driver at all and never constructs the database: it binds CardDao/
-        // SeedMetadataDao to storage-backed implementations instead (see WebCardDao).
+        // SeedMetadataDao to IndexedDB-backed implementations instead (see IndexedDbCardDao).
         create("CoupleMomentsDatabase") {
             packageName.set("org.neteinstein.couples.data.local")
         }

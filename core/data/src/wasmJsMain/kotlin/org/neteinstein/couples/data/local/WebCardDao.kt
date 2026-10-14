@@ -3,10 +3,10 @@ package org.neteinstein.couples.data.local
 import com.russhwolf.settings.Settings
 
 /**
- * [CardDao] for the web build. SQLDelight publishes no wasmJs driver, so there is no SQL engine to
- * put behind the generated queries on this target - but [CardDao] was deliberately kept
- * persistence-agnostic (see its doc comment), so a different backing store slots in without any
- * repository above it noticing.
+ * Fallback [CardDao] for the web build, used by [IndexedDbCardDao] only when IndexedDB can't be
+ * opened (and, before IndexedDB support, the web build's only card store). [CardDao] was
+ * deliberately kept persistence-agnostic (see its doc comment), so either store slots in without
+ * any repository above it noticing.
  *
  * The card rows themselves are held in memory, which costs nothing:
  * [org.neteinstein.couples.data.repository.QuestionRepositoryImpl] re-seeds them from
@@ -43,25 +43,32 @@ class WebCardDao(
         cards = cards.map { it.copy(isHidden = false) }
     }
 
-    private fun hiddenIds(): Set<Int> =
-        settings
-            .getStringOrNull(HIDDEN_IDS_KEY)
-            ?.split(',')
-            ?.mapNotNull { it.trim().toIntOrNull() }
-            ?.toSet()
-            .orEmpty()
+    private fun hiddenIds(): Set<Int> = readHiddenIds(settings)
 
     private fun writeHiddenIds(ids: Set<Int>) {
         settings.putString(HIDDEN_IDS_KEY, ids.joinToString(separator = ","))
     }
 
-    private companion object {
-        const val HIDDEN_IDS_KEY = "hidden_card_ids"
+    internal companion object {
+        private const val HIDDEN_IDS_KEY = "hidden_card_ids"
+
+        /** Also read by [IndexedDbCardDao] to migrate ids hidden before IndexedDB was used. */
+        fun readHiddenIds(settings: Settings): Set<Int> =
+            settings
+                .getStringOrNull(HIDDEN_IDS_KEY)
+                ?.split(',')
+                ?.mapNotNull { it.trim().toIntOrNull() }
+                ?.toSet()
+                .orEmpty()
+
+        fun clearHiddenIds(settings: Settings) {
+            settings.remove(HIDDEN_IDS_KEY)
+        }
     }
 }
 
 /**
- * [SeedMetadataDao] for the web build. Deliberately never reports a stored version, so
+ * Fallback [SeedMetadataDao] for the web build (see [IndexedDbSeedMetadataDao]). Deliberately never reports a stored version, so
  * [org.neteinstein.couples.data.repository.QuestionRepositoryImpl] re-seeds the in-memory card
  * list from [org.neteinstein.couples.data.source.QuestionSeedData] once per page load - which is
  * exactly what [WebCardDao] needs, since it starts empty every time. Writes are accepted and
