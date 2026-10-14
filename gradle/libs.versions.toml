@@ -83,7 +83,7 @@ koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = 
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel", version.ref = "koinCompose" }
 
 # Core
-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.0" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.1" }
 
 # Splash Screen
 splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
