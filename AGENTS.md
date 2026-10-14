@@ -112,7 +112,7 @@ Put code in `commonMain` by default. A platform source set is only for something
 
 | Concern | Common declaration | Android | iOS | Web |
 |---|---|---|---|---|
-| Storage bindings | `core:data` `platformDataModule` | SQLDelight `AndroidSqliteDriver`, `SharedPreferencesSettings` | SQLDelight `NativeSqliteDriver`, `NSUserDefaultsSettings` | `WebCardDao` + `StorageSettings` (`localStorage`) |
+| Storage bindings | `core:data` `platformDataModule` | SQLDelight `AndroidSqliteDriver`, `SharedPreferencesSettings` | SQLDelight `NativeSqliteDriver`, `NSUserDefaultsSettings` | IndexedDB (`IndexedDbCardDao`/`IndexedDbSeedMetadataDao`) + `StorageSettings` (`localStorage`) |
 | Blocking-IO dispatcher | `core:data` `ioDispatcher` | `Dispatchers.IO` | `Dispatchers.Default` (`IO` is internal on Native) | `Dispatchers.Default` (single event loop) |
 | OS locale | `core:data` `LocaleProviderImpl` | `Locale.getDefault()` | `NSLocale.currentLocale` | `navigator.language` |
 | Self-update | `core:data` `platformDataModule` | Ktor + GitHub Releases + `FileProvider` install | no-op | no-op |
@@ -121,7 +121,7 @@ Put code in `commonMain` by default. A platform source set is only for something
 | Language settings deep link / version name | `feature:settings` `SettingsPlatformActions` | `ACTION_LOCALE_SETTINGS`, `PackageManager` | none, `CFBundleShortVersionString` | none, placeholder |
 | "Install the Android app" banner | `app` `PlatformInstallAppBanner` | renders nothing | renders nothing | dismissible Play Store banner |
 
-**SQLDelight has no wasmJs driver.** `CardDao`/`SeedMetadataDao` were always persistence-agnostic interfaces, so the web build binds them to `WebCardDao`/`WebSeedMetadataDao` instead: the card rows live in memory (re-seeded from `QuestionSeedData` every page load, which costs nothing since it's a compiled-in constant) and only the hidden-id set is persisted, through `localStorage`. Android and iOS both get the real SQLDelight database. If a wasm driver ever lands, swapping it in needs no change to either interface or any caller.
+**SQLDelight has no wasmJs driver.** `CardDao`/`SeedMetadataDao` were always persistence-agnostic interfaces, so the web build binds them to `IndexedDbCardDao`/`IndexedDbSeedMetadataDao` instead (`core/data/src/wasmJsMain/.../local/IndexedDb.kt`): an IndexedDB database `couple_moments` mirroring the SQLDelight schema — a `cards` object store keyed on `id` with a `languageCode` index, and a single-row `seed_metadata` store — so cards persist across page loads and re-seed only on a `QuestionSeedData.VERSION` bump, like the other targets. Schema changes go in `idbOpen`'s `onupgradeneeded` with a bumped `DATABASE_VERSION`. If the browser won't open IndexedDB (some private modes, sandboxed iframes), both DAOs fall back together to `WebCardDao`/`WebSeedMetadataDao`: in-memory cards re-seeded every load, with only the hidden-id set persisted in `localStorage`. Hidden ids left in `localStorage` by that older storage are migrated into IndexedDB on its first seed. If a wasm SQLDelight driver ever lands, swapping it in needs no change to either interface or any caller.
 
 ### Icons and text glyphs
 
