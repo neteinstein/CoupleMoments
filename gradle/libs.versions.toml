@@ -30,7 +30,7 @@ playPublisher = "4.1.1"
 # --- KMP migration: not wired into any module yet (see the rollout steps in the migration plan) --
 sqldelight = "2.4.0"
 multiplatformSettings = "1.3.0"
-ktor = "3.5.2"
+ktor = "3.6.0"
 kotlinxSerialization = "1.11.0"
 # org.jetbrains.androidx.navigation - the multiplatform build of Navigation Compose, a DIFFERENT
 # group id from the androidx.navigation one `navigationCompose` above pins for today's Android-only
